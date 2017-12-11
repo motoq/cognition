@@ -70,4 +70,19 @@ public class Vector3D extends TVector {
    */
   public void set(Basis3D ii, double value) { set(ii.ordinal(), value); }
 
+  /**
+   * Set this vector to the product of the input [3x3] matrix and
+   * [3x1] vector.  this = mtx*vec
+   * 
+   * @param  mtx  [3x3] matrix on left side of the operand
+   * @param  vec  [3x1] vector on the right side of the operand
+   */
+  public void mult(Matrix3X3 mtx, Vector3D vec) {
+    final double x = vec.get(0);
+    final double y = vec.get(1);
+    final double z = vec.get(2);
+    set(0, x*mtx.get(0,0) + y*mtx.get(0,1) + z*mtx.get(0,2)); 
+    set(1, x*mtx.get(1,0) + y*mtx.get(1,1) + z*mtx.get(1,2)); 
+    set(2, x*mtx.get(2,0) + y*mtx.get(2,1) + z*mtx.get(2,2)); 
+  }
 }

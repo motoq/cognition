@@ -33,7 +33,7 @@ import cognition.math.tensor.TMatrix;
 public class Matrix3X3 extends TMatrix {
 
   /**
-   * Create a 3X3 matrix with values initizlized to zero.
+   * Create a 3X3 matrix with values initialized to zero.
    */
   public Matrix3X3() {
     super(3, 3);
@@ -62,4 +62,23 @@ public class Matrix3X3 extends TMatrix {
     set(row.ordinal(), col.ordinal(), value);
   }
 
+  /**
+   * Create a [3x1] vector equal to the product of this [3x3] matrix
+   * and the input [3x1] vector.
+   * 
+   * @param  vec0  [3x1] vector on the right side of the operand
+   *
+   * @return  this*vec0
+   */
+  public Vector3D mult(Vector3D vec0) {
+    final double x = vec0.get(0);                
+    final double y = vec0.get(1);
+    final double z = vec0.get(2);
+    Vector3D vec = new Vector3D();
+    vec.set(0, x*get(0,0) + y*get(0,1) + z*get(0,2));
+    vec.set(1, x*get(1,0) + y*get(1,1) + z*get(1,2));
+    vec.set(2, x*get(2,0) + y*get(2,1) + z*get(2,2));
+
+    return vec;
+  }
 }

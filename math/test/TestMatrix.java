@@ -6,8 +6,10 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import cognition.math.Q;
 import cognition.math.Basis3D;
 import cognition.math.VectorEnum;
+import cognition.math.Vector3D;
 import cognition.math.tensor.TVector;
 import cognition.math.MatrixEnum;
+import cognition.math.Matrix3X3;
 import cognition.math.tensor.TMatrix;
 
 public class TestMatrix {
@@ -62,11 +64,21 @@ public class TestMatrix {
     VectorEnum<Basis3D> mvult2 = new VectorEnum<>(Basis3D.I);
     mvult2.mult(m3, v1);
 
+
+    Matrix3X3 m3x3 = new Matrix3X3();
+    Vector3D v3d = new Vector3D();
+    m3x3.set(a3);
+    v3d.set(av1);
+    Vector3D v3d2 = m3x3.mult(v3d);
+    Vector3D v3d3 = new Vector3D();
+    v3d3.mult(m3x3, v3d);
+    
     System.out.println("Norm: " + diffMatrix(rmmult, mmult1));
     System.out.println("Norm: " + diffMatrix(rmmult, mmult2));
     System.out.println("Norm: " + diffMatrix(rmvmult, mvult1));
     System.out.println("Norm: " + diffMatrix(rmvmult, mvult2));
-
+    System.out.println("Norm: " + diffMatrix(rmvmult, v3d2));
+    System.out.println("Norm: " + diffMatrix(rmvmult, v3d3));
 
   }
 
