@@ -40,6 +40,18 @@ public class Matrix3X3 extends TMatrix {
   }
 
   /**
+   * Create a 3X3 matrix that is the equivalent quaternion reference
+   * frame rotation transformation (not a vector rotation). 
+   *                                                       
+   * @param  q  Quaternion to convert to a Matrix reference
+   *            frame transformation.
+   */
+  public Matrix3X3(Quaternion q) {
+    this();
+    set(q);
+  }
+
+  /**
    * <code>Basis3D</code> based accessor method.
    *
    * @param  row  Row for the element to be returned.
@@ -47,7 +59,7 @@ public class Matrix3X3 extends TMatrix {
    *
    * @return  Value stored at requested (row,col)
    */
-  public double get(Basis3D row, Basis3D col) {
+  public final double get(Basis3D row, Basis3D col) {
     return get(row.ordinal(), col.ordinal());
   }
 
@@ -58,8 +70,87 @@ public class Matrix3X3 extends TMatrix {
    * @param  col    Column for the element to be set.
    * @param  value  Value to store at requested (row,col)
    */
-  public void set(Basis3D row, Basis3D col, double value) {
+  public final void set(Basis3D row, Basis3D col, double value) {
     set(row.ordinal(), col.ordinal(), value);
+  }
+
+  /**
+   * Sets this matrix to the equivalent quaternion reference
+   * frame rotation transformation (not a vector rotation). 
+   *                                                       
+   * @param  q  Quaternion to convert to a Matrix reference
+   *            frame transformation.
+   */
+  public final void set(Quaternion q) {
+    final double q0 = q.get(Q.Q0);
+    final double qi = q.get(Q.QI);
+    final double qj = q.get(Q.QJ);
+    final double qk = q.get(Q.QK);
+
+    final double q0q0 = q0*q0;
+    final double q0qi = q0*qi;
+    final double q0qj = q0*qj;
+    final double q0qk = q0*qk;
+    final double qiqj = qi*qj;
+    final double qiqk = qi*qk;
+    final double qjqk = qj*qk;
+
+    set(0,0, 2.0*(q0q0 + qi*qi) - 1.0);
+    set(0,1, 2.0*(qiqj + q0qk));       
+    set(0,2, 2.0*(qiqk - q0qj));
+
+    set(1,0, 2.0*(qiqj - q0qk));
+    set(1,1, 2.0*(q0q0 + qj*qj) - 1.0);
+    set(1,2, 2.0*(qjqk + q0qi));
+
+    set(2,0, 2.0*(qiqk + q0qj));
+    set(2,1, 2.0*(qjqk - q0qi));
+    set(2,2, 2.0*(q0q0 + qk*qk) - 1.0);
+  }
+
+  /**
+   * Sets this Matrix to be a reference frame transformation representing
+   * a rotation about the X-axis by the input angle.
+   *
+   * @param  alpha  Rotation angle about X-axis, radians
+   */
+  public void rotX(double alpha) {
+    final double calpha = Math.cos(alpha);
+    final double salpha = Math.sin(alpha);
+
+    set(0,0, 1.0);  set(0,1,     0.0);  set(0,2,    0.0);
+    set(1,0, 0.0);  set(1,1,  calpha);  set(1,2, salpha);
+    set(2,0, 0.0);  set(2,1, -salpha);  set(2,2, calpha);
+  }
+
+  /**
+   * Sets this Matrix to be a reference frame transformation representing
+   * a rotation about the Y-axis by the input angle.
+   *
+   * @param  alpha  Rotation angle about Y-axis, radians
+   */
+  public void rotY(double alpha) {
+    final double calpha = Math.cos(alpha);
+    final double salpha = Math.sin(alpha);
+
+    set(0,0, calpha);  set(0,1, 0.0);  set(0,2, -salpha);
+    set(1,0,    0.0);  set(1,1, 1.0);  set(1,2,     0.0);
+    set(2,0, salpha);  set(2,1, 0.0);  set(2,2,  calpha);
+  }
+
+  /**
+   * Sets this Matrix to be a reference frame transformation representing
+   * a rotation about the Z-axis by the input angle.
+   *
+   * @param  alpha  Rotation angle about Z-axis, radians
+   */
+  public void rotZ(double alpha) {
+    final double calpha = Math.cos(alpha);
+    final double salpha = Math.sin(alpha);
+
+    set(0,0,  calpha);  set(0,1, salpha);  set(0,2, 0.0);
+    set(1,0, -salpha);  set(1,1, calpha);  set(1,2, 0.0);
+    set(2,0,     0.0);  set(2,1,    0.0);  set(2,2, 1.0);
   }
 
   /**

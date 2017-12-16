@@ -85,4 +85,84 @@ public class Vector3D extends TVector {
     set(1, x*mtx.get(1,0) + y*mtx.get(1,1) + z*mtx.get(1,2)); 
     set(2, x*mtx.get(2,0) + y*mtx.get(2,1) + z*mtx.get(2,2)); 
   }
+
+  /**
+   * q*vq  (quaternion multiplication performed left to right)
+   * <P>
+   * Set this vector with the result of applying a reference frame
+   * transformation to the input <code>Vector3D</code> with the input
+   * <code>Quaternion</code>.
+   *
+   * @param  q  Unit quaternion
+   * @param  v  Vector to be subjected to a reference frame transformation.
+   *            The components of the vector change but the vector itself
+   *            remains the same.
+   */
+  public void transform(Quaternion q, Vector3D v) {
+    final double q0 = q.get(Q.Q0);
+    final double qi = q.get(Q.QI);
+    final double qj = q.get(Q.QJ);
+    final double qk = q.get(Q.QK);
+
+    final double q0q0 = q0*q0;
+    final double q0qi = q0*qi;
+    final double q0qj = q0*qj;
+    final double q0qk = q0*qk;
+    final double qiqj = qi*qj;
+    final double qiqk = qi*qk;
+    final double qjqk = qj*qk;
+
+    final double q11 = 2.0*(q0q0 + qi*qi) - 1.0;
+    final double q21 = 2.0*(qiqj + q0qk);
+    final double q31 = 2.0*(qiqk - q0qj);
+    final double q12 = 2.0*(qiqj - q0qk);
+    final double q22 = 2.0*(q0q0 + qj*qj) - 1.0;
+    final double q32 = 2.0*(qjqk + q0qi);
+    final double q13 = 2.0*(qiqk + q0qj);
+    final double q23 = 2.0*(qjqk - q0qi);
+    final double q33 = 2.0*(q0q0 + qk*qk) - 1.0;
+
+    set(0, q11*v.get(0) + q21*v.get(1) + q31*v.get(2));
+    set(1, q12*v.get(0) + q22*v.get(1) + q32*v.get(2));
+    set(2, q13*v.get(0) + q23*v.get(1) + q33*v.get(2));
+  }
+
+  /**
+   * qvq*  (quaternion multiplication performed left to right)
+   * <P>
+   * Set this vector with the result rotating the input <code>Vector3D</code>
+   * using the input <code>Quaternion</code>.
+   *
+   * @param  q  Unit quaternion
+   * @param  v  Vector to be rotated (while the reference frame remains
+   *            the same).
+   */
+  public void rotate(Quaternion q, Vector3D v) {
+    final double q0 = q.get(Q.Q0);
+    final double qi = q.get(Q.QI);
+    final double qj = q.get(Q.QJ);
+    final double qk = q.get(Q.QK);
+
+    final double q0q0 = q0*q0;
+    final double q0qi = q0*qi;
+    final double q0qj = q0*qj;
+    final double q0qk = q0*qk;
+    final double qiqj = qi*qj;
+    final double qiqk = qi*qk;
+    final double qjqk = qj*qk;
+
+    final double q11 = 2.0*(q0q0 + qi*qi) - 1.0;
+    final double q21 = 2.0*(qiqj + q0qk);
+    final double q31 = 2.0*(qiqk - q0qj);
+    final double q12 = 2.0*(qiqj - q0qk);
+    final double q22 = 2.0*(q0q0 + qj*qj) - 1.0;
+    final double q32 = 2.0*(qjqk + q0qi);
+    final double q13 = 2.0*(qiqk + q0qj);
+    final double q23 = 2.0*(qjqk - q0qi);
+    final double q33 = 2.0*(q0q0 + qk*qk) - 1.0;
+
+    set(0, q11*v.get(0) + q12*v.get(1) + q13*v.get(2));
+    set(1, q21*v.get(0) + q22*v.get(1) + q23*v.get(2));
+    set(2, q31*v.get(0) + q32*v.get(1) + q33*v.get(2));
+  }
 }

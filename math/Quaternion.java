@@ -326,6 +326,41 @@ public class Quaternion {
   }
 
   /**
+   * q*vq  (quaternion multiplication performed left to right)
+   * <P>
+   * Return the result of a reference frame transformation on the
+   * input <code>Vector3D</code>.
+   *
+   * @param  v  Vector to be subjected to a reference frame transformation.
+   *
+   * @return  The result of applying this quaternion as a reference frame
+   *          transformation to the input vector.
+   */
+  public Vector3D transform(Vector3D v) {
+    Vector3D v2 = new Vector3D();
+    v2.set(v);
+    v2.transform(this, v2);
+    return v2;
+  }
+
+  /**
+   * qvq*  (quaternion multiplication performed left to right)
+   * <P>
+   * Return the result of a rotating the input <code>Vector3D</code>.
+   *
+   * @param  v  Vector to be rotated.
+   *
+   * @return  The result of applying this quaternion as a rotatoin to the
+   *          input vector.
+   */
+  public Vector3D rotate(Vector3D v) {
+    Vector3D v2 = new Vector3D();
+    v2.set(v);
+    v2.rotate(this, v2);
+    return v2;
+  }
+
+  /**
    * @return  String representation of the components of this
    *          <code>Quaternion</code>
    */
