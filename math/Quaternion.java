@@ -81,6 +81,13 @@ public class Quaternion {
   }
 
   /**
+   * @param  m  Instantiate with a direction cosine matrix.
+   */
+  public Quaternion(Matrix3X3 m) {
+    set(m);
+  }
+
+  /**
    * Gets the component values of this quaternion.
    *
    * @param  ndx  A <code>Q</code> indicating which component to
@@ -338,8 +345,7 @@ public class Quaternion {
    */
   public Vector3D transform(Vector3D v) {
     Vector3D v2 = new Vector3D();
-    v2.set(v);
-    v2.transform(this, v2);
+    v2.transform(this, v);
     return v2;
   }
 
@@ -355,8 +361,7 @@ public class Quaternion {
    */
   public Vector3D rotate(Vector3D v) {
     Vector3D v2 = new Vector3D();
-    v2.set(v);
-    v2.rotate(this, v2);
+    v2.rotate(this, v);
     return v2;
   }
 

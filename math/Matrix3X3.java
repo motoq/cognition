@@ -172,4 +172,19 @@ public class Matrix3X3 extends TMatrix {
 
     return vec;
   }
+
+  /**
+   * Return the product of this [3X3] matrix and the input
+   * [3X3] matrix.
+   *
+   * @param  bMat  Matrix to post-multiply this one by
+   *
+   * @return  this*bMat
+   */
+  public Matrix3X3 mult(Matrix3X3 bMat) {
+    Matrix3X3 cMat = new Matrix3X3();
+    cMat.mult(this, bMat);
+
+    return cMat;
+  }
 }
