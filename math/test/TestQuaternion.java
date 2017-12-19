@@ -1,31 +1,18 @@
 package cognition.math.test;
 
-/*
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-
-import cognition.math.Q;
-import cognition.math.Basis3D;
-import cognition.math.VectorEnum;
-import cognition.math.tensor.TVector;
-import cognition.math.MatrixEnum;
-*/
 import cognition.math.Basis3D;
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.RotationOrder;
 import org.apache.commons.math3.geometry.euclidean.threed.RotationConvention;
 
-import cognition.math.tensor.TMatrix;
 import cognition.math.Vector3D;
 import cognition.math.Matrix3X3;
 import cognition.math.Quaternion;
 
 
-
 public class TestQuaternion {
 
   public static void main(String[] args) {
-
 
     Matrix3X3 rot3 = new Matrix3X3();
     Matrix3X3 rot2 = new Matrix3X3();
@@ -35,21 +22,28 @@ public class TestQuaternion {
     rot2.rotY(Math.toRadians(-95.));
     rot1.rotZ(Math.toRadians(225.));
 
-    Matrix3X3 rot21 = rot2.mult(rot1);
-    Matrix3X3 rot321 = rot3.mult(rot21);
+    Matrix3X3 rot21 = new Matrix3X3();
+    rot21.mult(rot2, rot1);
+    Matrix3X3 rot321 = new Matrix3X3();
+    rot321.mult(rot3,rot21);
     
     Quaternion q = new Quaternion(rot321);
 
     Vector3D v0 = new Vector3D(3., 2., 1.);
-    Vector3D vq = q.transform(v0);
-    Vector3D vm = rot321.mult(v0);
+    Vector3D vq = new Vector3D();
+    vq.transform(q, v0);
+    Vector3D vm = new Vector3D();
+    vm.mult(rot321, v0);
 
-    TMatrix dv = vq.minus(vm);
+    Vector3D dv = new Vector3D();
+    dv.set(vq);
+    dv.minus(vm);
     System.out.println("Matrix3X3 vs. Quaternion:  " + dv.norm());
 
-    Vector3D v02 = q.rotate(vq);
+    Vector3D v02 = new Vector3D();
+    v02.rotate(q, vq);
     dv.set(v0);
-    dv.minusEquals(v02);
+    dv.minus(v02);
     System.out.println("Quaternion transform/rotate:  " + dv.norm());
     
     Rotation apRot = new Rotation(RotationOrder.ZYX,

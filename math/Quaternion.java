@@ -47,17 +47,6 @@ public class Quaternion {
 
   private static final double TOL = 1.e-26;
 
-    // used for Tuple3D indexing
-  private static final Basis3D I = Basis3D.I;
-  private static final Basis3D J = Basis3D.J;
-  private static final Basis3D K = Basis3D.K;
-
-    // and for external Quaternion indexing
-  private static final Q Q0 = Q.Q0;
-  private static final Q QI = Q.QI;
-  private static final Q QJ = Q.QJ;
-  private static final Q QK = Q.QK;
-
     // quaternion components - set to unit quaternion with
     // zero rotation angle
   private double q0 = 1;
@@ -115,10 +104,10 @@ public class Quaternion {
    *            input quaternion is assumed to be of unit length.
    */
   public final void set(Quaternion q) {
-    q0 = q.get(Q0);
-    qi = q.get(QI);
-    qj = q.get(QJ);
-    qk = q.get(QK);
+    q0 = q.q0;
+    qi = q.qi;
+    qj = q.qj;
+    qk = q.qk;
   }
 
   /**
@@ -132,9 +121,9 @@ public class Quaternion {
     alpha /= 2.0;
     q0 = Math.cos(alpha);
     alpha = Math.sin(alpha);
-    qi = axis.get(I)*alpha;
-    qj = axis.get(J)*alpha;
-    qk = axis.get(K)*alpha;
+    qi = axis.get(0)*alpha;
+    qj = axis.get(1)*alpha;
+    qk = axis.get(2)*alpha;
     normalize();
   }
 
@@ -228,28 +217,11 @@ public class Quaternion {
    * @param  q  second quaternion
    */
   public void mult(Quaternion p, Quaternion q) {
-    q0 =   p.get(Q0)*q.get(Q0) - p.get(QI)*q.get(QI)
-         - p.get(QJ)*q.get(QJ) - p.get(QK)*q.get(QK);
-    qi =   p.get(Q0)*q.get(QI) + p.get(QI)*q.get(Q0)
-         + p.get(QJ)*q.get(QK) - p.get(QK)*q.get(QJ);
-    qj =   p.get(Q0)*q.get(QJ) - p.get(QI)*q.get(QK)
-         + p.get(QJ)*q.get(Q0) + p.get(QK)*q.get(QI);
-    qk =   p.get(Q0)*q.get(QK) + p.get(QI)*q.get(QJ)
-         - p.get(QJ)*q.get(QI) + p.get(QK)*q.get(Q0);
+    q0 = p.q0*q.q0 - p.qi*q.qi - p.qj*q.qj - p.qk*q.qk;
+    qi = p.q0*q.qi + p.qi*q.q0 + p.qj*q.qk - p.qk*q.qj;
+    qj = p.q0*q.qj - p.qi*q.qk + p.qj*q.q0 + p.qk*q.qi;
+    qk = p.q0*q.qk + p.qi*q.qj - p.qj*q.qi + p.qk*q.q0;
     normalize();
-  }
-
-  /**
-   * Returns the product of this and the input quaternion.
-   *
-   * @param  q  Input quaternion
-   *
-   * @return  this*q
-   */
-  public Quaternion mult(Quaternion q) {
-    Quaternion p = new Quaternion(this);
-    p.mult(q);
-    return p;
   }
 
   /**
@@ -330,39 +302,6 @@ public class Quaternion {
    */
   public double angle() {
     return 2.0*Math.acos(q0);
-  }
-
-  /**
-   * q*vq  (quaternion multiplication performed left to right)
-   * <P>
-   * Return the result of a reference frame transformation on the
-   * input <code>Vector3D</code>.
-   *
-   * @param  v  Vector to be subjected to a reference frame transformation.
-   *
-   * @return  The result of applying this quaternion as a reference frame
-   *          transformation to the input vector.
-   */
-  public Vector3D transform(Vector3D v) {
-    Vector3D v2 = new Vector3D();
-    v2.transform(this, v);
-    return v2;
-  }
-
-  /**
-   * qvq*  (quaternion multiplication performed left to right)
-   * <P>
-   * Return the result of a rotating the input <code>Vector3D</code>.
-   *
-   * @param  v  Vector to be rotated.
-   *
-   * @return  The result of applying this quaternion as a rotatoin to the
-   *          input vector.
-   */
-  public Vector3D rotate(Vector3D v) {
-    Vector3D v2 = new Vector3D();
-    v2.rotate(this, v);
-    return v2;
   }
 
   /**

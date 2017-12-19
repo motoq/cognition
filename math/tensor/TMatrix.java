@@ -123,12 +123,12 @@ public class TMatrix extends Tensor {
   /**
    * @return  The number of rows in this matrix
    */
-  int numRows() { return ROWS; }
+  public int numRows() { return ROWS; }
 
   /**
    * @return  The number of columns in this matrix
    */
-  int numColumns() { return COLS; }
+  public int numColumns() { return COLS; }
 
   /**
    * Offset based accessor method
@@ -180,34 +180,11 @@ public class TMatrix extends Tensor {
   }
 
   /**
-   * Return a new matrix that is the sum of this and the input matrix.
-   *
-   * @param  mtx  Input matrix to add to this matrix.  Dimensions must
-   *              match.
-   *
-   * @return  The sum of this and the input matrix
-   */
-  public TMatrix plus(TMatrix mtx) {
-    if (mtx.ROWS != ROWS  ||  mtx.COLS != COLS) {
-      throw new IllegalArgumentException(
-        "C = TMatrix.plusEquals:  Can't add a " +
-                                  ROWS + "x" + COLS + " TMatrix to a " +
-                                  mtx.ROWS + "x" + mtx.COLS + " TMatrix."
-      );
-    }
-    TMatrix mtxSum = new TMatrix(ROWS, COLS);
-    for (int ii=0; ii<SIZE;  ii++) {
-      mtxSum.vals[ii] = vals[ii] + mtx.vals[ii];
-    }
-    return mtxSum;
-  }
-
-  /**
    * Add input matrix to this matrix
    *
    * @param  mtx  Input matrix to add.  Dimensions must match this matrix
    */
-  public void plusEquals(TMatrix mtx) {
+  public void plus(TMatrix mtx) {
     if (mtx.ROWS != ROWS  ||  mtx.COLS != COLS) {
       throw new IllegalArgumentException(
         "TMatrix.plusEquals:  Can't add a " +
@@ -221,34 +198,11 @@ public class TMatrix extends Tensor {
   }
 
   /**
-   * Return a new matrix that is the difference between this and the input
-   *  matrix.
-   *
-   * @param  mtx  Input matrix to subtract from this matrix.  Dimensions must
-   *              match.
-   *
-   * @return  This matrix minus the input matrix 
-   */
-  public TMatrix minus(TMatrix mtx) {
-    if (mtx.ROWS != ROWS  ||  mtx.COLS != COLS) {
-      throw new IllegalArgumentException(
-        "C = TMatrix.minusEquals:  Can't subtract a " + ROWS + "x" + COLS + 
-        " TMatrix from a " + mtx.ROWS + "x" + mtx.COLS + " TMatrix."
-      );
-    }
-    TMatrix mtxDiff = new TMatrix(ROWS, COLS);
-    for (int ii=0; ii<SIZE;  ii++) {
-      mtxDiff.vals[ii] = vals[ii] - mtx.vals[ii];
-    }
-    return mtxDiff;
-  }
-
-  /**
    * Subtract input matrix from this matrix
    *
    * @param  mtx  Input matrix to subtract.  Dimensions must match this matrix
    */
-  public void minusEquals(TMatrix mtx) {
+  public void minus(TMatrix mtx) {
     if (mtx.ROWS != ROWS  ||  mtx.COLS != COLS) {
       throw new IllegalArgumentException(
         "TMatrix.minusEquals:  Can't subtract a " + ROWS + "x" + COLS + 
@@ -285,31 +239,5 @@ public class TMatrix extends Tensor {
         }
       }
     }
-  }
-
-  /**
-   * Returns a matrix that is the product of this and the input matrix.
-   * Rows and columns must be compatible.
-   *
-   * @param  mat  PxN matrix where this is a MxP matrix
-   *
-   * @return  MxN matrix = this * mat
-   */
-  public TMatrix mult(TMatrix mat) {
-    if (COLS != mat.ROWS) {
-      throw new IllegalArgumentException("C = TMatrix.mult(B):  ?! " +
-        ROWS + "x" + COLS + " * " + mat.ROWS + "x" + mat.COLS);
-    }
-    final int N = mat.numColumns();
-    TMatrix m3 = new TMatrix(ROWS, N);
-    for (int ii=0; ii<ROWS; ii++) {
-      for (int kk=0; kk<COLS; kk++) {
-        for (int jj=0; jj<N; jj++) {
-          m3.vals[m3.off.applyAsInt(ii, jj)] += vals[off.applyAsInt(ii,kk)]*
-                                            mat.vals[mat.off.applyAsInt(kk,jj)];
-        }
-      }
-    }
-    return m3;
   }
 }

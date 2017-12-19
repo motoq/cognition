@@ -152,39 +152,4 @@ public class Matrix3X3 extends TMatrix {
     set(1,0, -salpha);  set(1,1, calpha);  set(1,2, 0.0);
     set(2,0,     0.0);  set(2,1,    0.0);  set(2,2, 1.0);
   }
-
-  /**
-   * Create a [3x1] vector equal to the product of this [3x3] matrix
-   * and the input [3x1] vector.
-   * 
-   * @param  vec0  [3x1] vector on the right side of the operand
-   *
-   * @return  this*vec0
-   */
-  public Vector3D mult(Vector3D vec0) {
-    final double x = vec0.get(0);                
-    final double y = vec0.get(1);
-    final double z = vec0.get(2);
-    Vector3D vec = new Vector3D();
-    vec.set(0, x*get(0,0) + y*get(0,1) + z*get(0,2));
-    vec.set(1, x*get(1,0) + y*get(1,1) + z*get(1,2));
-    vec.set(2, x*get(2,0) + y*get(2,1) + z*get(2,2));
-
-    return vec;
-  }
-
-  /**
-   * Return the product of this [3X3] matrix and the input
-   * [3X3] matrix.
-   *
-   * @param  bMat  Matrix to post-multiply this one by
-   *
-   * @return  this*bMat
-   */
-  public Matrix3X3 mult(Matrix3X3 bMat) {
-    Matrix3X3 cMat = new Matrix3X3();
-    cMat.mult(this, bMat);
-
-    return cMat;
-  }
 }

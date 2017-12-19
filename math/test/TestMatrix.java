@@ -55,7 +55,8 @@ public class TestMatrix {
     RealMatrix rmmult = rm2.multiply(rm1);
     MatrixEnum<Basis3D, Q> mmult1 = new MatrixEnum<>(Basis3D.I, Q.Q0);
     mmult1.mult(m2, m1);
-    TMatrix mmult2 = m2.mult(m1);
+    TMatrix mmult2 = new TMatrix(m2.numRows(), m1.numColumns());
+    mmult2.mult(m2, m1);
 
     RealMatrix rmvmult = rm3.multiply(rmv1);
     VectorEnum<Basis3D> mvult1 = VectorEnum.factory(Basis3D.class);
@@ -69,23 +70,25 @@ public class TestMatrix {
     Vector3D v3d = new Vector3D();
     m3x3.set(a3);
     v3d.set(av1);
-    Vector3D v3d2 = m3x3.mult(v3d);
+    Vector3D v3d2 = new Vector3D();
+    v3d2.mult(m3x3, v3d);
     Vector3D v3d3 = new Vector3D();
     v3d3.mult(m3x3, v3d);
     
-    System.out.println("Norm: " + diffMatrix(rmmult, mmult1));
-    System.out.println("Norm: " + diffMatrix(rmmult, mmult2));
-    System.out.println("Norm: " + diffMatrix(rmvmult, mvult1));
-    System.out.println("Norm: " + diffMatrix(rmvmult, mvult2));
-    System.out.println("Norm: " + diffMatrix(rmvmult, v3d2));
-    System.out.println("Norm: " + diffMatrix(rmvmult, v3d3));
+    System.out.println("Norm 1: " + diffMatrix(rmmult, mmult1));
+    System.out.println("Norm 2: " + diffMatrix(rmmult, mmult2));
+    System.out.println("Norm 3: " + diffMatrix(rmvmult, mvult1));
+    System.out.println("Norm 4: " + diffMatrix(rmvmult, mvult2));
+    System.out.println("Norm 5: " + diffMatrix(rmvmult, v3d2));
+    System.out.println("Norm 6: " + diffMatrix(rmvmult, v3d3));
 
   }
 
   public static double diffMatrix(RealMatrix rm, TMatrix tm) {
     double[][] a = rm.getData();
     TMatrix tma = new TMatrix(a);
-    TMatrix tm2 = tm.minus(tma);
+    TMatrix tm2 = new TMatrix(tm);
+    tm2.minus(tma);
     //TMatrix tm2 = new TMatrix(tm);
     //tm2.minusEquals(tma);
     return tm2.norm();
