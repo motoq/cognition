@@ -1,5 +1,6 @@
 package cognition.math.test;
 
+import cognition.math.Q;
 import cognition.math.Basis3D;
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.RotationOrder;
@@ -20,12 +21,12 @@ public class TestQuaternion {
 
     rot3.rotX(Math.toRadians( 30.));
     rot2.rotY(Math.toRadians(-95.));
-    rot1.rotZ(Math.toRadians(225.));
+    rot1.rotZ(Math.toRadians(195.));
 
     Matrix3X3 rot21 = new Matrix3X3();
     rot21.mult(rot2, rot1);
     Matrix3X3 rot321 = new Matrix3X3();
-    rot321.mult(rot3,rot21);
+    rot321.mult(rot3, rot21);
     
     Quaternion q = new Quaternion(rot321);
 
@@ -48,14 +49,26 @@ public class TestQuaternion {
     
     Rotation apRot = new Rotation(RotationOrder.ZYX,
                                   RotationConvention.FRAME_TRANSFORM,
-                                  Math.toRadians(225.),
+                                  Math.toRadians(195.),
                                   Math.toRadians(-95.),
                                   Math.toRadians( 30.));
     org.apache.commons.math3.geometry.euclidean.threed.Vector3D av0 =
         new org.apache.commons.math3.geometry.euclidean.threed.Vector3D(3., 2., 1.);
     org.apache.commons.math3.geometry.euclidean.threed.Vector3D av = apRot.applyTo(av0);
     System.out.println("Commons Rotation:  " + diffVec(av, vq));
-  
+
+    Quaternion q1 = new Quaternion(rot1);
+    Quaternion q2 = new Quaternion(rot2);
+    Quaternion q3 = new Quaternion(rot3);
+    Quaternion q12 = new Quaternion();
+    q12.mult(q1, q2);
+    Quaternion q123 = new Quaternion();
+    q123.mult(q12, q3);
+    Vector3D vqmult = new Vector3D();
+    vqmult.transform(q123, v0);
+    dv.set(vq);
+    dv.minus(vqmult);
+    System.out.println("Quaternion multiply:  " + dv.norm());
 
   }
   
