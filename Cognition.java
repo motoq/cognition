@@ -22,6 +22,8 @@
 package cognition;
 
 import javafx.application.Application;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.stage.Stage;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -29,9 +31,9 @@ import javafx.scene.Scene;
 //import javafx.scene.layout.StackPane;
 //import javafx.event.ActionEvent;
 //import javafx.event.EventHandler;
-
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.transform.Affine;
+import javafx.scene.transform.Rotate;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.DrawMode;
@@ -52,6 +54,12 @@ public class Cognition extends Application {
   private final double sceneWidth = 800;
   private final double sceneHeight = 400;
   private PerspectiveCamera camera;
+  private double sceneX = 0.0;
+  private double sceneY = 0.0;
+  private double fixedXAngle = 0.0;
+  private double fixedYAngle = 0.0;
+  private final DoubleProperty angleX = new SimpleDoubleProperty(0.0);
+  private final DoubleProperty angleY = new SimpleDoubleProperty(0.0);
   
   @Override
   public void start(Stage primaryStage) {
@@ -72,27 +80,27 @@ public class Cognition extends Application {
       // a reference frame transformation
     Group xAxis = createAxis(axisLength, axisRadius, "X");
     Matrix3X3 rot = new Matrix3X3();
-    rot.rotZ(Math.PI/2.0);
+    rot.rotX(Math.PI/2.0);
     Vector3D trans = new Vector3D();
-    trans.set(Basis3D.I, axisLength/2.0);
+    trans.set(Basis3D.K, -axisLength/2.0);
     Affine xTrans = affineJFX(rot, trans);
     xAxis.getTransforms().add(xTrans);
       //
     Group yAxis = createAxis(axisLength, axisRadius, "Y");
-    rot.rotZ(Math.PI);
+    rot.rotZ(Math.PI/2.0);
     trans.zero();
-    trans.set(Basis3D.J, -axisLength/2.0);
+    trans.set(Basis3D.I, axisLength/2.0);
     Affine yTrans = affineJFX(rot, trans);
     yAxis.getTransforms().add(yTrans);
       //
     Group zAxis = createAxis(axisLength, axisRadius, "Z");
-    rot.rotX(Math.PI/2.0);
+    rot.rotZ(Math.PI);
     trans.zero();
-    trans.set(Basis3D.K, -axisLength/2.0);
+    trans.set(Basis3D.J, -axisLength/2.0);
     Affine zTrans = affineJFX(rot, trans);
     zAxis.getTransforms().add(zTrans);
       //
-    Sphere origin = new Sphere(2.0*axisRadius);
+    Sphere origin = new Sphere(1.5*axisRadius);
     origin.setDrawMode(DrawMode.FILL);
 
 
@@ -101,6 +109,30 @@ public class Cognition extends Application {
 
     sceneRoot.getChildren().add(coordGroup);
 
+      // Initial Mouse control will rotate the group vs. change
+      // the camera perspective.  Note the use of bindings
+    Rotate xRotate = new Rotate(0, Rotate.X_AXIS);
+    Rotate yRotate = new Rotate(0, Rotate.Y_AXIS);
+    coordGroup.getTransforms().addAll(xRotate, yRotate);
+    xRotate.angleProperty().bind(angleX);
+    yRotate.angleProperty().bind(angleY);
+      // Reference point based on mouse click
+    scene.setOnMousePressed(event -> {
+      sceneX = event.getSceneX();
+      sceneY = event.getSceneY();
+      fixedXAngle = angleX.get();
+      fixedYAngle = angleY.get();
+    });
+      // Track mouse draft from reference point for viewing adjustment
+    scene.setOnMouseDragged(event -> {
+      angleX.set(fixedXAngle - (sceneX - event.getSceneY()));
+      angleY.set(fixedYAngle + sceneY - event.getSceneX());
+    });
+    
+    
+    
+    
+    
     primaryStage.setTitle("Axis");
     primaryStage.setScene(scene);
     primaryStage.show();
