@@ -40,9 +40,10 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.Sphere;
 import javafx.scene.shape.Cylinder;
 
+import cognition.math.Basis3D;
+import cognition.math.Quaternion;
 import cognition.math.Vector3D;
 import cognition.math.Matrix3X3;
-import cognition.math.Basis3D;
 
 
 /**
@@ -63,8 +64,6 @@ public class Cognition extends Application {
   
   @Override
   public void start(Stage primaryStage) {
-
-
     Group sceneRoot = new Group();
     Scene scene = new Scene(sceneRoot, sceneWidth, sceneHeight);
     scene.setFill(Color.BLACK);
@@ -74,40 +73,17 @@ public class Cognition extends Application {
     camera.setTranslateZ(-2.0*Math.max(sceneWidth, sceneHeight));
     scene.setCamera(camera);
 
+      // Cartesian Axis
     final double axisLength = 0.95*Math.min(sceneWidth, sceneHeight);
     final double axisRadius = axisLength/100.0;
-      // Note that rotations vector rotations - so perform the opposite of
-      // a reference frame transformation
-    Group xAxis = createAxis(axisLength, axisRadius, "X");
-    Matrix3X3 rot = new Matrix3X3();
-    rot.rotX(Math.PI/2.0);
-    Vector3D trans = new Vector3D();
-    trans.set(Basis3D.K, -axisLength/2.0);
-    Affine xTrans = affineJFX(rot, trans);
-    xAxis.getTransforms().add(xTrans);
-      //
-    Group yAxis = createAxis(axisLength, axisRadius, "Y");
-    rot.rotZ(Math.PI/2.0);
-    trans.zero();
-    trans.set(Basis3D.I, axisLength/2.0);
-    Affine yTrans = affineJFX(rot, trans);
-    yAxis.getTransforms().add(yTrans);
-      //
-    Group zAxis = createAxis(axisLength, axisRadius, "Z");
-    rot.rotZ(Math.PI);
-    trans.zero();
-    trans.set(Basis3D.J, -axisLength/2.0);
-    Affine zTrans = affineJFX(rot, trans);
-    zAxis.getTransforms().add(zTrans);
-      //
-    Sphere origin = new Sphere(1.5*axisRadius);
-    origin.setDrawMode(DrawMode.FILL);
+    Group coordGroup = createAxes(axisLength, axisRadius);
 
-
-    Group coordGroup = new Group(xAxis, yAxis, zAxis, origin);
-
-
-    sceneRoot.getChildren().add(coordGroup);
+      // Master Group orients everything with Z up
+    Group sceneGroup = new Group(coordGroup);
+    sceneGroup.getTransforms().add(jFX2Comp());
+    
+    
+    sceneRoot.getChildren().add(sceneGroup);
 
       // Initial Mouse control will rotate the group vs. change
       // the camera perspective.  Note the use of bindings
@@ -155,6 +131,52 @@ public class Cognition extends Application {
     primaryStage.setScene(scene);
     primaryStage.show();
 */
+  }
+
+  public Affine jFX2Comp() {
+    Quaternion q = new Quaternion();
+    Quaternion q1 = new Quaternion();
+    Quaternion q2 = new Quaternion();
+  
+    q1.set(Math.PI/2.0, Basis3D.I);
+    q2.set(-Math.PI/2.0, Basis3D.K);
+    q.mult(q1, q2);    
+    q.conj();
+    Matrix3X3 rot = new Matrix3X3(q);
+    
+    return affineJFX(rot);
+  }
+
+  public Group createAxes(double length, double radius) {
+    double delta = length/2.0;
+      // Note that rotations vector rotations - so perform the opposite of
+      // a reference frame transformation
+    Group xAxis = createAxis(length, radius, "X");
+    Matrix3X3 rot = new Matrix3X3();
+    rot.rotZ(Math.PI/2.0);
+    Vector3D trans = new Vector3D();
+    trans.set(Basis3D.I, delta);
+    Affine xTrans = affineJFX(rot, trans);
+    xAxis.getTransforms().add(xTrans);
+      //
+    Group yAxis = createAxis(length, radius, "Y");
+    rot.identity();
+    trans.zero();
+    trans.set(Basis3D.J, delta);
+    Affine yTrans = affineJFX(rot, trans);
+    yAxis.getTransforms().add(yTrans);
+      //
+    Group zAxis = createAxis(length, radius, "Z");
+    rot.rotX(-Math.PI/2.0);
+    trans.zero();
+    trans.set(Basis3D.K, delta);
+    Affine zTrans = affineJFX(rot, trans);
+    zAxis.getTransforms().add(zTrans);
+      //
+    Sphere origin = new Sphere(1.5*radius);
+    origin.setDrawMode(DrawMode.FILL);
+
+    return new Group(xAxis, yAxis, zAxis, origin);
   }
 
   public Group createAxis(double length, double radius, String axis) {
