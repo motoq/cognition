@@ -69,6 +69,8 @@ public class TVector extends TMatrix {
    *
    * @param  vec  Values from vec will be copied to this TVector.  The
    *              number of elements must match.
+   *
+   * @throws IllegalArgumentException if dimensions do not match
    */
   public final void set(double[] vec) {
     if (vec.length != size()) {

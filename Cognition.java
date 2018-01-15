@@ -39,6 +39,7 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.Sphere;
 import javafx.scene.shape.Cylinder;
+import javafx.scene.text.Text;
 
 import cognition.math.Basis3D;
 import cognition.math.Quaternion;
@@ -65,7 +66,7 @@ public class Cognition extends Application {
   @Override
   public void start(Stage primaryStage) {
     Group sceneRoot = new Group();
-    Scene scene = new Scene(sceneRoot, sceneWidth, sceneHeight);
+    Scene scene = new Scene(sceneRoot, sceneWidth, sceneHeight, true);
     scene.setFill(Color.BLACK);
     camera = new PerspectiveCamera(true);
     camera.setNearClip(0.1);
@@ -101,8 +102,8 @@ public class Cognition extends Application {
     });
       // Track mouse draft from reference point for viewing adjustment
     scene.setOnMouseDragged(event -> {
-      angleX.set(fixedXAngle - (sceneX - event.getSceneY()));
-      angleY.set(fixedYAngle + sceneY - event.getSceneX());
+      angleY.set(fixedXAngle - (sceneX - event.getSceneY()));
+      angleX.set(fixedYAngle + sceneY - event.getSceneX());
     });
     
     
@@ -205,7 +206,23 @@ public class Cognition extends Application {
     axisEnd.setMaterial(mat);
     axisEnd.setDrawMode(DrawMode.FILL);
     axisEnd.setTranslateY(length/2.0);
-    return new Group(axisBar, axisEnd);
+
+    Matrix3X3 rot = new Matrix3X3();
+    Matrix3X3 r1 = new Matrix3X3();
+    Matrix3X3 r2 = new Matrix3X3();
+    r1.rotY(Math.PI);
+    r2.rotX(0);
+    rot.mult(r2,r1);
+    Vector3D trans = new Vector3D();
+    //trans.set(Basis3D.I, radius);
+    trans.set(Basis3D.J, length/2.0 + 4.0*radius);
+    Affine tTrans = affineJFX(rot, trans);
+    Text text = new Text(0.0, 0.0, axis + "-Axis");
+    text.setFill(Color.WHITE);
+    text.getTransforms().add(tTrans);
+
+
+    return new Group(axisBar, axisEnd, text);
   }
 
   public Affine affineJFX(Matrix3X3 rot) {

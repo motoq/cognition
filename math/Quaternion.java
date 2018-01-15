@@ -167,6 +167,9 @@ public class Quaternion {
    * ("DCM to Quaternion and Back Again", by Kurt Motekew).
    *
    * @param  dcm  Reference frame transformation matrix
+   *
+   * @throws ArithmeticException if the matrix can't be converted to a
+   *         unit quaternion.
    */
   public final void set(Matrix3X3 dcm) {
     double tmp, d4;

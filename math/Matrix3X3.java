@@ -109,16 +109,6 @@ public class Matrix3X3 extends TMatrix {
   }
 
   /**
-   * Sets this Matrix to the identity matrix.
-   */
-  public void identity() {
-    zero();
-    set(0,0, 1.0);
-    set(1,1, 1.0);
-    set(2,2, 1.0);
-  }
-
-  /**
    * Sets this Matrix to be a reference frame transformation representing
    * a rotation about the X-axis by the input angle.
    *

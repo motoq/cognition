@@ -89,6 +89,8 @@ public class TMatrix extends Tensor {
    *              It should be a block double array, not jagged.
    *              Values are copied into this matrix.  The dimensions
    *              must match.
+   *
+   * @throws IllegalArgumentException if dimensions do not match
    */
   public final void set(double[][] mtx) {
     if (mtx.length != ROWS  ||  mtx[0].length != COLS) {
@@ -109,6 +111,8 @@ public class TMatrix extends Tensor {
    *
    * @param  mtx  Values from mtx will be copied to this TMatrix.  The
    *              rows and columns must match.
+   *
+   * @throws IllegalArgumentException if dimensions do not match
    */
   public final void set(TMatrix mtx) {
     if (mtx.ROWS != ROWS  ||  mtx.COLS != COLS) {
@@ -180,9 +184,28 @@ public class TMatrix extends Tensor {
   }
 
   /**
+   * Sets this Matrix to the identity matrix.
+   *
+   * @throws UnsupportedOperationException if this is not a square matrix
+   */
+  public void identity() {
+    if (ROWS != COLS) {
+      throw new UnsupportedOperationException("TMatrix.identity:  on a" +
+                                              ROWS + "x" + COLS + " TMatrix");
+    }
+
+    zero();
+    for (int ii=0; ii<ROWS; ii++) {
+      vals[off.applyAsInt(ii, ii)] = 1.0;
+    }
+  }
+
+  /**
    * Add input matrix to this matrix
    *
    * @param  mtx  Input matrix to add.  Dimensions must match this matrix
+   *
+   * @throws IllegalArgumentException if dimensions do not match
    */
   public void plus(TMatrix mtx) {
     if (mtx.ROWS != ROWS  ||  mtx.COLS != COLS) {
@@ -201,6 +224,8 @@ public class TMatrix extends Tensor {
    * Subtract input matrix from this matrix
    *
    * @param  mtx  Input matrix to subtract.  Dimensions must match this matrix
+   *
+   * @throws IllegalArgumentException if dimensions do not match
    */
   public void minus(TMatrix mtx) {
     if (mtx.ROWS != ROWS  ||  mtx.COLS != COLS) {
@@ -221,6 +246,8 @@ public class TMatrix extends Tensor {
    *
    * @param  aMat  MxP matrix
    * @param  bMat  PxN matrix
+   *
+   * @throws IllegalArgumentException if dimensions are not compatible
    */
   public void mult(TMatrix aMat, TMatrix bMat) {
     if (aMat.ROWS != ROWS  ||  bMat.COLS != COLS  ||  aMat.COLS != bMat.ROWS) {
