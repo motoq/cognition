@@ -201,6 +201,26 @@ public class TMatrix extends Tensor {
   }
 
   /**
+   * Sets this Matrix to its transpose
+   *
+   * @throws UnsupportedOperationException if this is not a square matrix
+   */
+  public void transpose() {
+    if (ROWS != COLS) {
+      throw new UnsupportedOperationException("TMatrix.transpose:  on a" +
+                                              ROWS + "x" + COLS + " TMatrix");
+    }
+
+    for (int ii=0; ii<ROWS; ii++) {
+      for (int jj=0; jj<ii; jj++) {
+        double tmp = vals[off.applyAsInt(jj, ii)];
+        vals[off.applyAsInt(jj, ii)] = vals[off.applyAsInt(ii, jj)];
+        vals[off.applyAsInt(ii, jj)] = tmp;
+      }
+    }
+  }
+
+  /**
    * Add input matrix to this matrix
    *
    * @param  mtx  Input matrix to add.  Dimensions must match this matrix

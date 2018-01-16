@@ -97,22 +97,33 @@ public class Cognition extends Application {
     });
       // Track mouse draft from reference point for viewing adjustment
     scene.setOnMouseDragged((MouseEvent event) -> {
+        // First compute X and Y axes rotations based
+        // on mouse movement - One degree per pixel
       double newY = event.getSceneY();
       double newX = event.getSceneX();
-      double xAng = Math.toRadians((sceneY - newY)/100.0);
-      double yAng = Math.toRadians((sceneX - newX)/100.0);
+      double xAng = Math.toRadians((sceneY - newY)/1.0);
+      double yAng = Math.toRadians((sceneX - newX)/1.0);
       sceneY = newY;
       sceneX = newX;
-      
+        // Next compute X and Y rotation transformations
       Matrix3X3 rx = new Matrix3X3();
       Matrix3X3 ry = new Matrix3X3();
       Matrix3X3 dr = new Matrix3X3();
-      rx.rotX(xAng);
+      rx.rotX(-xAng);
       ry.rotY(yAng);
       dr.mult(ry, rx);
       Matrix3X3 ca = new Matrix3X3();
       ca.set(cameraAtt);
       cameraAtt.mult(dr, ca);
+        // Finally compute location based on camera attitude
+      Vector3D r_o_c_c = new Vector3D(0., 0., cameraPos.norm());
+      Vector3D r_o_c_o = new Vector3D();
+      r_o_c_o.mult(cameraAtt, r_o_c_c);
+      Vector3D r_c_o_o = new Vector3D();
+      r_c_o_o.set(r_o_c_o);
+      r_c_o_o.mult(-1.0);
+      cameraPos.set(r_c_o_o);
+        // Update cameraTransform with new position and attitude
       affineJFX(cameraAtt, cameraPos, cameraTransform);
     });
     
