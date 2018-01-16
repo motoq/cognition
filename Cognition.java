@@ -45,6 +45,7 @@ import cognition.math.Basis3D;
 import cognition.math.Quaternion;
 import cognition.math.Vector3D;
 import cognition.math.Matrix3X3;
+import javafx.scene.input.MouseEvent;
 
 
 /**
@@ -58,10 +59,10 @@ public class Cognition extends Application {
   private PerspectiveCamera camera;
   private double sceneX = 0.0;
   private double sceneY = 0.0;
-  private double fixedXAngle = 0.0;
-  private double fixedYAngle = 0.0;
-  private final DoubleProperty angleX = new SimpleDoubleProperty(0.0);
-  private final DoubleProperty angleY = new SimpleDoubleProperty(0.0);
+
+  private final Matrix3X3 cameraAtt = new Matrix3X3();
+  private final Vector3D  cameraPos = new Vector3D();
+  private final Affine cameraTransform = new Affine();
   
   @Override
   public void start(Stage primaryStage) {
@@ -71,7 +72,11 @@ public class Cognition extends Application {
     camera = new PerspectiveCamera(true);
     camera.setNearClip(0.1);
     camera.setFarClip(10.0*Math.max(sceneWidth, sceneHeight));
-    camera.setTranslateZ(-2.0*Math.max(sceneWidth, sceneHeight));
+    cameraAtt.identity();
+    cameraPos.set(Basis3D.K, -2.0*Math.max(sceneWidth, sceneHeight));
+    affineJFX(cameraAtt, cameraPos, cameraTransform);
+    camera.getTransforms().setAll(cameraTransform);
+
     scene.setCamera(camera);
 
       // Cartesian Axis
@@ -83,38 +88,38 @@ public class Cognition extends Application {
     Group sceneGroup = new Group(coordGroup);
     sceneGroup.getTransforms().add(jFX2Comp());
     
-    
     sceneRoot.getChildren().add(sceneGroup);
 
-      // Initial Mouse control will rotate the group vs. change
-      // the camera perspective.  Note the use of bindings
-    Rotate xRotate = new Rotate(0, Rotate.X_AXIS);
-    Rotate yRotate = new Rotate(0, Rotate.Y_AXIS);
-    coordGroup.getTransforms().addAll(xRotate, yRotate);
-    xRotate.angleProperty().bind(angleX);
-    yRotate.angleProperty().bind(angleY);
       // Reference point based on mouse click
     scene.setOnMousePressed(event -> {
       sceneX = event.getSceneX();
       sceneY = event.getSceneY();
-      fixedXAngle = angleX.get();
-      fixedYAngle = angleY.get();
     });
       // Track mouse draft from reference point for viewing adjustment
-    scene.setOnMouseDragged(event -> {
-      angleY.set(fixedXAngle - (sceneX - event.getSceneY()));
-      angleX.set(fixedYAngle + sceneY - event.getSceneX());
+    scene.setOnMouseDragged((MouseEvent event) -> {
+      double newY = event.getSceneY();
+      double newX = event.getSceneX();
+      double xAng = Math.toRadians((sceneY - newY)/100.0);
+      double yAng = Math.toRadians((sceneX - newX)/100.0);
+      sceneY = newY;
+      sceneX = newX;
+      
+      Matrix3X3 rx = new Matrix3X3();
+      Matrix3X3 ry = new Matrix3X3();
+      Matrix3X3 dr = new Matrix3X3();
+      rx.rotX(xAng);
+      ry.rotY(yAng);
+      dr.mult(ry, rx);
+      Matrix3X3 ca = new Matrix3X3();
+      ca.set(cameraAtt);
+      cameraAtt.mult(dr, ca);
+      affineJFX(cameraAtt, cameraPos, cameraTransform);
     });
-    
-    
-    
     
     
     primaryStage.setTitle("Axis");
     primaryStage.setScene(scene);
     primaryStage.show();
-
-
 
 
 /*
@@ -259,7 +264,20 @@ public class Cognition extends Application {
     return at;
   }
 
-
+  public void affineJFX(Matrix3X3 rot, Vector3D trans, Affine at) {
+    at.setMxx(rot.get(Basis3D.I, Basis3D.I));
+    at.setMxy(rot.get(Basis3D.I, Basis3D.J));
+    at.setMxz(rot.get(Basis3D.I, Basis3D.K));
+    at.setTx(trans.get(Basis3D.I));
+    at.setMyx(rot.get(Basis3D.J, Basis3D.I));
+    at.setMyy(rot.get(Basis3D.J, Basis3D.J));
+    at.setMyz(rot.get(Basis3D.J, Basis3D.K));
+    at.setTy(trans.get(Basis3D.J));
+    at.setMzx(rot.get(Basis3D.K, Basis3D.I));
+    at.setMzy(rot.get(Basis3D.K, Basis3D.J));
+    at.setMzz(rot.get(Basis3D.K, Basis3D.K));
+    at.setTz(trans.get(Basis3D.K));
+  }
 
   /**
    * @param args the command line arguments
