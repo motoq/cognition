@@ -22,18 +22,16 @@
 package cognition;
 
 import javafx.application.Application;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.stage.Stage;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.input.MouseEvent;
 //import javafx.scene.control.Button;
 //import javafx.scene.layout.StackPane;
 //import javafx.event.ActionEvent;
 //import javafx.event.EventHandler;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.transform.Affine;
-import javafx.scene.transform.Rotate;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.DrawMode;
@@ -45,8 +43,7 @@ import cognition.math.Basis3D;
 import cognition.math.Quaternion;
 import cognition.math.Vector3D;
 import cognition.math.Matrix3X3;
-import javafx.scene.input.MouseEvent;
-
+import cognition.math.Angles;
 
 /**
  * Currently just a test ground for 3D JavaFX
@@ -56,6 +53,7 @@ import javafx.scene.input.MouseEvent;
 public class Cognition extends Application {
   private final double sceneWidth = 800;
   private final double sceneHeight = 400;
+  private final double maxDim = Math.max(sceneWidth, sceneHeight);
   private PerspectiveCamera camera;
   private double sceneX = 0.0;
   private double sceneY = 0.0;
@@ -71,9 +69,9 @@ public class Cognition extends Application {
     scene.setFill(Color.BLACK);
     camera = new PerspectiveCamera(true);
     camera.setNearClip(0.1);
-    camera.setFarClip(10.0*Math.max(sceneWidth, sceneHeight));
+    camera.setFarClip(10.0*maxDim);
     cameraAtt.identity();
-    cameraPos.set(Basis3D.K, -2.0*Math.max(sceneWidth, sceneHeight));
+    cameraPos.set(Basis3D.K, -2.0*maxDim);
     affineJFX(cameraAtt, cameraPos, cameraTransform);
     camera.getTransforms().setAll(cameraTransform);
 
@@ -81,7 +79,7 @@ public class Cognition extends Application {
 
       // Cartesian Axis
     final double axisLength = 0.95*Math.min(sceneWidth, sceneHeight);
-    final double axisRadius = axisLength/100.0;
+    final double axisRadius = axisLength/200.0;
     Group coordGroup = createAxes(axisLength, axisRadius);
 
       // Master Group orients everything with Z up
@@ -95,36 +93,58 @@ public class Cognition extends Application {
       sceneX = event.getSceneX();
       sceneY = event.getSceneY();
     });
-      // Track mouse draft from reference point for viewing adjustment
+      // Track mouse drag from reference point for viewing adjustment
+      // The shift button increases the rate relative to mouse movement
     scene.setOnMouseDragged((MouseEvent event) -> {
-        // First compute X and Y axes rotations based
-        // on mouse movement - One degree per pixel
-      double newY = event.getSceneY();
-      double newX = event.getSceneX();
-      double xAng = Math.toRadians((sceneY - newY)/1.0);
-      double yAng = Math.toRadians((sceneX - newX)/1.0);
-      sceneY = newY;
-      sceneX = newX;
-        // Next compute X and Y rotation transformations
-      Matrix3X3 rx = new Matrix3X3();
-      Matrix3X3 ry = new Matrix3X3();
-      Matrix3X3 dr = new Matrix3X3();
-      rx.rotX(-xAng);
-      ry.rotY(yAng);
-      dr.mult(ry, rx);
-      Matrix3X3 ca = new Matrix3X3();
-      ca.set(cameraAtt);
-      cameraAtt.mult(dr, ca);
-        // Finally compute location based on camera attitude
-      Vector3D r_o_c_c = new Vector3D(0., 0., cameraPos.norm());
-      Vector3D r_o_c_o = new Vector3D();
-      r_o_c_o.mult(cameraAtt, r_o_c_c);
-      Vector3D r_c_o_o = new Vector3D();
-      r_c_o_o.set(r_o_c_o);
-      r_c_o_o.mult(-1.0);
-      cameraPos.set(r_c_o_o);
-        // Update cameraTransform with new position and attitude
-      affineJFX(cameraAtt, cameraPos, cameraTransform);
+        // If the right mouse button is pressed, we are zooming
+        // Otherwise, we are strafing the camera position
+      if (event.isSecondaryButtonDown()) {
+        double smod = 1.0;
+        if (event.isShiftDown()) {
+          smod = 3.0;
+        }
+          // Compute camera offset from origin adjustment as a
+          // scale factor based on the drag distance and the
+          // maximum scene dimension
+        double newY = event.getSceneY();
+        double scale = 1.0 + smod*(sceneY - newY)/maxDim;
+        cameraPos.mult(scale);
+        sceneY = newY;
+        affineJFX(cameraAtt, cameraPos, cameraTransform);
+      } else {
+          // First compute X and Y axes rotations based on mouse
+          // movement - Tenth of a degree rotation per pixel
+        double smod = 0.1;
+        if (event.isShiftDown()) {
+          smod = 0.3;
+        }
+        double newY = event.getSceneY();
+        double newX = event.getSceneX();
+        double xAng = Math.toRadians(smod*(sceneY - newY));
+        double yAng = Math.toRadians(smod*(sceneX - newX));
+        sceneY = newY;
+        sceneX = newX;
+          // Next compute X and Y rotation transformations
+        Matrix3X3 rx = new Matrix3X3();
+        Matrix3X3 ry = new Matrix3X3();
+        Matrix3X3 dr = new Matrix3X3();
+        rx.rotX(-xAng);
+        ry.rotY(yAng);
+        dr.mult(ry, rx);
+        Matrix3X3 ca = new Matrix3X3();
+        ca.set(cameraAtt);
+        cameraAtt.mult(dr, ca);
+          // Finally compute location based on camera attitude
+        Vector3D r_o_c_c = new Vector3D(0., 0., cameraPos.norm());
+        Vector3D r_o_c_o = new Vector3D();
+        r_o_c_o.mult(cameraAtt, r_o_c_c);
+        Vector3D r_c_o_o = new Vector3D();
+        r_c_o_o.set(r_o_c_o);
+        r_c_o_o.mult(-1.0);
+        cameraPos.set(r_c_o_o);
+          // Update cameraTransform with new position and attitude
+        affineJFX(cameraAtt, cameraPos, cameraTransform);
+      }
     });
     
     
@@ -155,8 +175,8 @@ public class Cognition extends Application {
     Quaternion q1 = new Quaternion();
     Quaternion q2 = new Quaternion();
   
-    q1.set(Math.PI/2.0, Basis3D.I);
-    q2.set(-Math.PI/2.0, Basis3D.K);
+    q1.set(Angles.PIO2, Basis3D.I);
+    q2.set(-Angles.PIO2, Basis3D.K);
     q.mult(q1, q2);    
     q.conj();
     Matrix3X3 rot = new Matrix3X3(q);
@@ -170,7 +190,7 @@ public class Cognition extends Application {
       // a reference frame transformation
     Group xAxis = createAxis(length, radius, "X");
     Matrix3X3 rot = new Matrix3X3();
-    rot.rotZ(Math.PI/2.0);
+    rot.rotZ(Angles.PIO2);
     Vector3D trans = new Vector3D();
     trans.set(Basis3D.I, delta);
     Affine xTrans = affineJFX(rot, trans);
@@ -184,7 +204,7 @@ public class Cognition extends Application {
     yAxis.getTransforms().add(yTrans);
       //
     Group zAxis = createAxis(length, radius, "Z");
-    rot.rotX(-Math.PI/2.0);
+    rot.rotX(-Angles.PIO2);
     trans.zero();
     trans.set(Basis3D.K, delta);
     Affine zTrans = affineJFX(rot, trans);
