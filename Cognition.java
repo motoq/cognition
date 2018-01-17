@@ -44,6 +44,7 @@ import cognition.math.Quaternion;
 import cognition.math.Vector3D;
 import cognition.math.Matrix3X3;
 import cognition.math.Angles;
+import cognition.jfx.CognAffine;
 
 /**
  * Currently just a test ground for 3D JavaFX
@@ -60,7 +61,7 @@ public class Cognition extends Application {
 
   private final Matrix3X3 cameraAtt = new Matrix3X3();
   private final Vector3D  cameraPos = new Vector3D();
-  private final Affine cameraTransform = new Affine();
+  private final CognAffine cameraTransform = new CognAffine();
   
   @Override
   public void start(Stage primaryStage) {
@@ -72,7 +73,7 @@ public class Cognition extends Application {
     camera.setFarClip(10.0*maxDim);
     cameraAtt.identity();
     cameraPos.set(Basis3D.K, -2.0*maxDim);
-    affineJFX(cameraAtt, cameraPos, cameraTransform);
+    cameraTransform.set(cameraAtt, cameraPos);
     camera.getTransforms().setAll(cameraTransform);
 
     scene.setCamera(camera);
@@ -110,7 +111,7 @@ public class Cognition extends Application {
         double scale = 1.0 + smod*(sceneY - newY)/maxDim;
         cameraPos.mult(scale);
         sceneY = newY;
-        affineJFX(cameraAtt, cameraPos, cameraTransform);
+        cameraTransform.set(cameraAtt, cameraPos);
       } else {
           // First compute X and Y axes rotations based on mouse
           // movement - Tenth of a degree rotation per pixel
@@ -143,7 +144,7 @@ public class Cognition extends Application {
         r_c_o_o.mult(-1.0);
         cameraPos.set(r_c_o_o);
           // Update cameraTransform with new position and attitude
-        affineJFX(cameraAtt, cameraPos, cameraTransform);
+        cameraTransform.set(cameraAtt, cameraPos);
       }
     });
     
@@ -181,7 +182,7 @@ public class Cognition extends Application {
     q.conj();
     Matrix3X3 rot = new Matrix3X3(q);
     
-    return affineJFX(rot);
+    return new CognAffine(rot);
   }
 
   public Group createAxes(double length, double radius) {
@@ -193,21 +194,21 @@ public class Cognition extends Application {
     rot.rotZ(Angles.PIO2);
     Vector3D trans = new Vector3D();
     trans.set(Basis3D.I, delta);
-    Affine xTrans = affineJFX(rot, trans);
+    Affine xTrans = new CognAffine(rot, trans);
     xAxis.getTransforms().add(xTrans);
       //
     Group yAxis = createAxis(length, radius, "Y");
     rot.identity();
     trans.zero();
     trans.set(Basis3D.J, delta);
-    Affine yTrans = affineJFX(rot, trans);
+    Affine yTrans = new CognAffine(rot, trans);
     yAxis.getTransforms().add(yTrans);
       //
     Group zAxis = createAxis(length, radius, "Z");
     rot.rotX(-Angles.PIO2);
     trans.zero();
     trans.set(Basis3D.K, delta);
-    Affine zTrans = affineJFX(rot, trans);
+    Affine zTrans = new CognAffine(rot, trans);
     zAxis.getTransforms().add(zTrans);
       //
     Sphere origin = new Sphere(1.5*radius);
@@ -252,62 +253,13 @@ public class Cognition extends Application {
     Vector3D trans = new Vector3D();
     //trans.set(Basis3D.I, radius);
     trans.set(Basis3D.J, length/2.0 + 4.0*radius);
-    Affine tTrans = affineJFX(rot, trans);
+    Affine tTrans = new CognAffine(rot, trans);
     Text text = new Text(0.0, 0.0, axis + "-Axis");
     text.setFill(Color.WHITE);
     text.getTransforms().add(tTrans);
 
 
     return new Group(axisBar, axisEnd, text);
-  }
-
-  public Affine affineJFX(Matrix3X3 rot) {
-    Affine at = new Affine(rot.get(Basis3D.I, Basis3D.I),
-                           rot.get(Basis3D.I, Basis3D.J),
-                           rot.get(Basis3D.I, Basis3D.K),
-                           0.0,
-                           rot.get(Basis3D.J, Basis3D.I),
-                           rot.get(Basis3D.J, Basis3D.J),
-                           rot.get(Basis3D.J, Basis3D.K),
-                           0.0,
-                           rot.get(Basis3D.K, Basis3D.I),
-                           rot.get(Basis3D.K, Basis3D.J),
-                           rot.get(Basis3D.K, Basis3D.K),
-                           0.0
-    );
-    return at;
-  }
-
-  public Affine affineJFX(Matrix3X3 rot, Vector3D trans) {
-    Affine at = new Affine(rot.get(Basis3D.I, Basis3D.I),
-                           rot.get(Basis3D.I, Basis3D.J),
-                           rot.get(Basis3D.I, Basis3D.K),
-                           trans.get(Basis3D.I),
-                           rot.get(Basis3D.J, Basis3D.I),
-                           rot.get(Basis3D.J, Basis3D.J),
-                           rot.get(Basis3D.J, Basis3D.K),
-                           trans.get(Basis3D.J),
-                           rot.get(Basis3D.K, Basis3D.I),
-                           rot.get(Basis3D.K, Basis3D.J),
-                           rot.get(Basis3D.K, Basis3D.K),
-                           trans.get(Basis3D.K)
-    );
-    return at;
-  }
-
-  public void affineJFX(Matrix3X3 rot, Vector3D trans, Affine at) {
-    at.setMxx(rot.get(Basis3D.I, Basis3D.I));
-    at.setMxy(rot.get(Basis3D.I, Basis3D.J));
-    at.setMxz(rot.get(Basis3D.I, Basis3D.K));
-    at.setTx(trans.get(Basis3D.I));
-    at.setMyx(rot.get(Basis3D.J, Basis3D.I));
-    at.setMyy(rot.get(Basis3D.J, Basis3D.J));
-    at.setMyz(rot.get(Basis3D.J, Basis3D.K));
-    at.setTy(trans.get(Basis3D.J));
-    at.setMzx(rot.get(Basis3D.K, Basis3D.I));
-    at.setMzy(rot.get(Basis3D.K, Basis3D.J));
-    at.setMzz(rot.get(Basis3D.K, Basis3D.K));
-    at.setTz(trans.get(Basis3D.K));
   }
 
   /**
