@@ -58,7 +58,7 @@ public class CognAffine extends Affine {
    *              and no translation.
    */
   public CognAffine(Matrix3X3 rot) {
-    set(rot);
+    setAll(rot);
   }
 
   /**
@@ -66,7 +66,7 @@ public class CognAffine extends Affine {
    *                reference frame transformation.
    */
   public CognAffine(Vector3D trans) {
-    set(trans);
+    setAll(trans);
   }
 
   /**
@@ -74,75 +74,56 @@ public class CognAffine extends Affine {
    * @param  trans  Set the translation component
    */
   public final void set(Matrix3X3 rot, Vector3D trans) {
-    setMxx(rot.get(Basis3D.I, Basis3D.I));                      
-    setMxy(rot.get(Basis3D.I, Basis3D.J));
-    setMxz(rot.get(Basis3D.I, Basis3D.K));
-    setTx(trans.get(Basis3D.I));          
-    setMyx(rot.get(Basis3D.J, Basis3D.I));
-    setMyy(rot.get(Basis3D.J, Basis3D.J));
-    setMyz(rot.get(Basis3D.J, Basis3D.K));
-    setTy(trans.get(Basis3D.J));
-    setMzx(rot.get(Basis3D.K, Basis3D.I));
-    setMzy(rot.get(Basis3D.K, Basis3D.J));
-    setMzz(rot.get(Basis3D.K, Basis3D.K));
-    setTz(trans.get(Basis3D.K));
+    setToTransform(rot.get(Basis3D.I, Basis3D.I),
+                   rot.get(Basis3D.I, Basis3D.J),
+                   rot.get(Basis3D.I, Basis3D.K),
+                   trans.get(Basis3D.I),
+                   rot.get(Basis3D.J, Basis3D.I),
+                   rot.get(Basis3D.J, Basis3D.J),
+                   rot.get(Basis3D.J, Basis3D.K),
+                   trans.get(Basis3D.J),
+                   rot.get(Basis3D.K, Basis3D.I),
+                   rot.get(Basis3D.K, Basis3D.J),
+                   rot.get(Basis3D.K, Basis3D.K),
+                   trans.get(Basis3D.K));
   }
 
   /**
    * @param  rot  Set the reference frame transformation and reset
    *              the translation to zero.
    */
-  public final void set(Matrix3X3 rot) {
-    setMxx(rot.get(Basis3D.I, Basis3D.I));                      
-    setMxy(rot.get(Basis3D.I, Basis3D.J));
-    setMxz(rot.get(Basis3D.I, Basis3D.K));
-    setTx(0.0);          
-    setMyx(rot.get(Basis3D.J, Basis3D.I));
-    setMyy(rot.get(Basis3D.J, Basis3D.J));
-    setMyz(rot.get(Basis3D.J, Basis3D.K));
-    setTy(0.0);
-    setMzx(rot.get(Basis3D.K, Basis3D.I));
-    setMzy(rot.get(Basis3D.K, Basis3D.J));
-    setMzz(rot.get(Basis3D.K, Basis3D.K));
-    setTz(0.0);
+  public final void setAll(Matrix3X3 rot) {
+    setToTransform(rot.get(Basis3D.I, Basis3D.I),
+                   rot.get(Basis3D.I, Basis3D.J),
+                   rot.get(Basis3D.I, Basis3D.K),
+                   0.0,
+                   rot.get(Basis3D.J, Basis3D.I),
+                   rot.get(Basis3D.J, Basis3D.J),
+                   rot.get(Basis3D.J, Basis3D.K),
+                   0.0,
+                   rot.get(Basis3D.K, Basis3D.I),
+                   rot.get(Basis3D.K, Basis3D.J),
+                   rot.get(Basis3D.K, Basis3D.K),
+                   0.0);
   }
 
   /**
    * @param  trans  Set translation and reset the reference frame 
    *                transformation to the identity matrix.
    */
-  public final void set(Vector3D trans) {
-    setMxx(1.0);                      
-    setMxy(0.0);
-    setMxz(0.0);
-    setTx(trans.get(Basis3D.I));          
-    setMyx(0.0);
-    setMyy(1.0);
-    setMyz(0.0);
-    setTy(trans.get(Basis3D.J));
-    setMzx(0.0);
-    setMzy(0.0);
-    setMzz(1.0);
-    setTz(trans.get(Basis3D.K));
+  public final void setAll(Vector3D trans) {
+    setToTransform(1.0, 0.0, 0.0, trans.get(Basis3D.I),
+                   0.0, 1.0, 0.0, trans.get(Basis3D.J),
+                   0.0, 0.0, 1.0, trans.get(Basis3D.K));
   }
 
   /**
-   * Set to the do nothing transformation - identity regerence frame
+   * Set to the do nothing transformation - identity reference frame
    * transformation and zero translation.
    */
   public void reset() {
-    setMxx(1.0);                      
-    setMxy(0.0);
-    setMxz(0.0);
-    setTx(0.0);          
-    setMyx(0.0);
-    setMyy(1.0);
-    setMyz(0.0);
-    setTy(0.0);
-    setMzx(0.0);
-    setMzy(0.0);
-    setMzz(1.0);
-    setTz(0.0);
+    setToTransform(1.0, 0.0, 0.0, 0.0,
+                   0.0, 1.0, 0.0, 0.0,
+                   0.0, 0.0, 1.0, 0.0);
   }
-
 }

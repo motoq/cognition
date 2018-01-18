@@ -23,6 +23,7 @@ package cognition;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
+import javafx.stage.Screen;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.MouseEvent;
@@ -38,6 +39,7 @@ import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.Sphere;
 import javafx.scene.shape.Cylinder;
 import javafx.scene.text.Text;
+import javafx.geometry.Rectangle2D;
 
 import cognition.math.Basis3D;
 import cognition.math.Quaternion;
@@ -52,9 +54,6 @@ import cognition.jfx.CognAffine;
  * @author Kurt Motekew
  */
 public class Cognition extends Application {
-  private final double sceneWidth = 800;
-  private final double sceneHeight = 400;
-  private final double maxDim = Math.max(sceneWidth, sceneHeight);
   private PerspectiveCamera camera;
   private double sceneX = 0.0;
   private double sceneY = 0.0;
@@ -62,9 +61,19 @@ public class Cognition extends Application {
   private final Matrix3X3 cameraAtt = new Matrix3X3();
   private final Vector3D  cameraPos = new Vector3D();
   private final CognAffine cameraTransform = new CognAffine();
+
+  private final Matrix3X3 sparkyAtt = new Matrix3X3();
+  private final Vector3D  sparkyPos = new Vector3D();
+  private final CognAffine sparkyTransform = new CognAffine();
   
   @Override
   public void start(Stage primaryStage) {
+    final double fraction = 0.75;
+    Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+    final double sceneWidth = fraction*screenBounds.getWidth();
+    final double sceneHeight = fraction*screenBounds.getHeight();
+    final double maxDim = Math.max(sceneWidth, sceneHeight);
+    final double minDim = Math.min(sceneWidth, sceneHeight);
     Group sceneRoot = new Group();
     Scene scene = new Scene(sceneRoot, sceneWidth, sceneHeight, true);
     scene.setFill(Color.BLACK);
@@ -79,12 +88,20 @@ public class Cognition extends Application {
     scene.setCamera(camera);
 
       // Cartesian Axis
-    final double axisLength = 0.95*Math.min(sceneWidth, sceneHeight);
+    final double axisLength = fraction*minDim;
     final double axisRadius = axisLength/200.0;
     Group coordGroup = createAxes(axisLength, axisRadius);
+    
+    Group sparky = createStickSparky(axisLength/10);
+    sparkyAtt.identity();
+    sparkyPos.set(Basis3D.I, 0.5*minDim);
+    sparkyPos.set(Basis3D.J, 0.5*minDim);
+    sparkyPos.set(Basis3D.K, 0.25*minDim);
+    sparkyTransform.set(sparkyAtt, sparkyPos);
+    sparky.getTransforms().add(sparkyTransform);
 
       // Master Group orients everything with Z up
-    Group sceneGroup = new Group(coordGroup);
+    Group sceneGroup = new Group(coordGroup, sparky);
     sceneGroup.getTransforms().add(jFX2Comp());
     
     sceneRoot.getChildren().add(sceneGroup);
@@ -260,6 +277,29 @@ public class Cognition extends Application {
 
 
     return new Group(axisBar, axisEnd, text);
+  }
+
+  public Group createStickSparky(double length) {
+    Matrix3X3 rot = new Matrix3X3();
+    Vector3D trans = new Vector3D();
+
+    double radius = 0.1*length;
+    Cylinder fuselage = new Cylinder(radius, length);
+    rot.rotZ(-Angles.PIO2);
+    trans.set(Basis3D.I, 0.25*length);
+    Affine state = new CognAffine(rot, trans);
+    fuselage.getTransforms().add(state);
+
+    Cylinder horizStab = new Cylinder(radius, 0.5*length);
+
+    Cylinder vertStab = new Cylinder(radius, 0.25*length);
+    rot.rotX(Angles.PIO2);
+    trans.zero();
+    trans.set(Basis3D.K, 0.5*0.25*length);
+    state = new CognAffine(rot, trans);
+    vertStab.getTransforms().add(state);
+
+    return new Group(fuselage, horizStab, vertStab);
   }
 
   /**
