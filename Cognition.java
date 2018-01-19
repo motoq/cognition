@@ -27,6 +27,7 @@ import javafx.stage.Screen;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.KeyCode;
 //import javafx.scene.control.Button;
 //import javafx.scene.layout.StackPane;
 //import javafx.event.ActionEvent;
@@ -105,6 +106,27 @@ public class Cognition extends Application {
     sceneGroup.getTransforms().add(jFX2Comp());
     
     sceneRoot.getChildren().add(sceneGroup);
+
+    scene.setOnKeyPressed(event -> {
+      KeyCode key = event.getCode();
+      Matrix3X3 drot = null;
+      switch(key) {
+        case S:
+        case F:
+        case E:
+        case D:
+        case A:
+        case G:
+          drot = steer(key);
+          break;
+      }
+      if (drot != null) {
+        Matrix3X3 rot = new Matrix3X3();
+        rot.mult(drot, sparkyAtt);
+        sparkyAtt.set(rot);
+        sparkyTransform.set(sparkyAtt, sparkyPos);
+      }
+    });
 
       // Reference point based on mouse click
     scene.setOnMousePressed(event -> {
@@ -309,6 +331,30 @@ public class Cognition extends Application {
     launch(args);
   }
 
-
+  public Matrix3X3 steer(KeyCode key) {
+    Matrix3X3 drot = new Matrix3X3();
+    drot.identity();
+    switch(key) {
+      case S:
+        drot.rotX(Math.toRadians(5.0));
+        break;
+      case F:
+        drot.rotX(Math.toRadians(-5.0));
+        break;
+      case E:
+        drot.rotY(Math.toRadians(-5.0));         // Nose down
+        break;
+      case D:
+        drot.rotY(Math.toRadians(5.0));
+        break;
+      case A:
+        drot.rotZ(Math.toRadians(-5.0));
+        break;
+      case G:
+        drot.rotZ(Math.toRadians(5.0));
+        break;
+    }
+    return drot;
+  }
   
 }
