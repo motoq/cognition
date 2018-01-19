@@ -31,14 +31,23 @@ import cognition.math.Matrix3X3;
  * Specialization of the JFX Affine class allowing for construction
  * and modification via the cognition.math library.
  *
+ * Rotation is applied first, followed by translation
+ * 
+ * Note that when applied to a JavaFX Node as a Transform, the input direction
+ * cosine matrices are rotation (direct, or active) transformations, rotating
+ * vector locations instead of transforming vector components to another
+ * reference frame.  Therefore, if the attitude of a Node within the display
+ * reference frame is computed, take the transpose before passing to this
+ * class.
+ *
  * @author Kurt Motekew
  * @since 20180117
  */
 public class CognAffine extends Affine {
 
   /**
-   * Create the do nothing affine transformation - translation is
-   * zero and rotation is the identity.
+   * Create the do nothing affine transformation - no translation and
+   * zero rotation.
    */
   public CognAffine() {
   }
@@ -46,7 +55,7 @@ public class CognAffine extends Affine {
   /**
    * Instantiate with input transformations
    *
-   * @param  rot    Reference frame transformation
+   * @param  rot    Axis rotation (direct transformation)
    * @param  trans  Translation
    */
   public CognAffine(Matrix3X3 rot, Vector3D trans) {
@@ -54,7 +63,7 @@ public class CognAffine extends Affine {
   }
 
   /**
-   * @param  rot  Instantiate with this reference frame transformation
+   * @param  rot  Instantiate with input axis rotation (direct transformation)
    *              and no translation.
    */
   public CognAffine(Matrix3X3 rot) {
@@ -62,16 +71,17 @@ public class CognAffine extends Affine {
   }
 
   /**
-   * @param  trans  Instantiate with this translation and the identity
-   *                reference frame transformation.
+   * @param  trans  Instantiate with this translation and no rotation.
    */
   public CognAffine(Vector3D trans) {
     setAll(trans);
   }
 
   /**
-   * @param  rot    Set the reference frame transformation
-   * @param  trans  Set the translation component
+   * Set the rotation and translation
+   *
+   * @param  rot    Axis rotation (direct transformation)
+   * @param  trans  Translation
    */
   public final void set(Matrix3X3 rot, Vector3D trans) {
     setToTransform(rot.get(Basis3D.I, Basis3D.I),
@@ -89,8 +99,9 @@ public class CognAffine extends Affine {
   }
 
   /**
-   * @param  rot  Set the reference frame transformation and reset
-   *              the translation to zero.
+   * Set the rotation and zero translation
+   *
+   * @param  rot  Axis rotation (direct transformation)
    */
   public final void setAll(Matrix3X3 rot) {
     setToTransform(rot.get(Basis3D.I, Basis3D.I),
@@ -108,8 +119,9 @@ public class CognAffine extends Affine {
   }
 
   /**
-   * @param  trans  Set translation and reset the reference frame 
-   *                transformation to the identity matrix.
+   * Set translation and zero rotation.
+   *
+   * @param  trans  Translation.
    */
   public final void setAll(Vector3D trans) {
     setToTransform(1.0, 0.0, 0.0, trans.get(Basis3D.I),
@@ -118,10 +130,10 @@ public class CognAffine extends Affine {
   }
 
   /**
-   * Set to the do nothing transformation - identity reference frame
-   * transformation and zero translation.
+   * Set to the do nothing transformation - identity rotation and
+   * zero translation.
    */
-  public void reset() {
+  public final void reset() {
     setToTransform(1.0, 0.0, 0.0, 0.0,
                    0.0, 1.0, 0.0, 0.0,
                    0.0, 0.0, 1.0, 0.0);

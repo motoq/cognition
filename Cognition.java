@@ -92,9 +92,15 @@ public class Cognition extends Application {
     final double axisLength = fraction*minDim;
     final double axisRadius = axisLength/200.0;
     Group coordGroup = createAxes(axisLength, axisRadius);
-    
+
     Group sparky = createStickSparky(axisLength/10);
-    sparkyAtt.identity();
+    Matrix3X3 yaw = new Matrix3X3();
+    Matrix3X3 pitch = new Matrix3X3();
+    yaw.rotZ(Math.toRadians(45));
+    pitch.rotY(Math.toRadians(-45));
+    sparkyAtt.mult(pitch,yaw);
+      // Reference frame transformation to rotation
+    sparkyAtt.transpose();
     sparkyPos.set(Basis3D.I, 0.5*minDim);
     sparkyPos.set(Basis3D.J, 0.5*minDim);
     sparkyPos.set(Basis3D.K, 0.25*minDim);
