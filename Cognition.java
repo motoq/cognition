@@ -41,6 +41,9 @@ import javafx.scene.shape.Sphere;
 import javafx.scene.shape.Cylinder;
 import javafx.scene.text.Text;
 import javafx.geometry.Rectangle2D;
+import javafx.util.Duration;
+import javafx.animation.Timeline;
+import javafx.animation.KeyFrame;
 
 import cognition.math.Basis3D;
 import cognition.math.Quaternion;
@@ -66,6 +69,8 @@ public class Cognition extends Application {
   private final Matrix3X3 sparkyAtt = new Matrix3X3();
   private final Vector3D  sparkyPos = new Vector3D();
   private final CognAffine sparkyTransform = new CognAffine();
+
+  private Timeline simulationTimeline;
   
   @Override
   public void start(Stage primaryStage) {
@@ -117,6 +122,9 @@ public class Cognition extends Application {
       KeyCode key = event.getCode();
       Matrix3X3 drot = null;
       switch(key) {
+        case P:
+          simulationTimeline.playFromStart();
+          break;
         case S:
         case F:
         case E:
@@ -192,7 +200,13 @@ public class Cognition extends Application {
         cameraTransform.set(cameraAtt, cameraPos);
       }
     });
-    
+
+    simulationTimeline = new Timeline(
+      new KeyFrame(new Duration(1000.0), t-> {
+        System.out.println(t);
+      })
+    );
+    simulationTimeline.setCycleCount(Timeline.INDEFINITE);
     
     primaryStage.setTitle("Axis");
     primaryStage.setScene(scene);
