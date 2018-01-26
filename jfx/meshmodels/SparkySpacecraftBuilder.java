@@ -1,0 +1,89 @@
+/*
+ c  SparkySpacecraftBuilder.java
+ c
+ c  Copyright (C) 2018 Kurt Motekew
+ c
+ c  This library is free software; you can redistribute it and/or
+ c  modify it under the terms of the GNU Lesser General Public
+ c  License as published by the Free Software Foundation; either
+ c  version 2.1 of the License, or (at your option) any later version.
+ c
+ c  This library is distributed in the hope that it will be useful,
+ c  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ c  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ c  Lesser General Public License for more details.
+ c
+ c  You should have received a copy of the GNU Lesser General Public
+ c  License along with this library; if not, write to the Free Software
+ c  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ c  02110-1301 USA
+ */
+
+package cognition.jfx.meshmodels;
+
+import javafx.scene.Group;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.transform.Affine;
+import javafx.scene.shape.Cylinder;
+
+import cognition.math.Basis3D;
+import cognition.math.Matrix3X3;
+import cognition.math.Vector3D;
+import cognition.math.Angles;   
+import cognition.jfx.CognAffine;
+
+import java.io.IOException;
+
+public class SparkySpacecraftBuilder {
+  private final FXMLLoader sparkyLoader;
+  private final Affine att0;
+  private final String sparkyFilename = "sparky.fxml";
+
+  public SparkySpacecraftBuilder() {
+    sparkyLoader = new FXMLLoader(getClass().getResource(sparkyFilename));
+    Matrix3X3 roll = new Matrix3X3();
+    Matrix3X3 yaw = new Matrix3X3();
+    Matrix3X3 rot = new Matrix3X3();
+    roll.rotX(Angles.PIO2);
+    yaw.rotZ(Angles.PIO2);
+    rot.mult(roll, yaw);
+    rot.transpose();
+    att0 = new CognAffine(rot);
+  }
+
+  public Group instantiate() {
+    Group sparky;
+    try {
+      sparky = sparkyLoader.load();
+      sparky.getTransforms().add(att0);
+    } catch (IOException | IllegalStateException ex) {
+      System.err.println("Can't find " + sparkyFilename + ":  " + ex);
+      sparky = createStickSparky(100.);
+    }
+    return new Group(sparky);
+  }
+
+  private Group createStickSparky(double length) {
+    Matrix3X3 rot = new Matrix3X3();
+    Vector3D trans = new Vector3D();
+
+    double radius = 0.1*length;
+    Cylinder fuselage = new Cylinder(radius, length);
+    rot.rotZ(-Angles.PIO2);
+    trans.set(Basis3D.I, 0.25*length);
+    Affine state = new CognAffine(rot, trans);
+    fuselage.getTransforms().add(state);
+
+    Cylinder horizStab = new Cylinder(radius, 0.5*length);
+
+    Cylinder vertStab = new Cylinder(radius, 0.25*length);
+    rot.rotX(Angles.PIO2);
+    trans.zero();
+    trans.set(Basis3D.K, 0.5*0.25*length);
+    state = new CognAffine(rot, trans);   
+    vertStab.getTransforms().add(state);
+
+    return new Group(fuselage, horizStab, vertStab);
+  }
+
+}

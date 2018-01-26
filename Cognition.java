@@ -51,6 +51,7 @@ import cognition.math.Vector3D;
 import cognition.math.Matrix3X3;
 import cognition.math.Angles;
 import cognition.jfx.CognAffine;
+import cognition.jfx.meshmodels.SparkySpacecraftBuilder;
 
 /**
  * Currently just a test ground for 3D JavaFX
@@ -71,6 +72,9 @@ public class Cognition extends Application {
   private final CognAffine sparkyTransform = new CognAffine();
 
   private Timeline simulationTimeline;
+  private final double dtmills = 100.0;
+  private long cycles = 0L;
+  private boolean working = false;
   
   @Override
   public void start(Stage primaryStage) {
@@ -98,7 +102,9 @@ public class Cognition extends Application {
     final double axisRadius = axisLength/200.0;
     Group coordGroup = createAxes(axisLength, axisRadius);
 
-    Group sparky = createStickSparky(axisLength/10);
+    //Group sparky = createStickSparky(axisLength/10);
+    SparkySpacecraftBuilder spb = new SparkySpacecraftBuilder();
+    Group sparky = spb.instantiate();
     Matrix3X3 yaw = new Matrix3X3();
     Matrix3X3 pitch = new Matrix3X3();
     yaw.rotZ(Math.toRadians(45));
@@ -111,9 +117,13 @@ public class Cognition extends Application {
     sparkyPos.set(Basis3D.K, 0.25*minDim);
     sparkyTransform.set(sparkyAtt, sparkyPos);
     sparky.getTransforms().add(sparkyTransform);
+    
+    
+
+    Group sceneGroup;
+    sceneGroup = new Group(coordGroup, sparky);
 
       // Master Group orients everything with Z up
-    Group sceneGroup = new Group(coordGroup, sparky);
     sceneGroup.getTransforms().add(jFX2Comp());
     
     sceneRoot.getChildren().add(sceneGroup);
@@ -202,8 +212,25 @@ public class Cognition extends Application {
     });
 
     simulationTimeline = new Timeline(
-      new KeyFrame(new Duration(1000.0), t-> {
-        System.out.println(t);
+      new KeyFrame(new Duration(dtmills), t-> {
+        cycles++;
+        if (working) {
+          System.out.println("Still Working");
+        } else {
+          working = true;
+          System.out.println("Time:  " + cycles*dtmills/1000.0);
+          for (int ii=0; ii<10000; ii++) {
+            Matrix3X3 r1 = new Matrix3X3();
+            Matrix3X3 r2 = new Matrix3X3();
+            Matrix3X3 r = new Matrix3X3();
+            r1.identity();
+            r2.identity();
+            r1.mult(ii);
+            r2.mult(1.0/ii);
+            r.mult(r1, r2);
+          }
+          working = false;
+        }
       })
     );
     simulationTimeline.setCycleCount(Timeline.INDEFINITE);
