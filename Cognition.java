@@ -112,9 +112,9 @@ public class Cognition extends Application {
     sparkyAtt.mult(pitch,yaw);
       // Reference frame transformation to rotation
     sparkyAtt.transpose();
-    sparkyPos.set(Basis3D.I, 0.5*minDim);
-    sparkyPos.set(Basis3D.J, 0.5*minDim);
-    sparkyPos.set(Basis3D.K, 0.25*minDim);
+    sparkyPos.set(Basis3D.I, 0.1*minDim);
+    sparkyPos.set(Basis3D.J, 0.1*minDim);
+    sparkyPos.set(Basis3D.K, 0.05*minDim);
     sparkyTransform.set(sparkyAtt, sparkyPos);
     sparky.getTransforms().add(sparkyTransform);
     
@@ -218,17 +218,9 @@ public class Cognition extends Application {
           System.out.println("Still Working");
         } else {
           working = true;
+          sparkyPos.mult(1.01);
+          sparkyTransform.set(sparkyAtt, sparkyPos);
           System.out.println("Time:  " + cycles*dtmills/1000.0);
-          for (int ii=0; ii<10000; ii++) {
-            Matrix3X3 r1 = new Matrix3X3();
-            Matrix3X3 r2 = new Matrix3X3();
-            Matrix3X3 r = new Matrix3X3();
-            r1.identity();
-            r2.identity();
-            r1.mult(ii);
-            r2.mult(1.0/ii);
-            r.mult(r1, r2);
-          }
           working = false;
         }
       })
@@ -248,12 +240,7 @@ public class Cognition extends Application {
     
     StackPane root = new StackPane();
     root.getChildren().add(btn);
-    
-    Scene scene = new Scene(root, 300, 250);
-    
-    primaryStage.setTitle("Cognition Launch Pad");
-    primaryStage.setScene(scene);
-    primaryStage.show();
+
 */
   }
 
@@ -348,36 +335,6 @@ public class Cognition extends Application {
     return new Group(axisBar, axisEnd, text);
   }
 
-  public Group createStickSparky(double length) {
-    Matrix3X3 rot = new Matrix3X3();
-    Vector3D trans = new Vector3D();
-
-    double radius = 0.1*length;
-    Cylinder fuselage = new Cylinder(radius, length);
-    rot.rotZ(-Angles.PIO2);
-    trans.set(Basis3D.I, 0.25*length);
-    Affine state = new CognAffine(rot, trans);
-    fuselage.getTransforms().add(state);
-
-    Cylinder horizStab = new Cylinder(radius, 0.5*length);
-
-    Cylinder vertStab = new Cylinder(radius, 0.25*length);
-    rot.rotX(Angles.PIO2);
-    trans.zero();
-    trans.set(Basis3D.K, 0.5*0.25*length);
-    state = new CognAffine(rot, trans);
-    vertStab.getTransforms().add(state);
-
-    return new Group(fuselage, horizStab, vertStab);
-  }
-
-  /**
-   * @param args the command line arguments
-   */
-  public static void main(String[] args) {
-    launch(args);
-  }
-
   public Matrix3X3 steer(KeyCode key) {
     Matrix3X3 drot = new Matrix3X3();
     drot.identity();
@@ -402,6 +359,13 @@ public class Cognition extends Application {
         break;
     }
     return drot;
+  }
+
+  /**
+   * @param args the command line arguments
+   */
+  public static void main(String[] args) {
+    launch(args);
   }
   
 }

@@ -23,6 +23,7 @@ package cognition.jfx.meshmodels;
 
 import javafx.scene.Group;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Bounds;
 import javafx.scene.transform.Affine;
 import javafx.scene.shape.Cylinder;
 
@@ -35,31 +36,40 @@ import cognition.jfx.CognAffine;
 import java.io.IOException;
 
 public class SparkySpacecraftBuilder {
-  private final FXMLLoader sparkyLoader;
-  private final Affine att0;
+  private final Matrix3X3 attDCM = new Matrix3X3();
   private final String sparkyFilename = "sparky.fxml";
 
   public SparkySpacecraftBuilder() {
-    sparkyLoader = new FXMLLoader(getClass().getResource(sparkyFilename));
     Matrix3X3 roll = new Matrix3X3();
     Matrix3X3 yaw = new Matrix3X3();
-    Matrix3X3 rot = new Matrix3X3();
     roll.rotX(Angles.PIO2);
     yaw.rotZ(Angles.PIO2);
-    rot.mult(roll, yaw);
-    rot.transpose();
-    att0 = new CognAffine(rot);
+    attDCM.mult(roll, yaw);
+    attDCM.transpose();
   }
 
   public Group instantiate() {
+    FXMLLoader sparkyLoader = new FXMLLoader(
+      getClass().getResource(sparkyFilename)
+    );
     Group sparky;
     try {
       sparky = sparkyLoader.load();
-      sparky.getTransforms().add(att0);
+      Affine att = new CognAffine(attDCM);
+      sparky.getTransforms().add(att);
     } catch (IOException | IllegalStateException ex) {
       System.err.println("Can't find " + sparkyFilename + ":  " + ex);
       sparky = createStickSparky(100.);
     }
+    Bounds bnds = sparky.getLayoutBounds();
+    double depth = bnds.getDepth();
+    double width = bnds.getWidth();
+    double height = bnds.getHeight();
+    double maxDim = Math.max(Math.max(depth, width), height);
+    System.out.println("MaxDim: " + maxDim);
+    System.out.println("Depth: " + depth);
+    System.out.println("Width: " + width);
+    System.out.println("Height: " + height);
     return new Group(sparky);
   }
 
