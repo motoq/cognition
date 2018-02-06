@@ -25,6 +25,7 @@ import javafx.scene.Group;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
 import javafx.scene.transform.Affine;
+import javafx.scene.transform.Scale;
 import javafx.scene.shape.Cylinder;
 
 import cognition.math.Basis3D;
@@ -38,6 +39,7 @@ import java.io.IOException;
 public class SparkySpacecraftBuilder {
   private final Matrix3X3 attDCM = new Matrix3X3();
   private final String sparkyFilename = "sparky.fxml";
+  private final Scale modelScale = new Scale(2.0, 2.0, 2.0);
 
   public SparkySpacecraftBuilder() {
     Matrix3X3 roll = new Matrix3X3();
@@ -56,7 +58,7 @@ public class SparkySpacecraftBuilder {
     try {
       sparky = sparkyLoader.load();
       Affine att = new CognAffine(attDCM);
-      sparky.getTransforms().add(att);
+      sparky.getTransforms().addAll(att, modelScale);
     } catch (IOException | IllegalStateException ex) {
       System.err.println("Can't find " + sparkyFilename + ":  " + ex);
       sparky = createStickSparky(100.);

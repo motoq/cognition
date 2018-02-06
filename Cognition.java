@@ -231,6 +231,9 @@ public class Cognition extends Application {
     primaryStage.setScene(scene);
     primaryStage.show();
 
+    Stage gxStage = new Stage();
+    gxStage.setTitle("Blank Stage");
+		gxStage.show();	
 
 /*
 
