@@ -52,6 +52,28 @@ public class Matrix3X3 extends TMatrix {
   }
 
   /**
+   * Create a reference frame transformation given a Cartesian
+   * coordinate system axis and angle.
+   *
+   * @param  axis   Basis vector about which the rotation is made
+   * @param  angle  Angle of rotation, radians.
+   */
+  public Matrix3X3(Basis3D axis, double angle) {
+    super(3, 3);
+    switch(axis) {
+      case I:
+        rotX(angle);
+        break;
+      case J:
+        rotY(angle);
+        break;
+      case K:
+        rotZ(angle);
+        break;
+    }
+  }
+
+  /**
    * <code>Basis3D</code> based accessor method.
    *
    * @param  row  Row for the element to be returned.
@@ -114,7 +136,7 @@ public class Matrix3X3 extends TMatrix {
    *
    * @param  alpha  Rotation angle about X-axis, radians
    */
-  public void rotX(double alpha) {
+  public final void rotX(double alpha) {
     final double calpha = Math.cos(alpha);
     final double salpha = Math.sin(alpha);
 
@@ -129,7 +151,7 @@ public class Matrix3X3 extends TMatrix {
    *
    * @param  alpha  Rotation angle about Y-axis, radians
    */
-  public void rotY(double alpha) {
+  public final void rotY(double alpha) {
     final double calpha = Math.cos(alpha);
     final double salpha = Math.sin(alpha);
 
@@ -144,7 +166,7 @@ public class Matrix3X3 extends TMatrix {
    *
    * @param  alpha  Rotation angle about Z-axis, radians
    */
-  public void rotZ(double alpha) {
+  public final void rotZ(double alpha) {
     final double calpha = Math.cos(alpha);
     final double salpha = Math.sin(alpha);
 

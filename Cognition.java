@@ -105,10 +105,8 @@ public class Cognition extends Application {
     //Group sparky = createStickSparky(axisLength/10);
     SparkySpacecraftBuilder spb = new SparkySpacecraftBuilder();
     Group sparky = spb.instantiate();
-    Matrix3X3 yaw = new Matrix3X3();
-    Matrix3X3 pitch = new Matrix3X3();
-    yaw.rotZ(Math.toRadians(45));
-    pitch.rotY(Math.toRadians(-45));
+    Matrix3X3 yaw = new Matrix3X3(Basis3D.K, Math.toRadians(45.0));
+    Matrix3X3 pitch = new Matrix3X3(Basis3D.J, Math.toRadians(-45));
     sparkyAtt.mult(pitch,yaw);
       // Reference frame transformation to rotation
     sparkyAtt.transpose();
@@ -189,11 +187,9 @@ public class Cognition extends Application {
         sceneY = newY;
         sceneX = newX;
           // Next compute X and Y rotation transformations
-        Matrix3X3 rx = new Matrix3X3();
-        Matrix3X3 ry = new Matrix3X3();
+        Matrix3X3 rx = new Matrix3X3(Basis3D.I, -xAng);
+        Matrix3X3 ry = new Matrix3X3(Basis3D.J, yAng);
         Matrix3X3 dr = new Matrix3X3();
-        rx.rotX(-xAng);
-        ry.rotY(yAng);
         dr.mult(ry, rx);
         Matrix3X3 ca = new Matrix3X3();
         ca.set(cameraAtt);
@@ -266,8 +262,7 @@ public class Cognition extends Application {
       // Note that rotations vector rotations - so perform the opposite of
       // a reference frame transformation
     Group xAxis = createAxis(length, radius, "X");
-    Matrix3X3 rot = new Matrix3X3();
-    rot.rotZ(Angles.PIO2);
+    Matrix3X3 rot = new Matrix3X3(Basis3D.K, Angles.PIO2);
     Vector3D trans = new Vector3D();
     trans.set(Basis3D.I, delta);
     Affine xTrans = new CognAffine(rot, trans);
@@ -321,9 +316,8 @@ public class Cognition extends Application {
     axisEnd.setTranslateY(length/2.0);
 
     Matrix3X3 rot = new Matrix3X3();
-    Matrix3X3 r1 = new Matrix3X3();
+    Matrix3X3 r1 = new Matrix3X3(Basis3D.J, Math.PI);
     Matrix3X3 r2 = new Matrix3X3();
-    r1.rotY(Math.PI);
     r2.rotX(0);
     rot.mult(r2,r1);
     Vector3D trans = new Vector3D();
