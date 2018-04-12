@@ -223,12 +223,12 @@ public class Cognition extends Application {
     );
     simulationTimeline.setCycleCount(Timeline.INDEFINITE);
     
-    primaryStage.setTitle("Axis");
-    primaryStage.setScene(scene);
+    primaryStage.setTitle("Cognition");
     primaryStage.show();
 
     Stage gxStage = new Stage();
-    gxStage.setTitle("Blank Stage");
+    gxStage.setScene(scene);
+    gxStage.setTitle("Axis");
 		gxStage.show();	
 
 /*
