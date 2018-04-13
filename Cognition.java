@@ -189,10 +189,8 @@ public class Cognition extends Application {
         sceneX = newX;
           // Build transformation to convert 2D screen space movement to
           // 3D transformations - project 3D axes into 2D screen
-        Vector3D dxyz = new Vector3D();
-        Matrix3X3 ca = new Matrix3X3();
-        ca.set(cameraAtt);
-        dxyz.mult(cameraAtt, dxy);
+        Matrix3X3 ca = new Matrix3X3(cameraAtt);
+        Vector3D dxyz = new Vector3D(cameraAtt, dxy);
         Matrix3X3 rx = new Matrix3X3(Basis3D.I,
                                      Math.toRadians(smod*dxyz.get(Basis3D.I)));
         Matrix3X3 ry = new Matrix3X3(Basis3D.J,

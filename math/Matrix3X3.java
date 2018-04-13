@@ -40,6 +40,16 @@ public class Matrix3X3 extends TMatrix {
   }
 
   /**
+   * Instantiate given an input <code>Matrix3X3</code>
+   * 
+   * @param  mtx  Copy values into this
+   */
+  public Matrix3X3(Matrix3X3 mtx) {
+    super(3,3);
+    this.set(mtx);
+  }
+
+  /**
    * Create a 3X3 matrix that is the equivalent quaternion reference
    * frame rotation transformation (not a vector rotation). 
    *                                                       
