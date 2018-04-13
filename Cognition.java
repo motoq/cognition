@@ -323,19 +323,13 @@ public class Cognition extends Application {
     axisEnd.setDrawMode(DrawMode.FILL);
     axisEnd.setTranslateY(length/2.0);
 
-    Matrix3X3 rot = new Matrix3X3();
-    Matrix3X3 r1 = new Matrix3X3(Basis3D.J, Math.PI);
-    Matrix3X3 r2 = new Matrix3X3();
-    r2.rotX(0);
-    rot.mult(r2,r1);
+    Matrix3X3 rot = new Matrix3X3(Basis3D.J, Math.PI);
     Vector3D trans = new Vector3D();
-    //trans.set(Basis3D.I, radius);
     trans.set(Basis3D.J, length/2.0 + 4.0*radius);
     Affine tTrans = new CognAffine(rot, trans);
     Text text = new Text(0.0, 0.0, axis + "-Axis");
     text.setFill(Color.WHITE);
     text.getTransforms().add(tTrans);
-
 
     return new Group(axisBar, axisEnd, text);
   }
