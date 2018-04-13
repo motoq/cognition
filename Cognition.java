@@ -182,20 +182,33 @@ public class Cognition extends Application {
         }
         double newY = event.getSceneY();
         double newX = event.getSceneX();
-        double xAng = Math.toRadians(smod*(sceneY - newY));
-        double yAng = Math.toRadians(smod*(sceneX - newX));
+          // Flip x & y, reverse x-axis angle
+        Vector3D dxy = new Vector3D(newY - sceneY, sceneX - newX,0.);
+          // Reset reference point for the next click
         sceneY = newY;
         sceneX = newX;
-          // Next compute X and Y rotation transformations
-        Matrix3X3 rx = new Matrix3X3(Basis3D.I, -xAng);
-        Matrix3X3 ry = new Matrix3X3(Basis3D.J, yAng);
-        Matrix3X3 dr = new Matrix3X3();
-        dr.mult(ry, rx);
+          // Build transformation to convert 2D screen space movement to
+          // 3D transformations - project 3D axes into 2D screen
+        Vector3D dxyz = new Vector3D();
         Matrix3X3 ca = new Matrix3X3();
         ca.set(cameraAtt);
+        dxyz.mult(cameraAtt, dxy);
+        Matrix3X3 rx = new Matrix3X3(Basis3D.I,
+                                     Math.toRadians(smod*dxyz.get(Basis3D.I)));
+        Matrix3X3 ry = new Matrix3X3(Basis3D.J,
+                                     Math.toRadians(smod*dxyz.get(Basis3D.J)));
+        Matrix3X3 rz = new Matrix3X3(Basis3D.K,
+                                     Math.toRadians(smod*dxyz.get(Basis3D.K)));
+        Matrix3X3 ryrz = new Matrix3X3();
+        ryrz.mult(ry, rz);
+        Matrix3X3 dr = new Matrix3X3();
+        dr.mult(rx, ryrz);
+          // Update camera attitude
         cameraAtt.mult(dr, ca);
-          // Finally compute location based on camera attitude
+          // Update camera position based on location magnitude and attitude
+          // Location of origin relative to camera position in camera coords
         Vector3D r_o_c_c = new Vector3D(0., 0., cameraPos.norm());
+          // Transform to origin coordinates, etc.
         Vector3D r_o_c_o = new Vector3D();
         r_o_c_o.mult(cameraAtt, r_o_c_c);
         Vector3D r_c_o_o = new Vector3D();
