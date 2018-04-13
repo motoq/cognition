@@ -74,6 +74,32 @@ public class Matrix3X3 extends TMatrix {
   }
 
   /**
+   * Create a <code>Matrix3X3</code> by multiplying the two input
+   * matrices together.  This = r2*r1
+   *
+   * @param  r2  Second transformation
+   * @param  r1  First transformation
+   */
+  public Matrix3X3(Matrix3X3 r2, Matrix3X3 r1) {
+    super(3,3);
+    this.mult(r2, r1);
+  }
+
+  /**
+   * Create a <code>Matrix3X3</code> by multiplying the three input
+   * matrices together.  This = r3*r2*r1
+   *
+   * @param  r3  Third transformation
+   * @param  r2  Second transformation
+   * @param  r1  First transformation
+   */
+  public Matrix3X3(Matrix3X3 r3, Matrix3X3 r2, Matrix3X3 r1) {
+    super(3,3);
+    Matrix3X3 r2r1 = new Matrix3X3(r2, r1);
+    this.mult(r3, r2r1);
+  }
+
+  /**
    * <code>Basis3D</code> based accessor method.
    *
    * @param  row  Row for the element to be returned.

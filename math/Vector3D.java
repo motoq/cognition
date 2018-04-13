@@ -54,6 +54,28 @@ public class Vector3D extends TVector {
   }
 
   /**
+   * Instantiate given an input <code>Vector3D</code>
+   * 
+   * @param  vec  Copy values into this
+   */
+  public Vector3D(Vector3D vec) {
+    super(3);
+    this.set(vec);
+  }
+
+  /**
+   * Instantiate this vector with the product of the input [3x3] matrix
+   * and [3x1] vector.  this = mtx*vec
+   * 
+   * @param  mtx  [3x3] matrix on left side of the operand
+   * @param  vec  [3x1] vector on the right side of the operand
+   */
+  public Vector3D(Matrix3X3 mtx, Vector3D vec) {
+    super(3);
+    this.mult(mtx, vec);
+  }
+
+  /**
    * <code>Basis3D</code> based accessor method.
    *
    * @param  ii  Index for the element to be returned.
@@ -77,7 +99,7 @@ public class Vector3D extends TVector {
    * @param  mtx  [3x3] matrix on left side of the operand
    * @param  vec  [3x1] vector on the right side of the operand
    */
-  public void mult(Matrix3X3 mtx, Vector3D vec) {
+  public final void mult(Matrix3X3 mtx, Vector3D vec) {
     final double x = vec.get(0);
     final double y = vec.get(1);
     final double z = vec.get(2);

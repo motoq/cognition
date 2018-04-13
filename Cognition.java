@@ -199,20 +199,15 @@ public class Cognition extends Application {
                                      Math.toRadians(smod*dxyz.get(Basis3D.J)));
         Matrix3X3 rz = new Matrix3X3(Basis3D.K,
                                      Math.toRadians(smod*dxyz.get(Basis3D.K)));
-        Matrix3X3 ryrz = new Matrix3X3();
-        ryrz.mult(ry, rz);
-        Matrix3X3 dr = new Matrix3X3();
-        dr.mult(rx, ryrz);
+        Matrix3X3 dr = new Matrix3X3(rx, ry, rz);
           // Update camera attitude
         cameraAtt.mult(dr, ca);
           // Update camera position based on location magnitude and attitude
           // Location of origin relative to camera position in camera coords
         Vector3D r_o_c_c = new Vector3D(0., 0., cameraPos.norm());
           // Transform to origin coordinates, etc.
-        Vector3D r_o_c_o = new Vector3D();
-        r_o_c_o.mult(cameraAtt, r_o_c_c);
-        Vector3D r_c_o_o = new Vector3D();
-        r_c_o_o.set(r_o_c_o);
+        Vector3D r_o_c_o = new Vector3D(cameraAtt, r_o_c_c);
+        Vector3D r_c_o_o = new Vector3D(r_o_c_o);
         r_c_o_o.mult(-1.0);
         cameraPos.set(r_c_o_o);
           // Update cameraTransform with new position and attitude

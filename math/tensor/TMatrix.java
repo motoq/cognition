@@ -269,7 +269,7 @@ public class TMatrix extends Tensor {
    *
    * @throws IllegalArgumentException if dimensions are not compatible
    */
-  public void mult(TMatrix aMat, TMatrix bMat) {
+  public final void mult(TMatrix aMat, TMatrix bMat) {
     if (aMat.ROWS != ROWS  ||  bMat.COLS != COLS  ||  aMat.COLS != bMat.ROWS) {
       throw new IllegalArgumentException("TMatrix.mult(A, B):  " +
         ROWS + "x" + COLS + " ?= " + aMat.ROWS + "x" + aMat.COLS + 
