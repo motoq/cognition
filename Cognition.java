@@ -21,9 +21,13 @@
 
 package cognition;
 
+import java.util.Collection;
+import java.util.ArrayList;
+
 import javafx.application.Application;
 import javafx.stage.Stage;
 import javafx.stage.Screen;
+import javafx.scene.Node;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.MouseEvent;
@@ -75,7 +79,7 @@ public class Cognition extends Application {
   private final double dtmills = 100.0;
   private long cycles = 0L;
   private boolean working = false;
-  
+
   @Override
   public void start(Stage primaryStage) {
     final double fraction = 0.75;
@@ -100,7 +104,7 @@ public class Cognition extends Application {
       // Cartesian Axis
     final double axisLength = fraction*minDim;
     final double axisRadius = axisLength/200.0;
-    Group coordGroup = createAxes(axisLength, axisRadius);
+    Group coordGroup = createAxes(axisLength, axisRadius, 10);
 
     //Group sparky = createStickSparky(axisLength/10);
     SparkySpacecraftBuilder spb = new SparkySpacecraftBuilder();
@@ -115,15 +119,13 @@ public class Cognition extends Application {
     sparkyPos.set(Basis3D.K, 0.05*minDim);
     sparkyTransform.set(sparkyAtt, sparkyPos);
     sparky.getTransforms().add(sparkyTransform);
-    
-    
 
     Group sceneGroup;
     sceneGroup = new Group(coordGroup, sparky);
 
       // Master Group orients everything with Z up
     sceneGroup.getTransforms().add(jFX2Comp());
-    
+
     sceneRoot.getChildren().add(sceneGroup);
 
     scene.setOnKeyPressed(event -> {
@@ -228,7 +230,7 @@ public class Cognition extends Application {
       })
     );
     simulationTimeline.setCycleCount(Timeline.INDEFINITE);
-    
+
     primaryStage.setTitle("Cognition");
     primaryStage.show();
 
@@ -263,25 +265,40 @@ public class Cognition extends Application {
     return new CognAffine(rot);
   }
 
-  public Group createAxes(double length, double radius) {
+  /**
+   * Creates a JavaFX 3D Cartesian reference frame.  Each axis is the
+   * same length.
+   *
+   * @param  length  Length of each axis in pixels
+   * @param  radius  Radius of axis in pixels (text and end marker make
+   *                 use of more space)
+   * @param  nTicks  The number of tick marks on each axis.  Currently,
+   *                 tick marks are labeled 1 through nTick, so they will
+   *                 have to represent some form of normalized values if
+   *                 an integer scale isn't convenient.  If zero, no tick
+   *                 marks are added.
+   *
+   * @return  JavaFX 3D Cartesian reference frame
+   */
+  public Group createAxes(double length, double radius, int nTicks) {
     double delta = length/2.0;
-      // Note that rotations vector rotations - so perform the opposite of
-      // a reference frame transformation
-    Group xAxis = createAxis(length, radius, "X");
+      // Note that these are vector rotations - so perform the
+      // opposite of a reference frame transformation
+    Group xAxis = createAxis(length, radius, "X", nTicks);
     Matrix3X3 rot = new Matrix3X3(Basis3D.K, Angles.PIO2);
     Vector3D trans = new Vector3D();
     trans.set(Basis3D.I, delta);
     Affine xTrans = new CognAffine(rot, trans);
     xAxis.getTransforms().add(xTrans);
       //
-    Group yAxis = createAxis(length, radius, "Y");
+    Group yAxis = createAxis(length, radius, "Y", nTicks);
     rot.identity();
     trans.zero();
     trans.set(Basis3D.J, delta);
     Affine yTrans = new CognAffine(rot, trans);
     yAxis.getTransforms().add(yTrans);
       //
-    Group zAxis = createAxis(length, radius, "Z");
+    Group zAxis = createAxis(length, radius, "Z", nTicks);
     rot.rotX(-Angles.PIO2);
     trans.zero();
     trans.set(Basis3D.K, delta);
@@ -294,7 +311,23 @@ public class Cognition extends Application {
     return new Group(xAxis, yAxis, zAxis, origin);
   }
 
-  public Group createAxis(double length, double radius, String axis) {
+  /**
+   * Creates a JavaFX 3D axis for a Cartesian reference frame.
+   *
+   * @param  length  Length of each axis in pixels
+   * @param  radius  Radius of axis in pixels (text and end marker make
+   *                 use of more space)
+   * @param  axis    Axis label.  'X' will be red, 'Y' green, and 'Z' blue.
+   *                 Anything else will be blue.
+   * @param  tics    The number of tick marks on each axis.  Currently,
+   *                 tick marks are labeled 1 through nTick, so they will
+   *                 have to represent some form of normalized values if
+   *                 an integer scale isn't convenient.  If zero, no tick
+   *                 marks are added.
+   *
+   * @return  JavaFX 3D Cartesian reference frame
+   */
+  public Group createAxis(double length, double radius, String axis, int tics) {
     Cylinder axisBar = new Cylinder(radius, length);
     Sphere axisEnd = new Sphere(2.0*radius);
     PhongMaterial mat = new PhongMaterial();
@@ -321,6 +354,7 @@ public class Cognition extends Application {
     axisEnd.setDrawMode(DrawMode.FILL);
     axisEnd.setTranslateY(length/2.0);
 
+      // Rotations and translations for axis label.
     Matrix3X3 r1 = new Matrix3X3(Basis3D.J, Angles.PI);
     Matrix3X3 r2 = new Matrix3X3(Basis3D.I, Angles.PIO2);
     Matrix3X3 rot = new Matrix3X3(r2, r1);
@@ -332,7 +366,25 @@ public class Cognition extends Application {
     text.setFill(Color.WHITE);
     text.getTransforms().add(tTrans);
 
-    return new Group(axisBar, axisEnd, text);
+      // Add axis components and label
+    Collection<Node> axisComponents = new ArrayList<>();
+    axisComponents.add(axisBar);
+    axisComponents.add(axisEnd);
+    axisComponents.add(text);
+
+      // Same rotation for tick marks, translate relative to '-' bar end
+    double offset = -length/2.0;
+    double dl = length/tics;
+    for (int ii=1; ii<=tics; ii++) {
+      text = new Text(0.0, 0.0, "" + ii);
+      text.setFill(Color.WHITE);
+      trans.set(Basis3D.J, offset + ii*dl);
+      tTrans = new CognAffine(rot, trans);
+      text.getTransforms().add(tTrans);
+      axisComponents.add(text);
+    }
+
+    return new Group(axisComponents);
   }
 
   public Matrix3X3 steer(KeyCode key) {
@@ -367,5 +419,5 @@ public class Cognition extends Application {
   public static void main(String[] args) {
     launch(args);
   }
-  
+
 }
