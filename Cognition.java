@@ -21,13 +21,9 @@
 
 package cognition;
 
-import java.util.Collection;
-import java.util.ArrayList;
-
 import javafx.application.Application;
 import javafx.stage.Stage;
 import javafx.stage.Screen;
-import javafx.scene.Node;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.MouseEvent;
@@ -39,11 +35,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.transform.Affine;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.DrawMode;
-import javafx.scene.shape.Sphere;
-import javafx.scene.shape.Cylinder;
-import javafx.scene.text.Text;
 import javafx.geometry.Rectangle2D;
 import javafx.util.Duration;
 import javafx.animation.Timeline;
@@ -55,6 +46,7 @@ import cognition.math.Vector3D;
 import cognition.math.Matrix3X3;
 import cognition.math.Angles;
 import cognition.jfx.CognAffine;
+import cognition.jfx.Axes3D;
 import cognition.jfx.meshmodels.SparkySpacecraftBuilder;
 
 /**
@@ -104,7 +96,7 @@ public class Cognition extends Application {
       // Cartesian Axis
     final double axisLength = fraction*minDim;
     final double axisRadius = axisLength/200.0;
-    Group coordGroup = createAxes(axisLength, axisRadius, 10);
+    Group coordGroup = new Axes3D(axisLength, axisRadius, 10);
 
     //Group sparky = createStickSparky(axisLength/10);
     SparkySpacecraftBuilder spb = new SparkySpacecraftBuilder();
@@ -263,128 +255,6 @@ public class Cognition extends Application {
     Matrix3X3 rot = new Matrix3X3(q);
     
     return new CognAffine(rot);
-  }
-
-  /**
-   * Creates a JavaFX 3D Cartesian reference frame.  Each axis is the
-   * same length.
-   *
-   * @param  length  Length of each axis in pixels
-   * @param  radius  Radius of axis in pixels (text and end marker make
-   *                 use of more space)
-   * @param  nTicks  The number of tick marks on each axis.  Currently,
-   *                 tick marks are labeled 1 through nTick, so they will
-   *                 have to represent some form of normalized values if
-   *                 an integer scale isn't convenient.  If zero, no tick
-   *                 marks are added.
-   *
-   * @return  JavaFX 3D Cartesian reference frame
-   */
-  public Group createAxes(double length, double radius, int nTicks) {
-    double delta = length/2.0;
-      // Note that these are vector rotations - so perform the
-      // opposite of a reference frame transformation
-    Group xAxis = createAxis(length, radius, "X", nTicks);
-    Matrix3X3 rot = new Matrix3X3(Basis3D.K, Angles.PIO2);
-    Vector3D trans = new Vector3D();
-    trans.set(Basis3D.I, delta);
-    Affine xTrans = new CognAffine(rot, trans);
-    xAxis.getTransforms().add(xTrans);
-      //
-    Group yAxis = createAxis(length, radius, "Y", nTicks);
-    rot.identity();
-    trans.zero();
-    trans.set(Basis3D.J, delta);
-    Affine yTrans = new CognAffine(rot, trans);
-    yAxis.getTransforms().add(yTrans);
-      //
-    Group zAxis = createAxis(length, radius, "Z", nTicks);
-    rot.rotX(-Angles.PIO2);
-    trans.zero();
-    trans.set(Basis3D.K, delta);
-    Affine zTrans = new CognAffine(rot, trans);
-    zAxis.getTransforms().add(zTrans);
-      //
-    Sphere origin = new Sphere(1.5*radius);
-    origin.setDrawMode(DrawMode.FILL);
-
-    return new Group(xAxis, yAxis, zAxis, origin);
-  }
-
-  /**
-   * Creates a JavaFX 3D axis for a Cartesian reference frame.
-   *
-   * @param  length  Length of each axis in pixels
-   * @param  radius  Radius of axis in pixels (text and end marker make
-   *                 use of more space)
-   * @param  axis    Axis label.  'X' will be red, 'Y' green, and 'Z' blue.
-   *                 Anything else will be blue.
-   * @param  tics    The number of tick marks on each axis.  Currently,
-   *                 tick marks are labeled 1 through nTick, so they will
-   *                 have to represent some form of normalized values if
-   *                 an integer scale isn't convenient.  If zero, no tick
-   *                 marks are added.
-   *
-   * @return  JavaFX 3D Cartesian reference frame
-   */
-  public Group createAxis(double length, double radius, String axis, int tics) {
-    Cylinder axisBar = new Cylinder(radius, length);
-    Sphere axisEnd = new Sphere(2.0*radius);
-    PhongMaterial mat = new PhongMaterial();
-    switch (axis.toLowerCase()) {
-      case "x":
-        mat.setDiffuseColor(Color.RED);
-        mat.setSpecularColor(Color.TOMATO);
-        break;
-      case "y":
-        mat.setDiffuseColor(Color.FORESTGREEN);
-        mat.setSpecularColor(Color.LIMEGREEN);
-        break;
-      case "z":
-        mat.setDiffuseColor(Color.DEEPSKYBLUE);
-        mat.setSpecularColor(Color.BLUE);
-        break;
-      default:
-        mat.setDiffuseColor(Color.DEEPSKYBLUE);
-        mat.setSpecularColor(Color.BLUE);
-    }
-    axisBar.setMaterial(mat);
-    axisBar.setDrawMode(DrawMode.FILL);
-    axisEnd.setMaterial(mat);
-    axisEnd.setDrawMode(DrawMode.FILL);
-    axisEnd.setTranslateY(length/2.0);
-
-      // Rotations and translations for axis label.
-    Matrix3X3 r1 = new Matrix3X3(Basis3D.J, Angles.PI);
-    Matrix3X3 r2 = new Matrix3X3(Basis3D.I, Angles.PIO2);
-    Matrix3X3 rot = new Matrix3X3(r2, r1);
-    Vector3D trans = new Vector3D();
-    trans.set(Basis3D.J, length/2.0 + 4.0*radius);
-    trans.set(Basis3D.K, radius);
-    Affine tTrans = new CognAffine(rot, trans);
-    Text text = new Text(0.0, 0.0, axis + "-Axis");
-    text.setFill(Color.WHITE);
-    text.getTransforms().add(tTrans);
-
-      // Add axis components and label
-    Collection<Node> axisComponents = new ArrayList<>();
-    axisComponents.add(axisBar);
-    axisComponents.add(axisEnd);
-    axisComponents.add(text);
-
-      // Same rotation for tick marks, translate relative to '-' bar end
-    double offset = -length/2.0;
-    double dl = length/tics;
-    for (int ii=1; ii<=tics; ii++) {
-      text = new Text(0.0, 0.0, "" + ii);
-      text.setFill(Color.WHITE);
-      trans.set(Basis3D.J, offset + ii*dl);
-      tTrans = new CognAffine(rot, trans);
-      text.getTransforms().add(tTrans);
-      axisComponents.add(text);
-    }
-
-    return new Group(axisComponents);
   }
 
   public Matrix3X3 steer(KeyCode key) {
