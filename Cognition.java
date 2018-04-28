@@ -26,13 +26,11 @@ import javafx.stage.Stage;
 import javafx.stage.Screen;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.input.KeyCode;
 //import javafx.scene.control.Button;
 //import javafx.scene.layout.StackPane;
 //import javafx.event.ActionEvent;
 //import javafx.event.EventHandler;
-import javafx.scene.PerspectiveCamera;
 import javafx.scene.transform.Affine;
 import javafx.scene.paint.Color;
 import javafx.geometry.Rectangle2D;
@@ -45,6 +43,7 @@ import cognition.math.Quaternion;
 import cognition.math.Vector3D;
 import cognition.math.Matrix3X3;
 import cognition.math.Angles;
+import cognition.jfx.MouseLookScene;
 import cognition.jfx.CognAffine;
 import cognition.jfx.Axes3D;
 import cognition.jfx.meshmodels.SparkySpacecraftBuilder;
@@ -55,14 +54,6 @@ import cognition.jfx.meshmodels.SparkySpacecraftBuilder;
  * @author Kurt Motekew
  */
 public class Cognition extends Application {
-  private PerspectiveCamera camera;
-  private double sceneX = 0.0;
-  private double sceneY = 0.0;
-
-  private final Matrix3X3 cameraAtt = new Matrix3X3();
-  private final Vector3D  cameraPos = new Vector3D();
-  private final CognAffine cameraTransform = new CognAffine();
-
   private final Matrix3X3 sparkyAtt = new Matrix3X3();
   private final Vector3D  sparkyPos = new Vector3D();
   private final CognAffine sparkyTransform = new CognAffine();
@@ -81,17 +72,9 @@ public class Cognition extends Application {
     final double maxDim = Math.max(sceneWidth, sceneHeight);
     final double minDim = Math.min(sceneWidth, sceneHeight);
     Group sceneRoot = new Group();
-    Scene scene = new Scene(sceneRoot, sceneWidth, sceneHeight, true);
+    Scene scene = new MouseLookScene(sceneRoot, sceneWidth, sceneHeight);
+    
     scene.setFill(Color.BLACK);
-    camera = new PerspectiveCamera(true);
-    camera.setNearClip(0.1);
-    camera.setFarClip(10.0*maxDim);
-    cameraAtt.identity();
-    cameraPos.set(Basis3D.K, -2.0*maxDim);
-    cameraTransform.set(cameraAtt, cameraPos);
-    camera.getTransforms().setAll(cameraTransform);
-
-    scene.setCamera(camera);
 
       // Cartesian Axis
     final double axisLength = fraction*minDim;
@@ -141,69 +124,6 @@ public class Cognition extends Application {
         rot.mult(drot, sparkyAtt);
         sparkyAtt.set(rot);
         sparkyTransform.set(sparkyAtt, sparkyPos);
-      }
-    });
-
-      // Reference point based on mouse click
-    scene.setOnMousePressed(event -> {
-      sceneX = event.getSceneX();
-      sceneY = event.getSceneY();
-    });
-      // Track mouse drag from reference point for viewing adjustment
-      // The shift button increases the rate relative to mouse movement
-    scene.setOnMouseDragged((MouseEvent event) -> {
-        // If the right mouse button is pressed, we are zooming
-        // Otherwise, we are strafing the camera position
-      if (event.isSecondaryButtonDown()) {
-        double smod = 1.0;
-        if (event.isShiftDown()) {
-          smod = 3.0;
-        }
-          // Compute camera offset from origin adjustment as a
-          // scale factor based on the drag distance and the
-          // maximum scene dimension
-        double newY = event.getSceneY();
-        double scale = 1.0 + smod*(sceneY - newY)/maxDim;
-        cameraPos.mult(scale);
-        sceneY = newY;
-        cameraTransform.set(cameraAtt, cameraPos);
-      } else {
-          // First compute X and Y axes rotations based on mouse
-          // movement - Tenth of a degree rotation per pixel
-        double smod = 0.1;
-        if (event.isShiftDown()) {
-          smod = 0.3;
-        }
-        double newY = event.getSceneY();
-        double newX = event.getSceneX();
-          // Flip x & y, reverse x-axis angle
-        Vector3D dxy = new Vector3D(newY - sceneY, sceneX - newX,0.);
-          // Reset reference point for the next click
-        sceneY = newY;
-        sceneX = newX;
-          // Build transformation to convert 2D screen space movement to
-          // 3D transformations - project 3D axes into 2D screen
-        Matrix3X3 ca = new Matrix3X3(cameraAtt);
-        Vector3D dxyz = new Vector3D(cameraAtt, dxy);
-        Matrix3X3 rx = new Matrix3X3(Basis3D.I,
-                                     Math.toRadians(smod*dxyz.get(Basis3D.I)));
-        Matrix3X3 ry = new Matrix3X3(Basis3D.J,
-                                     Math.toRadians(smod*dxyz.get(Basis3D.J)));
-        Matrix3X3 rz = new Matrix3X3(Basis3D.K,
-                                     Math.toRadians(smod*dxyz.get(Basis3D.K)));
-        Matrix3X3 dr = new Matrix3X3(rx, ry, rz);
-          // Update camera attitude
-        cameraAtt.mult(dr, ca);
-          // Update camera position based on location magnitude and attitude
-          // Location of origin relative to camera position in camera coords
-        Vector3D r_o_c_c = new Vector3D(0., 0., cameraPos.norm());
-          // Transform to origin coordinates, etc.
-        Vector3D r_o_c_o = new Vector3D(cameraAtt, r_o_c_c);
-        Vector3D r_c_o_o = new Vector3D(r_o_c_o);
-        r_c_o_o.mult(-1.0);
-        cameraPos.set(r_c_o_o);
-          // Update cameraTransform with new position and attitude
-        cameraTransform.set(cameraAtt, cameraPos);
       }
     });
 
