@@ -31,7 +31,6 @@ import javafx.scene.input.KeyCode;
 //import javafx.scene.layout.StackPane;
 //import javafx.event.ActionEvent;
 //import javafx.event.EventHandler;
-import javafx.scene.transform.Affine;
 import javafx.scene.paint.Color;
 import javafx.geometry.Rectangle2D;
 import javafx.util.Duration;
@@ -39,12 +38,11 @@ import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
 
 import cognition.math.Basis3D;
-import cognition.math.Quaternion;
 import cognition.math.Vector3D;
 import cognition.math.Matrix3X3;
-import cognition.math.Angles;
 import cognition.jfx.MouseLookScene;
 import cognition.jfx.CognAffine;
+import cognition.jfx.JFX2ComputationalFrame;
 import cognition.jfx.Axes3D;
 import cognition.jfx.meshmodels.SparkySpacecraftBuilder;
 
@@ -99,7 +97,7 @@ public class Cognition extends Application {
     sceneGroup = new Group(coordGroup, sparky);
 
       // Master Group orients everything with Z up
-    sceneGroup.getTransforms().add(jFX2Comp());
+    sceneGroup.getTransforms().add(new JFX2ComputationalFrame());
 
     sceneRoot.getChildren().add(sceneGroup);
 
@@ -161,20 +159,6 @@ public class Cognition extends Application {
     root.getChildren().add(btn);
 
 */
-  }
-
-  public Affine jFX2Comp() {
-    Quaternion q = new Quaternion();
-    Quaternion q1 = new Quaternion();
-    Quaternion q2 = new Quaternion();
-  
-    q1.set(Angles.PIO2, Basis3D.I);
-    q2.set(-Angles.PIO2, Basis3D.K);
-    q.mult(q1, q2);    
-    q.conj();
-    Matrix3X3 rot = new Matrix3X3(q);
-    
-    return new CognAffine(rot);
   }
 
   public Matrix3X3 steer(KeyCode key) {
