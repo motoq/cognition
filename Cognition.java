@@ -33,13 +33,11 @@ import javafx.scene.input.KeyCode;
 //import javafx.event.EventHandler;
 import javafx.scene.paint.Color;
 import javafx.geometry.Rectangle2D;
-import javafx.util.Duration;
-import javafx.animation.Timeline;
-import javafx.animation.KeyFrame;
 
 import cognition.math.Basis3D;
 import cognition.math.Vector3D;
 import cognition.math.Matrix3X3;
+import cognition.jfx.SimulationTimeline;
 import cognition.jfx.MouseLookScene;
 import cognition.jfx.CognAffine;
 import cognition.jfx.JFX2ComputationalFrame;
@@ -55,11 +53,6 @@ public class Cognition extends Application {
   private final Matrix3X3 sparkyAtt = new Matrix3X3();
   private final Vector3D  sparkyPos = new Vector3D();
   private final CognAffine sparkyTransform = new CognAffine();
-
-  private Timeline simulationTimeline;
-  private final double dtmills = 100.0;
-  private long cycles = 0L;
-  private boolean working = false;
 
   @Override
   public void start(Stage primaryStage) {
@@ -101,12 +94,17 @@ public class Cognition extends Application {
 
     sceneRoot.getChildren().add(sceneGroup);
 
+    SimulationTimeline stl = new SimulationTimeline();
+    
     scene.setOnKeyPressed(event -> {
       KeyCode key = event.getCode();
       Matrix3X3 drot = null;
       switch(key) {
         case P:
-          simulationTimeline.playFromStart();
+          stl.pause();
+          break;
+        case R:
+          stl.play();
           break;
         case S:
         case F:
@@ -125,22 +123,6 @@ public class Cognition extends Application {
       }
     });
 
-    simulationTimeline = new Timeline(
-      new KeyFrame(new Duration(dtmills), t-> {
-        cycles++;
-        if (working) {
-          System.out.println("Still Working");
-        } else {
-          working = true;
-          sparkyPos.mult(1.01);
-          sparkyTransform.set(sparkyAtt, sparkyPos);
-          System.out.println("Time:  " + cycles*dtmills/1000.0);
-          working = false;
-        }
-      })
-    );
-    simulationTimeline.setCycleCount(Timeline.INDEFINITE);
-
     primaryStage.setTitle("Cognition");
     primaryStage.show();
 
@@ -150,14 +132,12 @@ public class Cognition extends Application {
 		gxStage.show();	
 
 /*
-
     Button btn = new Button();
     btn.setText("Launch");
     btn.setOnAction(e -> System.out.println("Launch Application"));
     
     StackPane root = new StackPane();
     root.getChildren().add(btn);
-
 */
   }
 
