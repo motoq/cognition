@@ -22,12 +22,17 @@
 package cognition;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.stage.Stage;
 import javafx.stage.Screen;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Button;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.input.KeyCode;
-//import javafx.scene.control.Button;
 //import javafx.scene.layout.StackPane;
 //import javafx.event.ActionEvent;
 //import javafx.event.EventHandler;
@@ -53,6 +58,8 @@ public class Cognition extends Application {
   private final Matrix3X3 sparkyAtt = new Matrix3X3();
   private final Vector3D  sparkyPos = new Vector3D();
   private final CognAffine sparkyTransform = new CognAffine();
+  private final Stage gxStage = new Stage();
+  private boolean packageLoaded = false;
 
   @Override
   public void start(Stage primaryStage) {
@@ -123,13 +130,24 @@ public class Cognition extends Application {
       }
     });
 
+    Label simLabel = new Label("Simulation Package:  ");
+    TextField simField = new TextField();
+    simField.setPrefColumnCount(32);
+    HBox simEntry = new HBox(simLabel, simField);
+    Button loadBtn = new Button("Load");
+    loadBtn.setOnAction(e -> loadPackage(loadBtn, simField.getText()));
+    Button exitBtn = new Button("Exit");
+    exitBtn.setOnAction(e -> Platform.exit());
+    VBox simMain = new VBox(5., simEntry, loadBtn, exitBtn);
+    Scene simScene = new Scene(simMain);
+    
+    primaryStage.setScene(simScene);
     primaryStage.setTitle("Cognition");
     primaryStage.show();
 
-    Stage gxStage = new Stage();
     gxStage.setScene(scene);
     gxStage.setTitle("Axis");
-		gxStage.show();	
+			
 
 /*
     Button btn = new Button();
@@ -167,6 +185,15 @@ public class Cognition extends Application {
     return drot;
   }
 
+  private void loadPackage(Button btn, String packageStr) {
+    if (!packageLoaded) {
+      System.out.println(packageStr);
+      gxStage.show();
+      packageLoaded = true;
+      btn.setDisable(true);
+    }
+  }
+  
   /**
    * @param args the command line arguments
    */
