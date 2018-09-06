@@ -32,12 +32,19 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.geometry.Insets;
 import javafx.scene.input.KeyCode;
 //import javafx.scene.layout.StackPane;
 //import javafx.event.ActionEvent;
 //import javafx.event.EventHandler;
 import javafx.scene.paint.Color;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.geometry.Rectangle2D;
+import javafx.geometry.Pos;
 
 import cognition.math.Basis3D;
 import cognition.math.Vector3D;
@@ -58,7 +65,6 @@ public class Cognition extends Application {
   private final Matrix3X3 sparkyAtt = new Matrix3X3();
   private final Vector3D  sparkyPos = new Vector3D();
   private final CognAffine sparkyTransform = new CognAffine();
-  private final Stage gxStage = new Stage();
   private boolean packageLoaded = false;
 
   @Override
@@ -130,16 +136,90 @@ public class Cognition extends Application {
       }
     });
 
-    Label simLabel = new Label("Simulation Package:  ");
-    TextField simField = new TextField();
+    Label simLabel = new Label("Simulation Package:");
+    final TextField simField = new TextField();
     simField.setPrefColumnCount(32);
-    HBox simEntry = new HBox(simLabel, simField);
     Button loadBtn = new Button("Load");
-    loadBtn.setOnAction(e -> loadPackage(loadBtn, simField.getText()));
+    HBox simEntry = new HBox(10., simLabel, simField, loadBtn);
+    simEntry.setAlignment(Pos.CENTER);
+    HBox.setMargin(simLabel, new Insets(0., 0., 0., 5.));
+    HBox.setMargin(loadBtn, new Insets(0., 5., 0., 0.));
+    
+    Label timeLabel = new Label("Time (TU):");
+    TextField timeField = new TextField();
+    timeField.setDisable(true);
+    HBox timeArea = new HBox(10., timeLabel, timeField);
+    timeArea.setAlignment(Pos.CENTER);
+    HBox.setMargin(timeLabel, new Insets(0., 0., 0., 5.));
+    final Button playBtn = new Button(">");
+    playBtn.setDisable(true);
+    final Button pauseBtn = new Button("||");
+    pauseBtn.setDisable(true);
     Button exitBtn = new Button("Exit");
+    Region regionLM = new Region();
+    Region regionRM = new Region();
+    HBox.setHgrow(regionLM, Priority.ALWAYS);
+    HBox.setHgrow(regionRM, Priority.ALWAYS);
+    HBox startStopArea = new HBox(10., timeArea, playBtn, pauseBtn,
+                                       regionRM, exitBtn);
+    
+    VBox controlArea = new VBox(10., simEntry, startStopArea);
+    VBox.setMargin(simEntry, new Insets(5., 0., 5., 0.));
+    VBox.setMargin(startStopArea, new Insets(5., 0., 5., 0.));
+    
+    Label newDataLabel = new Label("Data Window:");
+    Label tmpDataLabel = new Label("Combobox");
+    Button newDataButton = new Button("New");
+    HBox dataArea = new HBox(newDataLabel, tmpDataLabel, newDataButton);
+    dataArea.setAlignment(Pos.CENTER);
+    HBox.setMargin(newDataLabel, new Insets(0., 0., 0., 5.));
+    HBox.setMargin(tmpDataLabel, new Insets(0., 0., 0., 5.));
+    HBox.setMargin(newDataButton, new Insets(0., 0., 0., 5.));
+    //controlArea.setCenter(startStopArea);
+    //controlArea.setLeft(timeArea);
+    //controlArea.setRight(exitBtn);
+    //BorderPane.setMargin(exitBtn, new Insets(0., 5., 0., 0.));
+    //BorderPane.setAlignment(startStopArea, Pos.CENTER);
+    
+    Image splashImage = new Image("cognition/cognition.png");
+    ImageView splashIV = new ImageView();
+    splashIV.setImage(splashImage);
+    splashIV.setFitWidth(640);
+    splashIV.setPreserveRatio(true);
+    splashIV.setSmooth(true);
+    splashIV.setCache(true);
+
+    
+    
+    final BorderPane simMain = new BorderPane();
+    simMain.setTop(controlArea);
+    simMain.setBottom(dataArea);
+    simMain.setCenter(splashIV);
+    
+    
+    
     exitBtn.setOnAction(e -> Platform.exit());
-    VBox simMain = new VBox(5., simEntry, loadBtn, exitBtn);
-    Scene simScene = new Scene(simMain);
+    //VBox simMain = new VBox(5., simEntry, controlArea);
+    final Scene simScene = new Scene(simMain);
+    
+    Stage gxStage = new Stage();
+    
+    final Stage ps = primaryStage;
+    loadBtn.setOnAction(e -> {
+      if (!packageLoaded) {
+        System.out.println(simField.getText());
+        gxStage.show();
+        packageLoaded = true;
+        loadBtn.setDisable(true);
+        simField.setDisable(true);
+        playBtn.setDisable(false);
+        pauseBtn.setDisable(false);
+        ISimModel sim = new TestProject(); 
+        simMain.setCenter(sim.getRoot());
+        sim.launch();
+        ps.sizeToScene();
+      }
+    });
     
     primaryStage.setScene(simScene);
     primaryStage.setTitle("Cognition");
@@ -183,15 +263,6 @@ public class Cognition extends Application {
         break;
     }
     return drot;
-  }
-
-  private void loadPackage(Button btn, String packageStr) {
-    if (!packageLoaded) {
-      System.out.println(packageStr);
-      gxStage.show();
-      packageLoaded = true;
-      btn.setDisable(true);
-    }
   }
   
   /**
