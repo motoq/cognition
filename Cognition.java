@@ -139,11 +139,9 @@ public class Cognition extends Application {
     Label simLabel = new Label("Simulation Package:");
     final TextField simField = new TextField();
     simField.setPrefColumnCount(32);
-    Button loadBtn = new Button("Load");
+    final Button loadBtn = new Button("Load");
     HBox simEntry = new HBox(10., simLabel, simField, loadBtn);
     simEntry.setAlignment(Pos.CENTER);
-    HBox.setMargin(simLabel, new Insets(0., 0., 0., 5.));
-    HBox.setMargin(loadBtn, new Insets(0., 5., 0., 0.));
     
     Label timeLabel = new Label("Time (TU):");
     TextField timeField = new TextField();
@@ -156,25 +154,41 @@ public class Cognition extends Application {
     final Button pauseBtn = new Button("||");
     pauseBtn.setDisable(true);
     Button exitBtn = new Button("Exit");
-    Region regionLM = new Region();
     Region regionRM = new Region();
-    HBox.setHgrow(regionLM, Priority.ALWAYS);
     HBox.setHgrow(regionRM, Priority.ALWAYS);
     HBox startStopArea = new HBox(10., timeArea, playBtn, pauseBtn,
                                        regionRM, exitBtn);
     
     VBox controlArea = new VBox(10., simEntry, startStopArea);
-    VBox.setMargin(simEntry, new Insets(5., 0., 5., 0.));
-    VBox.setMargin(startStopArea, new Insets(5., 0., 5., 0.));
+    controlArea.setStyle("-fx-padding: 10;" + 
+                      "-fx-border-style: solid inside;" + 
+                      "-fx-border-width: 2;" +
+                      "-fx-border-insets: 5;" + 
+                      "-fx-border-radius: 5;" + 
+                      "-fx-border-color: blue;");
     
     Label newDataLabel = new Label("Data Window:");
     Label tmpDataLabel = new Label("Combobox");
-    Button newDataButton = new Button("New");
-    HBox dataArea = new HBox(newDataLabel, tmpDataLabel, newDataButton);
+    final Button newDataBtn = new Button("New");
+    newDataBtn.setDisable(true);
+    Label newTableLabel = new Label("Table Window:");
+    Label tmpTableLabel = new Label("Combobox");
+    final Button newTableBtn = new Button("New");
+    newTableBtn.setDisable(true);
+    Region regionM = new Region();
+    HBox.setHgrow(regionM, Priority.ALWAYS);
+    HBox dataArea = new HBox(10., newDataLabel, tmpDataLabel, newDataBtn,
+                            regionM, newTableLabel, tmpTableLabel, newTableBtn);
     dataArea.setAlignment(Pos.CENTER);
-    HBox.setMargin(newDataLabel, new Insets(0., 0., 0., 5.));
-    HBox.setMargin(tmpDataLabel, new Insets(0., 0., 0., 5.));
-    HBox.setMargin(newDataButton, new Insets(0., 0., 0., 5.));
+    //HBox.setMargin(newDataLabel, new Insets(0., 0., 0., 5.));
+    //HBox.setMargin(tmpDataLabel, new Insets(0., 0., 0., 5.));
+    //HBox.setMargin(newDataButton, new Insets(0., 0., 0., 5.));
+    dataArea.setStyle("-fx-padding: 10;" + 
+                      "-fx-border-style: solid inside;" + 
+                      "-fx-border-width: 2;" +
+                      "-fx-border-insets: 5;" + 
+                      "-fx-border-radius: 5;" + 
+                      "-fx-border-color: blue;");
     //controlArea.setCenter(startStopArea);
     //controlArea.setLeft(timeArea);
     //controlArea.setRight(exitBtn);
@@ -202,7 +216,7 @@ public class Cognition extends Application {
     //VBox simMain = new VBox(5., simEntry, controlArea);
     final Scene simScene = new Scene(simMain);
     
-    Stage gxStage = new Stage();
+    final Stage gxStage = new Stage();
     
     final Stage ps = primaryStage;
     loadBtn.setOnAction(e -> {
@@ -214,6 +228,8 @@ public class Cognition extends Application {
         simField.setDisable(true);
         playBtn.setDisable(false);
         pauseBtn.setDisable(false);
+        newDataBtn.setDisable(false);
+        newTableBtn.setDisable(false);
         ISimModel sim = new TestProject(); 
         simMain.setCenter(sim.getRoot());
         sim.launch();
