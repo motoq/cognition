@@ -24,8 +24,6 @@ package cognition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
-import javafx.stage.Screen;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -36,105 +34,21 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.geometry.Insets;
-import javafx.scene.input.KeyCode;
-//import javafx.scene.layout.StackPane;
-//import javafx.event.ActionEvent;
-//import javafx.event.EventHandler;
-import javafx.scene.paint.Color;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
-import javafx.geometry.Rectangle2D;
 import javafx.geometry.Pos;
 
-import cognition.math.Basis3D;
-import cognition.math.Vector3D;
-import cognition.math.Matrix3X3;
-import cognition.jfx.SimulationTimeline;
-import cognition.jfx.MouseLookScene;
-import cognition.jfx.CognAffine;
-import cognition.jfx.JFX2ComputationalFrame;
-import cognition.jfx.Axes3D;
-import cognition.jfx.meshmodels.SparkySpacecraftBuilder;
-
 /**
- * Currently just a test ground for 3D JavaFX
+ * Initial infrastructure to replace the Java3D based Vehicle Simulation
+ * Environment with a JavaFX one.  The new package name will simply be
+ * Cognition since the old VSE was used quite a bit to study and understand
+ * various M&S related topics.
  *
  * @author Kurt Motekew
  */
 public class Cognition extends Application {
-  private final Matrix3X3 sparkyAtt = new Matrix3X3();
-  private final Vector3D  sparkyPos = new Vector3D();
-  private final CognAffine sparkyTransform = new CognAffine();
-
   @Override
   public void start(Stage primaryStage) {
-    final double fraction = 0.75;
-    Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-    final double sceneWidth = fraction*screenBounds.getWidth();
-    final double sceneHeight = fraction*screenBounds.getHeight();
-    final double maxDim = Math.max(sceneWidth, sceneHeight);
-    final double minDim = Math.min(sceneWidth, sceneHeight);
-    Group sceneRoot = new Group();
-    Scene scene = new MouseLookScene(sceneRoot, sceneWidth, sceneHeight);
-    
-    scene.setFill(Color.BLACK);
-
-      // Cartesian Axis
-    final double axisLength = fraction*minDim;
-    final double axisRadius = axisLength/200.0;
-    Group coordGroup = new Axes3D(axisLength, axisRadius, 10);
-
-    //Group sparky = createStickSparky(axisLength/10);
-    SparkySpacecraftBuilder spb = new SparkySpacecraftBuilder();
-    Group sparky = spb.instantiate();
-    Matrix3X3 yaw = new Matrix3X3(Basis3D.K, Math.toRadians(45.0));
-    Matrix3X3 pitch = new Matrix3X3(Basis3D.J, Math.toRadians(-45));
-    sparkyAtt.mult(pitch,yaw);
-      // Reference frame transformation to rotation
-    sparkyAtt.transpose();
-    sparkyPos.set(Basis3D.I, 0.1*minDim);
-    sparkyPos.set(Basis3D.J, 0.1*minDim);
-    sparkyPos.set(Basis3D.K, 0.05*minDim);
-    sparkyTransform.set(sparkyAtt, sparkyPos);
-    sparky.getTransforms().add(sparkyTransform);
-
-    Group sceneGroup;
-    sceneGroup = new Group(coordGroup, sparky);
-
-      // Master Group orients everything with Z up
-    sceneGroup.getTransforms().add(new JFX2ComputationalFrame());
-
-    sceneRoot.getChildren().add(sceneGroup);
-
-    SimulationTimeline stl = new SimulationTimeline();
-    
-    scene.setOnKeyPressed(event -> {
-      KeyCode key = event.getCode();
-      Matrix3X3 drot = null;
-      switch(key) {
-        case P:
-          stl.pause();
-          break;
-        case R:
-          stl.play();
-          break;
-        case S:
-        case F:
-        case E:
-        case D:
-        case A:
-        case G:
-          drot = steer(key);
-          break;
-      }
-      if (drot != null) {
-        Matrix3X3 rot = new Matrix3X3();
-        rot.mult(drot, sparkyAtt);
-        sparkyAtt.set(rot);
-        sparkyTransform.set(sparkyAtt, sparkyPos);
-      }
-    });
-
     //
     // Create BorderPane Main Entry Window.  The top portion contains
     // simulation entry and time controls.  The bottom portion allows
@@ -162,6 +76,7 @@ public class Cognition extends Application {
     final Button pauseBtn = new Button("||");
     pauseBtn.setDisable(true);
     Button exitBtn = new Button("Exit");
+    exitBtn.setOnAction(e -> Platform.exit());
     Region regionRM = new Region();
     HBox.setHgrow(regionRM, Priority.ALWAYS);
     HBox startStopArea = new HBox(10., timeArea, playBtn, pauseBtn,
@@ -207,28 +122,30 @@ public class Cognition extends Application {
     simMain.setTop(controlArea);
     simMain.setBottom(dataArea);
     simMain.setCenter(splashIV);
-    
-    
-    
-    exitBtn.setOnAction(e -> Platform.exit());
-    //VBox simMain = new VBox(5., simEntry, controlArea);
+
     final Scene simScene = new Scene(simMain);
-    
-    final Stage gxStage = new Stage();
-    
     final Stage ps = primaryStage;
+    primaryStage.setScene(simScene);
+    primaryStage.setTitle("Cognition");
+    primaryStage.show();
+
+    //
+    // Non-trivial callbacks
+    //
+
+      // Load Button attempts to create a class from the input package
+      // name and if sucessfull, launches the new simulation
     loadBtn.setOnAction(e -> {
       try {
           // Try to load class - disable class inputs if sucessful
         Class<? extends ISimModel> cModel = 
                Class.forName(simField.getText()).asSubclass(ISimModel.class);
-        ISimModel model = cModel.newInstance();
+        ISimModel sModel = cModel.newInstance();
         loadBtn.setDisable(true);
         simField.setDisable(true);
           // Grab model inputs and launch
-        simMain.setCenter(model.getRoot());
-        model.launch();
-        gxStage.show();
+        simMain.setCenter(sModel.getRoot());
+        sModel.launch();
           // Activate main window controls and resize model area
         playBtn.setDisable(false);
         pauseBtn.setDisable(false);
@@ -243,51 +160,8 @@ public class Cognition extends Application {
         System.out.println("Not allowed access to class: " + iae);
       }
     });
-    
-    primaryStage.setScene(simScene);
-    primaryStage.setTitle("Cognition");
-    primaryStage.show();
-
-    gxStage.setScene(scene);
-    gxStage.setTitle("Axis");
-			
-
-/*
-    Button btn = new Button();
-    btn.setText("Launch");
-    btn.setOnAction(e -> System.out.println("Launch Application"));
-    
-    StackPane root = new StackPane();
-    root.getChildren().add(btn);
-*/
   }
 
-  public Matrix3X3 steer(KeyCode key) {
-    Matrix3X3 drot = new Matrix3X3();
-    drot.identity();
-    switch(key) {
-      case S:
-        drot.rotX(Math.toRadians(5.0));
-        break;
-      case F:
-        drot.rotX(Math.toRadians(-5.0));
-        break;
-      case E:
-        drot.rotY(Math.toRadians(-5.0));         // Nose down
-        break;
-      case D:
-        drot.rotY(Math.toRadians(5.0));
-        break;
-      case A:
-        drot.rotZ(Math.toRadians(-5.0));
-        break;
-      case G:
-        drot.rotZ(Math.toRadians(5.0));
-        break;
-    }
-    return drot;
-  }
-  
   /**
    * @param args the command line arguments
    */
