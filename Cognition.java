@@ -65,7 +65,6 @@ public class Cognition extends Application {
   private final Matrix3X3 sparkyAtt = new Matrix3X3();
   private final Vector3D  sparkyPos = new Vector3D();
   private final CognAffine sparkyTransform = new CognAffine();
-  private boolean packageLoaded = false;
 
   @Override
   public void start(Stage primaryStage) {
@@ -136,13 +135,22 @@ public class Cognition extends Application {
       }
     });
 
+    //
+    // Create BorderPane Main Entry Window.  The top portion contains
+    // simulation entry and time controls.  The bottom portion allows
+    // the user to select output windows as provided by the loaded
+    // models.  The center will be replaced with a custom control area
+    // specific to the loaded simulation.
+    //
+
+      // Simulation package name entry
     Label simLabel = new Label("Simulation Package:");
     final TextField simField = new TextField();
     simField.setPrefColumnCount(32);
     final Button loadBtn = new Button("Load");
     HBox simEntry = new HBox(10., simLabel, simField, loadBtn);
     simEntry.setAlignment(Pos.CENTER);
-    
+      // Time control area for the simulation - initially disabled
     Label timeLabel = new Label("Time (TU):");
     TextField timeField = new TextField();
     timeField.setDisable(true);
@@ -158,7 +166,7 @@ public class Cognition extends Application {
     HBox.setHgrow(regionRM, Priority.ALWAYS);
     HBox startStopArea = new HBox(10., timeArea, playBtn, pauseBtn,
                                        regionRM, exitBtn);
-    
+      // Container for package and time control
     VBox controlArea = new VBox(10., simEntry, startStopArea);
     controlArea.setStyle("-fx-padding: 10;" + 
                       "-fx-border-style: solid inside;" + 
@@ -166,7 +174,7 @@ public class Cognition extends Application {
                       "-fx-border-insets: 5;" + 
                       "-fx-border-radius: 5;" + 
                       "-fx-border-color: blue;");
-    
+      // Output options
     Label newDataLabel = new Label("Data Window:");
     Label tmpDataLabel = new Label("Combobox");
     final Button newDataBtn = new Button("New");
@@ -180,21 +188,13 @@ public class Cognition extends Application {
     HBox dataArea = new HBox(10., newDataLabel, tmpDataLabel, newDataBtn,
                             regionM, newTableLabel, tmpTableLabel, newTableBtn);
     dataArea.setAlignment(Pos.CENTER);
-    //HBox.setMargin(newDataLabel, new Insets(0., 0., 0., 5.));
-    //HBox.setMargin(tmpDataLabel, new Insets(0., 0., 0., 5.));
-    //HBox.setMargin(newDataButton, new Insets(0., 0., 0., 5.));
     dataArea.setStyle("-fx-padding: 10;" + 
                       "-fx-border-style: solid inside;" + 
                       "-fx-border-width: 2;" +
                       "-fx-border-insets: 5;" + 
                       "-fx-border-radius: 5;" + 
                       "-fx-border-color: blue;");
-    //controlArea.setCenter(startStopArea);
-    //controlArea.setLeft(timeArea);
-    //controlArea.setRight(exitBtn);
-    //BorderPane.setMargin(exitBtn, new Insets(0., 5., 0., 0.));
-    //BorderPane.setAlignment(startStopArea, Pos.CENTER);
-    
+      // Initial splash image - to be replaced with loaded simulation
     Image splashImage = new Image("cognition/cognition.png");
     ImageView splashIV = new ImageView();
     splashIV.setImage(splashImage);
@@ -202,9 +202,7 @@ public class Cognition extends Application {
     splashIV.setPreserveRatio(true);
     splashIV.setSmooth(true);
     splashIV.setCache(true);
-
-    
-    
+      // Main window
     final BorderPane simMain = new BorderPane();
     simMain.setTop(controlArea);
     simMain.setBottom(dataArea);
@@ -220,20 +218,29 @@ public class Cognition extends Application {
     
     final Stage ps = primaryStage;
     loadBtn.setOnAction(e -> {
-      if (!packageLoaded) {
-        System.out.println(simField.getText());
-        gxStage.show();
-        packageLoaded = true;
+      try {
+          // Try to load class - disable class inputs if sucessful
+        Class<? extends ISimModel> cModel = 
+               Class.forName(simField.getText()).asSubclass(ISimModel.class);
+        ISimModel model = cModel.newInstance();
         loadBtn.setDisable(true);
         simField.setDisable(true);
+          // Grab model inputs and launch
+        simMain.setCenter(model.getRoot());
+        model.launch();
+        gxStage.show();
+          // Activate main window controls and resize model area
         playBtn.setDisable(false);
         pauseBtn.setDisable(false);
         newDataBtn.setDisable(false);
         newTableBtn.setDisable(false);
-        ISimModel sim = new TestProject(); 
-        simMain.setCenter(sim.getRoot());
-        sim.launch();
         ps.sizeToScene();
+      } catch(ClassNotFoundException cnfe) {
+        System.out.println("Class not found: " + cnfe);
+      } catch(InstantiationException ie) {
+        System.out.println("Can't instantiate class: " + ie);
+      } catch(IllegalAccessException iae) {
+        System.out.println("Not allowed access to class: " + iae);
       }
     });
     
