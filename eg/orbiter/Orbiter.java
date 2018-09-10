@@ -31,6 +31,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.geometry.Rectangle2D;
+import javafx.collections.ObservableList;
+import javafx.collections.FXCollections;
 
 import cognition.math.Basis3D;
 import cognition.math.Vector3D;
@@ -141,7 +143,25 @@ public class Orbiter implements ISimModel {
     
   }
   
+  @Override
+  public ObservableList<String> getRealtimeDataList() {
+    ObservableList<String> rtds = FXCollections.observableArrayList("RTD 1",
+                                                                    "RTD 2",
+                                                                    "RTD 3"
+    );
+
+    return rtds;
+  }
   
+  @Override
+  public ObservableList<String> getTableDataList() {
+    ObservableList<String> rtds = FXCollections.observableArrayList("Table 1",
+                                                                    "Table 2",
+                                                                    "Table 3"
+    );
+
+    return rtds;
+  }
   
   public Matrix3X3 steer(KeyCode key) {
     Matrix3X3 drot = new Matrix3X3();

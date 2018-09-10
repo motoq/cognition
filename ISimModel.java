@@ -22,6 +22,7 @@
 package cognition;
 
 import javafx.scene.Node;
+import javafx.collections.ObservableList;
 
 /**
  * Interface defining a class that represents a model that can be plugged
@@ -40,5 +41,8 @@ public interface ISimModel {
   public void launch();
   
   public Node getRoot();
-
+  
+  public ObservableList<String> getRealtimeDataList();
+  
+  public ObservableList<String> getTableDataList();
 }

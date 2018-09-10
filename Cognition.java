@@ -28,6 +28,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.BorderPane;
@@ -91,17 +92,23 @@ public class Cognition extends Application {
                       "-fx-border-color: blue;");
       // Output options
     Label newDataLabel = new Label("Data Window:");
-    Label tmpDataLabel = new Label("Combobox");
+    final ComboBox<String> rtDispCB = new ComboBox<>();
     final Button newDataBtn = new Button("New");
     newDataBtn.setDisable(true);
+    rtDispCB.setOnAction(e -> { if (newDataBtn.isDisabled()) { 
+                                  newDataBtn.setDisable(false);
+    }});
     Label newTableLabel = new Label("Table Window:");
-    Label tmpTableLabel = new Label("Combobox");
+    final ComboBox<String> tableCB = new ComboBox<>();
     final Button newTableBtn = new Button("New");
     newTableBtn.setDisable(true);
+    tableCB.setOnAction(e -> { if (newTableBtn.isDisabled()) {
+                                 newTableBtn.setDisable(false);
+    }});
     Region regionM = new Region();
     HBox.setHgrow(regionM, Priority.ALWAYS);
-    HBox dataArea = new HBox(10., newDataLabel, tmpDataLabel, newDataBtn,
-                            regionM, newTableLabel, tmpTableLabel, newTableBtn);
+    HBox dataArea = new HBox(10., newDataLabel, rtDispCB, newDataBtn,
+                            regionM, newTableLabel, tableCB, newTableBtn);
     dataArea.setAlignment(Pos.CENTER);
     dataArea.setStyle("-fx-padding: 10;" + 
                       "-fx-border-style: solid inside;" + 
@@ -145,12 +152,11 @@ public class Cognition extends Application {
         simField.setDisable(true);
           // Grab model inputs and launch
         simMain.setCenter(sModel.getRoot());
+        rtDispCB.setItems(sModel.getRealtimeDataList());
+        tableCB.setItems(sModel.getTableDataList());
         sModel.launch();
           // Activate main window controls and resize model area
         playBtn.setDisable(false);
-        pauseBtn.setDisable(false);
-        newDataBtn.setDisable(false);
-        newTableBtn.setDisable(false);
         ps.sizeToScene();
       } catch(ClassNotFoundException cnfe) {
         System.out.println("Class not found: " + cnfe);
