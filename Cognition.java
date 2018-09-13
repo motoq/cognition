@@ -32,6 +32,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.geometry.Insets;
@@ -60,8 +61,10 @@ public class Cognition extends Application {
 
       // Simulation package name entry
     Label simLabel = new Label("Simulation Package:");
-    final TextField simField = new TextField();
+    final TextField simField = new TextField("cognition.eg.orbiter.Orbiter");
     simField.setPrefColumnCount(32);
+    Tooltip tt = new Tooltip("Example Simulation - Enter class in CLASSPATH");
+    Tooltip.install(simField, tt);
     final Button loadBtn = new Button("Load");
     HBox simEntry = new HBox(10., simLabel, simField, loadBtn);
     simEntry.setAlignment(Pos.CENTER);
@@ -98,10 +101,18 @@ public class Cognition extends Application {
     rtDispCB.setOnAction(e -> { if (newDataBtn.isDisabled()) { 
                                   newDataBtn.setDisable(false);
     }});
+    newDataBtn.setOnAction(e -> {
+      String sval = rtDispCB.getValue();
+      System.out.println(sval);
+    });
     Label newTableLabel = new Label("Table Window:");
     final ComboBox<String> tableCB = new ComboBox<>();
     final Button newTableBtn = new Button("New");
     newTableBtn.setDisable(true);
+    newTableBtn.setOnAction(e -> {
+      String sval = tableCB.getValue();
+      System.out.println(sval);
+    });
     tableCB.setOnAction(e -> { if (newTableBtn.isDisabled()) {
                                  newTableBtn.setDisable(false);
     }});
@@ -126,6 +137,7 @@ public class Cognition extends Application {
     splashIV.setCache(true);
       // Main window
     final BorderPane simMain = new BorderPane();
+    
     simMain.setTop(controlArea);
     simMain.setBottom(dataArea);
     simMain.setCenter(splashIV);
@@ -158,6 +170,8 @@ public class Cognition extends Application {
           // Activate main window controls and resize model area
         playBtn.setDisable(false);
         ps.sizeToScene();
+        ps.setAlwaysOnTop(true);
+        ps.setAlwaysOnTop(false);
       } catch(ClassNotFoundException cnfe) {
         System.out.println("Class not found: " + cnfe);
       } catch(InstantiationException ie) {

@@ -21,11 +21,13 @@
 
 package cognition.eg.orbiter;
 
-import javafx.scene.Group;
 import javafx.stage.Stage;
+import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.stage.Screen;
 import javafx.scene.Node;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.scene.image.Image;
@@ -138,8 +140,19 @@ public class Orbiter implements ISimModel {
     projectIV.setPreserveRatio(true);
     projectIV.setSmooth(true);
     projectIV.setCache(true);
+    
+    Tab setupTab = new Tab("Setup");
+    setupTab.setClosable(false);
+    
+    Tab orbitTab = new Tab("Orbit");
+    orbitTab.setContent(projectIV);
+    orbitTab.setClosable(false);
+    orbitTab.setDisable(true);
+    
+    TabPane tabPane = new TabPane();
+		tabPane.getTabs().addAll(setupTab, orbitTab);
 
-    return projectIV;
+    return tabPane;
     
   }
   
