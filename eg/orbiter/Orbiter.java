@@ -26,6 +26,11 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.stage.Screen;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.KeyCode;
@@ -33,6 +38,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.geometry.Rectangle2D;
+import javafx.geometry.Pos;
 import javafx.collections.ObservableList;
 import javafx.collections.FXCollections;
 
@@ -46,6 +52,7 @@ import cognition.jfx.Axes3D;
 import cognition.jfx.JFX2ComputationalFrame;
 import cognition.jfx.meshmodels.SparkySpacecraftBuilder;
 import cognition.jfx.SimulationTimeline;
+import cognition.jfx.gui.DoubleTextField;
 
 public class Orbiter implements ISimModel {
   private final Matrix3X3 sparkyAtt = new Matrix3X3();
@@ -141,8 +148,53 @@ public class Orbiter implements ISimModel {
     projectIV.setSmooth(true);
     projectIV.setCache(true);
     
+    // Primary modeling parameters setup area
+    
+      // Gravitational Parameter
+    Label gmLabel = new Label("Gravitational Parameter (DU\u00B3/TU\u00B2):");
+    DoubleTextField gmField = new DoubleTextField();
+    Region leftRegion = new Region();
+    HBox.setHgrow(leftRegion, Priority.ALWAYS);
+    HBox gmEntry = new HBox(10., leftRegion, gmLabel, gmField);
+    gmEntry.setAlignment(Pos.CENTER);
+      // Gravitational Scaling Radius
+    Label radiusLabel = new Label("Gravitational Scaling Radius (DU):");
+    DoubleTextField radiusField = new DoubleTextField();
+    leftRegion = new Region();
+    HBox.setHgrow(leftRegion, Priority.ALWAYS);
+    HBox radiusEntry = new HBox(10., leftRegion, radiusLabel, radiusField);
+    radiusEntry.setAlignment(Pos.CENTER);
+      // First column
+    VBox grArea = new VBox(10., gmEntry, radiusEntry);
+    
+      // Central body rotation rate
+    Label wLabel = new Label("Central Body Rotation Rate (rad/TU):");
+    DoubleTextField wField = new DoubleTextField();
+    leftRegion = new Region();
+    HBox.setHgrow(leftRegion, Priority.ALWAYS);
+    HBox wEntry = new HBox(10., leftRegion, wLabel, wField);
+    wEntry.setAlignment(Pos.CENTER);
+      // Solid model scale factor (so you can see it depending on units selected
+    Label smsfLabel = new Label("Solid Model Scale Factor:");
+    DoubleTextField smsfField = new DoubleTextField(1.0);
+    leftRegion = new Region();
+    HBox.setHgrow(leftRegion, Priority.ALWAYS);
+    HBox smsfEntry = new HBox(10., leftRegion, smsfLabel, smsfField);
+    smsfEntry.setAlignment(Pos.CENTER);
+      // Second column
+    VBox etcArea = new VBox(10., wEntry, smsfEntry);
+    
+    HBox primaryParamsArea = new HBox(10., grArea, etcArea);
+    primaryParamsArea.setStyle("-fx-padding: 10;" + 
+                      "-fx-border-style: solid inside;" + 
+                      "-fx-border-width: 2;" +
+                      "-fx-border-insets: 5;" + 
+                      "-fx-border-radius: 5;" + 
+                      "-fx-border-color: blue;");
     Tab setupTab = new Tab("Setup");
     setupTab.setClosable(false);
+    setupTab.setContent(primaryParamsArea);
+    
     
     Tab orbitTab = new Tab("Orbit");
     orbitTab.setContent(projectIV);
