@@ -24,7 +24,10 @@ package cognition.jfx.gui;
 import java.text.DecimalFormat;
 
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCode;
 import javafx.geometry.Pos;
+import javafx.event.EventHandler;
 
 import cognition.util.IErrorReportable;
 
@@ -34,68 +37,92 @@ public class DoubleTextField extends TextField implements IErrorReportable {
   private double maxValue =  Double.MAX_VALUE;
   private String errorText = "";
   private DecimalFormat df = new DecimalFormat("0.00000000E00");
+  private boolean valid = true;
+  private boolean newTextValue = false;
 
   public DoubleTextField() {
-    this(0.0);
+    this(0.0, -Double.MAX_VALUE, Double.MAX_VALUE);
   }
+  
+   public DoubleTextField(double doubleValue) {
+     this(doubleValue, -Double.MAX_VALUE, Double.MAX_VALUE);
+   }
 
-  public DoubleTextField(double dval) {
+  public DoubleTextField(double doubleValue, double minValue, double maxValue) {
+    this.doubleValue = doubleValue;
+    this.minValue = minValue;
+    this.maxValue = maxValue;
     setAlignment(Pos.CENTER_RIGHT);
-    setText(df.format(dval));
-    setStyle("-fx-background-color: white;");
-    isValid();
+    set();
+    textProperty().addListener((o, old, nw) -> {
+      newTextValue = true;
+      System.out.println("text property");
+    });
+    
+    setOnKeyPressed(new EventHandler<KeyEvent>() {
+      @Override
+      public void handle(KeyEvent keyEvent) {
+        if (keyEvent.getCode() == KeyCode.ENTER)  {
+          get();
+          System.out.println("Enter");
+        }
+      }
+    });
+  }
+  
+  /** Tries to parse and then set the extracted double.  Does nothing
+      if no changes have been made to the TextField */
+  private void get() {
+    if (newTextValue) {
+      try {
+        doubleValue = Double.parseDouble(getText());
+        newTextValue = false;
+        set();
+      } catch(NumberFormatException e) {
+        errorText = "Unable to convert " + getText() + " to a double: " + e;
+        setStyle("-fx-background-color: red;");
+        valid = false;
+      }
+    }
+  }
+  
+  private void set() {
+    if (doubleValue <= maxValue  &&  doubleValue >= minValue) {
+      errorText = "";
+      setText(df.format(doubleValue));
+      setStyle("-fx-background-color: white;");
+      valid = true;
+    } else {
+      errorText = "Entered value out of range";
+      setStyle("-fx-background-color: red;");
+      valid = false;
+    } 
   }
 
   @Override
   final public boolean isValid() {
-    try {
-      doubleValue = Double.parseDouble(getText());
-      if (doubleValue <= maxValue  &&  doubleValue >= minValue) {
-        errorText = "";
-        setText(df.format(doubleValue));
-        setStyle("-fx-background-color: white;");
-        return true;
-      } else {
-        errorText = "Entered value out of range";
-        setStyle("-fx-background-color: red;");
-        return false;
-      }
-    } catch(NumberFormatException e) {
-      doubleValue = Double.NaN;
-      errorText = "Unable to convert " + getText() + " to a double: " + e;
-      setStyle("-fx-background-color: red;");
-      return false;
-    }
+    get();
+    return valid;
   }
-  
+
   @Override
   public String  getErrorLabel() {
-    isValid();
+    get();
     return errorText;
   }
-  
-  public void set(double dval) {
-    setText(df.format(dval));
-    isValid();
-  }
 
-  /** @return  Value entered into text field */
-  public double get() {
-    isValid();
+    /** @return  Value entered into text field */
+  public double getDoubleValue() {
+    get();
     return doubleValue;
   }
-
-  public void setMinMaxValues(double min, double max) {
-    minValue = min;
-    maxValue = max;
-  }
-
+  
   public double getMinValue() { return minValue; }
   
   public double getMaxValue() { return maxValue; }
   
   public void setFormat(DecimalFormat df) {
     this.df = df;
-    set(doubleValue);
+    set();
   }
 }

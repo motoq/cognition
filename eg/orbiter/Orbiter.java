@@ -21,6 +21,8 @@
 
 package cognition.eg.orbiter;
 
+import java.text.DecimalFormat;
+
 import javafx.stage.Stage;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -152,14 +154,16 @@ public class Orbiter implements ISimModel {
     
       // Gravitational Parameter
     Label gmLabel = new Label("Gravitational Parameter (DU\u00B3/TU\u00B2):");
-    DoubleTextField gmField = new DoubleTextField();
+    DoubleTextField gmField = new DoubleTextField(3.986004415e14);
+    gmField.setFormat(new DecimalFormat("0.000000000E00"));
     Region leftRegion = new Region();
     HBox.setHgrow(leftRegion, Priority.ALWAYS);
     HBox gmEntry = new HBox(10., leftRegion, gmLabel, gmField);
     gmEntry.setAlignment(Pos.CENTER);
       // Gravitational Scaling Radius
     Label radiusLabel = new Label("Gravitational Scaling Radius (DU):");
-    DoubleTextField radiusField = new DoubleTextField();
+    DoubleTextField radiusField = new DoubleTextField(6378136.6);
+    radiusField.setFormat(new DecimalFormat("0.0000000E00"));
     leftRegion = new Region();
     HBox.setHgrow(leftRegion, Priority.ALWAYS);
     HBox radiusEntry = new HBox(10., leftRegion, radiusLabel, radiusField);
@@ -169,7 +173,8 @@ public class Orbiter implements ISimModel {
     
       // Central body rotation rate
     Label wLabel = new Label("Central Body Rotation Rate (rad/TU):");
-    DoubleTextField wField = new DoubleTextField();
+    DoubleTextField wField = new DoubleTextField(7.292115e-5);
+    wField.setFormat(new DecimalFormat("0.000000E00"));
     leftRegion = new Region();
     HBox.setHgrow(leftRegion, Priority.ALWAYS);
     HBox wEntry = new HBox(10., leftRegion, wLabel, wField);
