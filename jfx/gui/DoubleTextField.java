@@ -47,6 +47,12 @@ public class DoubleTextField extends TextField implements IErrorReportable {
    public DoubleTextField(double doubleValue) {
      this(doubleValue, -Double.MAX_VALUE, Double.MAX_VALUE);
    }
+   
+   public DoubleTextField(DoubleTextField dtf) {
+     this(dtf.doubleValue, dtf.minValue, dtf.maxValue);
+     this.df = new DecimalFormat(dtf.df.toPattern(), dtf.df.getDecimalFormatSymbols());
+     set();
+   }
 
   public DoubleTextField(double doubleValue, double minValue, double maxValue) {
     this.doubleValue = doubleValue;
@@ -125,4 +131,5 @@ public class DoubleTextField extends TextField implements IErrorReportable {
     this.df = df;
     set();
   }
+  
 }

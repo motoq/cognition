@@ -55,6 +55,7 @@ import cognition.jfx.JFX2ComputationalFrame;
 import cognition.jfx.meshmodels.SparkySpacecraftBuilder;
 import cognition.jfx.SimulationTimeline;
 import cognition.jfx.gui.DoubleTextField;
+import cognition.jfx.gui.DoubleTextMatrix;
 
 public class Orbiter implements ISimModel {
   private final Matrix3X3 sparkyAtt = new Matrix3X3();
@@ -191,14 +192,25 @@ public class Orbiter implements ISimModel {
     
     HBox primaryParamsArea = new HBox(10., grArea, etcArea);
     primaryParamsArea.setStyle("-fx-padding: 10;" + 
-                      "-fx-border-style: solid inside;" + 
-                      "-fx-border-width: 2;" +
-                      "-fx-border-insets: 5;" + 
-                      "-fx-border-radius: 5;" + 
-                      "-fx-border-color: blue;");
+                               "-fx-border-width: 2;" +
+                               "-fx-border-insets: 5;" + 
+                               "-fx-border-radius: 5;");
+    
+    DoubleTextField dtmField = new DoubleTextField(7.5);
+    dtmField.setFormat(new DecimalFormat("0.00E00"));
+    DoubleTextMatrix dtm = new DoubleTextMatrix(4,3, dtmField);
+    
+    VBox setupParamsArea = new VBox(primaryParamsArea, dtm);
+    setupParamsArea.setStyle("-fx-padding: 10;" + 
+                             "-fx-border-style: solid inside;" + 
+                             "-fx-border-width: 2;" +
+                             "-fx-border-insets: 5;" + 
+                             "-fx-border-radius: 5;" + 
+                             "-fx-border-color: blue;");
+    
     Tab setupTab = new Tab("Setup");
     setupTab.setClosable(false);
-    setupTab.setContent(primaryParamsArea);
+    setupTab.setContent(setupParamsArea);
     
     
     Tab orbitTab = new Tab("Orbit");
