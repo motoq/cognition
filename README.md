@@ -1,2 +1,2 @@
-# cognition
-Modeling, Simulation, and Analysis Tool
+# Cognition
+Framework for study of math and physics related concepts.
