@@ -1,0 +1,11 @@
+set term qt 3
+
+set title "Oblate Spheroid"
+set parametric
+set isosamples 25
+splot [-pi:pi][-pi/2:pi/2] 7.500e0*cos(u)*cos(v), 7.500e0*sin(u)*cos(v), 4.961e0*sin(v)
+set arrow from 2,0,0 to 4,0,0
+
+set grid
+
+set view equal xyz
