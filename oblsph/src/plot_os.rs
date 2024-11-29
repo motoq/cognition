@@ -1,8 +1,7 @@
 use std::fs::File;
 use std::io::{Write, BufWriter};
 
-use nalgebra as na;
-
+use cogs::gp_plot::plot_arrow;
 use cogs::oblate_spheroid;
 
 use crate::Config;
@@ -62,6 +61,7 @@ pub fn plot_os(os: &oblate_spheroid::OblateSpheroid,
     Ok(())
 }
 
+/*
 fn plot_arrow(out: &mut BufWriter<File>,
               orgn: &na::SMatrix<f64, 3, 1>,
               dstn: &na::SMatrix<f64, 3, 1>,
@@ -72,5 +72,6 @@ fn plot_arrow(out: &mut BufWriter<File>,
     write!(out, " filled back lw 3 lc rgb \"{}\"", rgb)?;
     Ok(())
 }
+*/
 
 
