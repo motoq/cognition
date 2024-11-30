@@ -1,0 +1,16 @@
+# Comment lines must have a '#' as the first non-whitespace character
+# Mid-line or trailing comments are not allowed
+# Two entries per input line: key value
+# All possible entry types are illustrated below but not all
+# are active due to being commented out
+#
+# Oblate spheroid definition
+    eccentricity 0.75
+    semimajor 7.5
+# Location on oblate spheroid
+    longitude_deg 70.0
+    latitude 0.5
+# Plotting options
+    plot_prefix ob_test
+    plot covariant_basis
+#   plot contravariant_basis

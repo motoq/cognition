@@ -1,7 +1,15 @@
+/*
+ * Copyright 2024 Kurt Motekew
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
 use std::fs::File;
 use std::io::{Write, BufWriter};
 
-use cogs::gp_plot::plot_arrow;
+use cogs::gp_plot::gp_plot_basis;
 use cogs::oblate_spheroid;
 
 use crate::Config;
@@ -32,23 +40,13 @@ pub fn plot_os(os: &oblate_spheroid::OblateSpheroid,
         match plt {
             OsPlotType::BasisCovariant => {
                 let xyz0 = os.get_cartesian();
-                let (e1, e2, e3) = os.get_cov_basis();
-                let mut xyz = xyz0 + e1;
-                plot_arrow(&mut writer, &xyz0, &xyz, &"red".to_string())?;
-                xyz = xyz0 + e2;
-                plot_arrow(&mut writer, &xyz0, &xyz, &"green".to_string())?;
-                xyz = xyz0 + e3;
-                plot_arrow(&mut writer, &xyz0, &xyz, &"blue".to_string())?;
+                let basis = os.get_cov_basis();
+                gp_plot_basis(&mut writer, &xyz0, &basis)?;
             }
             OsPlotType::BasisContravariant => {
                 let xyz0 = os.get_cartesian();
-                let (e1, e2, e3) = os.get_cont_basis();
-                let mut xyz = xyz0 + e1;
-                plot_arrow(&mut writer, &xyz0, &xyz, &"red".to_string())?;
-                xyz = xyz0 + e2;
-                plot_arrow(&mut writer, &xyz0, &xyz, &"green".to_string())?;
-                xyz = xyz0 + e3;
-                plot_arrow(&mut writer, &xyz0, &xyz, &"blue".to_string())?;
+                let basis = os.get_cont_basis();
+                gp_plot_basis(&mut writer, &xyz0, &basis)?;
             }
         }
     }
@@ -60,18 +58,4 @@ pub fn plot_os(os: &oblate_spheroid::OblateSpheroid,
     writer.flush()?;
     Ok(())
 }
-
-/*
-fn plot_arrow(out: &mut BufWriter<File>,
-              orgn: &na::SMatrix<f64, 3, 1>,
-              dstn: &na::SMatrix<f64, 3, 1>,
-              rgb: &str) -> std::io::Result<()> {
-    write!(out, "\nset arrow from {:.3e}, {:.3e}, {:.3e}",
-                 orgn[0], orgn[1], orgn[2])?;
-    write!(out, " to {:.3e}, {:.3e}, {:.3e}", dstn[0], dstn[1], dstn[2])?;
-    write!(out, " filled back lw 3 lc rgb \"{}\"", rgb)?;
-    Ok(())
-}
-*/
-
 

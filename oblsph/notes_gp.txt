@@ -1,4 +1,7 @@
-set term qt 3
+reset session
+set term qt 0
+reset session
+set term qt 1
 
 set title "Oblate Spheroid"
 set parametric
@@ -8,4 +11,12 @@ set arrow from 2,0,0 to 4,0,0
 
 set grid
 
+set view equal xyz
+set title "Oblate Spheroid"
+set parametric
+set isosamples 25
+splot [-pi:pi][-pi/2:pi/2] 7.500e0*cos(u)*cos(v), 7.500e0*sin(u)*cos(v), 4.961e0*sin(v)
+set arrow from 2.221e0, 6.103e0, 2.480e0 to 2.518e0, 6.917e0, 2.811e0 back lw 3 lc rgb "red"
+set arrow from 2.221e0, 6.103e0, 2.480e0 to -3.882e0, 8.325e0, 2.480e0 filled front lw 3 lc rgb "green"
+set arrow from 2.221e0, 6.103e0, 2.480e0 to 7.405e-1, 2.034e0, 7.441e0 filled back lw 3 lc rgb "blue"
 set view equal xyz

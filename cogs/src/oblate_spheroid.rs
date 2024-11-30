@@ -10,7 +10,6 @@ use nalgebra as na;
 
 use crate::utl_const::DEG_PER_RAD;
 
-
 /**
  * Oblate spheroid definition (eccentricity and semimajor axis length)
  * and coordinates (oblate spheroidal and Cartesian) struct.
@@ -23,7 +22,6 @@ pub struct OblateSpheroid {
     lat: f64,
     xyz: na::SMatrix<f64, 3, 1>,
 }
-
 
 /*
  * Constructors
@@ -86,7 +84,6 @@ impl TryFrom<&(f64, f64, f64, f64)> for OblateSpheroid {
 }
 
 impl TryFrom<&(f64, na::SMatrix<f64, 3, 1>)> for OblateSpheroid {
-    //type Error = &'static str;
     type Error = String;
 
     /**
@@ -115,9 +112,8 @@ impl TryFrom<&(f64, na::SMatrix<f64, 3, 1>)> for OblateSpheroid {
     }
 }
 
-
 /*
- * Public immutable associated methods
+ * Public immutable methods
  */
 
 impl OblateSpheroid {
@@ -164,7 +160,7 @@ impl OblateSpheroid {
     }
 
     /**
-     * @return  Covariant basis vectors at current location
+     * @return  Covariant basis vectors at these coordinates
      */
     pub fn get_cov_basis(&self) -> (na::SMatrix<f64, 3, 1>,
                                     na::SMatrix<f64, 3, 1>,
@@ -183,7 +179,7 @@ impl OblateSpheroid {
     }
 
     /**
-     * @return  Contravariant basis vectors at current location
+     * @return  Contravariant basis vectors at these coordinates
      */
     pub fn get_cont_basis(&self) -> (na::SMatrix<f64, 3, 1>,
                                      na::SMatrix<f64, 3, 1>,
@@ -202,7 +198,6 @@ impl OblateSpheroid {
          na::matrix![-eta*sqometa2*cl/a;-eta*sqometa2*sl/a;ometa2/(a*sqome2)])
     }
 }
-
 
 /*
  * Private associated methods
@@ -250,7 +245,6 @@ impl OblateSpheroid {
         self.lat = cart[2]/(self.sma*ome2.sqrt());
     }
 }
-
 
 /*
  * Utility

@@ -1,6 +1,0 @@
-eccentricity 0.75
-semimajor 7.5
-longitude_deg 70.0
-latitude 0.5
-plot_prefix ob_test
-plot covariant_basis
