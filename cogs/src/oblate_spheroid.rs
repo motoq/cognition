@@ -7,6 +7,8 @@
  */
 
 use nalgebra as na;
+//extern crate nalgebra as na;
+//use na::{Vector3, Rotation3};
 
 use crate::utl_const::DEG_PER_RAD;
 
@@ -196,6 +198,51 @@ impl OblateSpheroid {
         (na::matrix![sqometa2*cl ; sqometa2*sl ; eta/sqome2],
          na::matrix![-sl/(a*sqometa2) ; cl/(a*sqometa2) ; 0.0],
          na::matrix![-eta*sqometa2*cl/a;-eta*sqometa2*sl/a;ometa2/(a*sqome2)])
+    }
+
+    /**
+     * Given a cartesian location and pointing vector, return the
+     * surface point tangent to the line from the position vector,
+     * in the direction of the pointing vector and in the plane formed
+     * by the position and pointing vectors.
+     *
+     * @param  pos  Cartesian position w.r.t. the origin of the oblate
+     *              spheroid
+     * @param  pnt  Cartesian pointing vector
+     *
+     * @return  Horizon point
+     */
+    pub fn get_surface_tangent(&self, pos: &na::SMatrix<f64, 3, 1>,
+                                      pnt: &na::SMatrix<f64, 3, 1>) ->
+                                            na::SMatrix<f64, 3, 1>
+    {
+        // Oblate spheroid to unit sphere affine transformation
+        let mut aff: na::SMatrix<f64, 3, 3> = na::SMatrix::identity();
+        aff[(0,0)] = 1.0/self.sma;
+        aff[(1,1)] = 1.0/self.sma;
+        aff[(2,2)] = 1.0/self.get_semiminor();
+
+        // Transform geometry to unit sphere space
+        let ar = aff*pos;
+        let ar2 = ar.dot(&ar);
+        let ap = aff*pnt;
+        let ap = na::Unit::new_normalize(ap).into_inner();
+        let arp = ar.dot(&ap);
+
+        // Unit sphere to oblate spheroid
+        aff[(0,0)] = self.sma;
+        aff[(1,1)] = self.sma;
+        aff[(2,2)] = self.get_semiminor();
+
+        // If position vector is inside the oblate spheroid,
+        // return intersection as degenerate tangent point
+        if ar2 < 1.0 {
+            return aff*na::Unit::new_normalize(ar).into_inner();
+        }
+
+        // Unit sphere intersection transformed back to
+        // oblate spheroid space
+        aff*(ar - ap/arp)/(ar2 - arp*arp).sqrt()
     }
 }
 
