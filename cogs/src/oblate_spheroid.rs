@@ -324,16 +324,20 @@ mod tests {
     #[test]
     fn surface_tangent() {
         let eps = 1.0e-13;
-        // Define an oblate spheroid, pos, and pointing vector
-        let os = crate::oblate_spheroid::OblateSpheroid::try_from(
-            &(0.4, 1.0, 1.0, 0.5)).expect("Bad Oblate Spheroid ");
+        // Define an oblate spheroid with an arbitrary location
+        // along with a position and pointing vector
+        let ecc = 0.4;
+        let smaj = 1.0;
+        let lon = 1.0;                                // Radians
+        let lat = 0.5;
+        let mut os = crate::oblate_spheroid::OblateSpheroid::try_from(
+            &(ecc, smaj, lon, lat)).expect("Bad Oblate Spheroid ");
         let pos = na::matrix![1.0 ; 1.0 ; 1.0];
         let pnt = na::matrix![-1.0 ; -1.0 ; 0.0];
         // Get tangent point.  Then, using the same eccentricity
-        // define an oblate spheroid passing through this point
+        // update oblate spheroid point to pass through this point
         let tp = os.get_surface_tangent(&pos, &pnt);
-        let os = crate::oblate_spheroid::OblateSpheroid::try_from(
-            &(os.get_eccentricity(), tp)).expect("Bad Oblate Spheroid ");
+        os.set_with_cartesian(ecc, &tp);
         // The vector from the tangent point to the position should
         // be a linear combination of the tangent plane basis vectors
         let p2t = tp - pos;
