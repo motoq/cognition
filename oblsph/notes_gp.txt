@@ -1,3 +1,17 @@
+
+# Use:
+
+#
+# To run GP file
+#
+
+# Leaves plot up after run, but loses functionality once GP exits
+gnuplot -p ob_test.gp
+
+# Start gnuplot and run, remaining interactive
+load 'ob_test.gp'
+
+
 reset session
 set term qt 0
 reset session

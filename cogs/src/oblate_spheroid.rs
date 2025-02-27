@@ -7,10 +7,9 @@
  */
 
 use nalgebra as na;
-//extern crate nalgebra as na;
-//use na::{Vector3, Rotation3};
 
 use crate::utl_const::DEG_PER_RAD;
+use crate::unit_circle;
 
 /**
  * Oblate spheroid definition (eccentricity and semimajor axis length)
@@ -222,27 +221,34 @@ impl OblateSpheroid {
         aff[(1,1)] = 1.0/self.sma;
         aff[(2,2)] = 1.0/self.get_semiminor();
 
-        // Transform geometry to unit sphere space
-        let ar = aff*pos;
-        let ar2 = ar.dot(&ar);
-        let ap = aff*pnt;
-        let ap = na::Unit::new_normalize(ap).into_inner();
-        let arp = ar.dot(&ap);
+        // Oblate spheroid to spherical
+        let pos_aff = aff*pos;
+        let pnt_aff = aff*pnt;
+        // 3D to 2D
+        let yhat = pos_aff;
+        let zhat = pos_aff.cross(&pnt_aff);
+        let xhat = yhat.cross(&zhat);
+        let xhat = na::Unit::new_normalize(xhat).into_inner();
+        let yhat = na::Unit::new_normalize(yhat).into_inner();
+        let zhat = na::Unit::new_normalize(zhat).into_inner();
 
-        // Unit sphere to oblate spheroid
+        let to_3d = na::SMatrix::<f64, 3, 3>::from_columns(&[xhat, yhat, zhat]);
+        let to_2d = to_3d.transpose();
+
+        let pos_2d = to_2d*pos_aff;
+        let pnt_2d = to_2d*pnt_aff;
+
+        let r = pos_2d.fixed_view::<2,1>(0,0).into_owned();
+        let p = pnt_2d.fixed_view::<2,1>(0,0).into_owned();
+
+        let xy = unit_circle::tangent(&r, &p);
+
+        let xyz = na::matrix![xy[0] ; xy[1] ; 0.0];
+
         aff[(0,0)] = self.sma;
         aff[(1,1)] = self.sma;
         aff[(2,2)] = self.get_semiminor();
-
-        // If position vector is inside the oblate spheroid,
-        // return intersection as degenerate tangent point
-        if ar2 < 1.0 {
-            return aff*na::Unit::new_normalize(ar).into_inner();
-        }
-
-        // Unit sphere intersection transformed back to
-        // oblate spheroid space
-        aff*(ar - ap/arp)/(ar2 - arp*arp).sqrt()
+        aff*to_3d*xyz
     }
 }
 
@@ -305,6 +311,38 @@ impl std::fmt::Display for OblateSpheroid {
         write!(f, "(Eccentricity: {};  Semimajor: {}\
                    ;  Azimuth: {};  Elevation: {})",
             self.ecc, self.sma, DEG_PER_RAD*self.lon, self.lat)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /**
+     * Unit test for the surface oblate_spheroid::surface_tangent function
+     */
+    #[test]
+    fn surface_tangent() {
+        let eps = 1.0e-13;
+        // Define an oblate spheroid, pos, and pointing vector
+        let os = crate::oblate_spheroid::OblateSpheroid::try_from(
+            &(0.4, 1.0, 1.0, 0.5)).expect("Bad Oblate Spheroid ");
+        let pos = na::matrix![1.0 ; 1.0 ; 1.0];
+        let pnt = na::matrix![-1.0 ; -1.0 ; 0.0];
+        // Get tangent point.  Then, using the same eccentricity
+        // define an oblate spheroid passing through this point
+        let tp = os.get_surface_tangent(&pos, &pnt);
+        let os = crate::oblate_spheroid::OblateSpheroid::try_from(
+            &(os.get_eccentricity(), tp)).expect("Bad Oblate Spheroid ");
+        // The vector from the tangent point to the position should
+        // be a linear combination of the tangent plane basis vectors
+        let p2t = tp - pos;
+        let (_, e2, e3) = os.get_cov_basis();
+        let rank_2m = na::SMatrix::<f64, 3, 3>::from_columns(&[e2, e3, p2t]);
+        // Check both determinant and rank just to illustrate use of both
+        let det = rank_2m.determinant();
+        let rank = rank_2m.rank(eps);
+        assert!(det < eps  &&  rank == 2);
     }
 }
 
