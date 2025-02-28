@@ -1,0 +1,7 @@
+cargo check
+cargo build
+
+
+
+cargo run --bin oblsph inputs.txt
+cargo run --bin test_consistency
