@@ -8,7 +8,7 @@
 
 use nalgebra as na;
 
-/*
+/**
  * Computes the tangent point on a unit circle given a location
  * and pointing vector from that location.  The side of the circle
  * most closely aligns with the pointing vector is chosen for the

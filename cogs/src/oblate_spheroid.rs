@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Kurt Motekew
+ * Copyright 2024, 2025 Kurt Motekew
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,14 +13,35 @@ use crate::unit_circle;
 
 /**
  * Oblate spheroid definition (eccentricity and semimajor axis length)
- * and coordinates (oblate spheroidal and Cartesian) struct.
+ * and coordinates (oblate spheroidal (os) and Cartesian) struct.  When
+ * created, this struct defines a location in space using both Cartesian
+ * and oblate spheroidal coordinates.  Properties related to this surface
+ * are available at the location currently defined by the struct (e.g.,
+ * basis vectors).  Some functionality (e.g., get_surface_tangent()) relies
+ * on only the oblate spheroid definition vs. a specific location.  In
+ * these cases, initialization with the default location at the origin of
+ * the surface coordinates is sufficient.
+ *
+ * The oblate spheroid is a surface of revolution formed by rotating an
+ * ellipse with a semiminor axis aligned with the Cartesian z-axis, rotated
+ * about the z-axis.  For this implementation, the oblate spheroid itself
+ * is defined by the eccentricity (ecc) and semimajor axis (sma).  This
+ * is in contrast to traditional implementations that use the semiminor
+ * axis as one of the os coordinates.  The longitude parameter (lon) is
+ * identical to that defined for spherical or geodetic coordinates - it is
+ * the angle measured in a right handed sense from the x-axis.  The latitude
+ * (lat) is not an angle, but instead the +/- percentage along the z-axis,
+ * with +1 being the north pole, and -1 the south pole.
+ *
+ * @author  Kurt Motekew  2024
+ *                        2025/02/26  Added get_surface_tangent()
  */
 #[derive(Copy, Clone)]
 pub struct OblateSpheroid {
-    ecc: f64,
-    sma: f64,
-    lon: f64,
-    lat: f64,
+    ecc: f64,                                    // 0   <= e   < 1
+    sma: f64,                                    // 0   <  a   < inf
+    lon: f64,                                    // -pi <  lon <= pi
+    lat: f64,                                    // -1  <= lat <= 1
     xyz: na::SMatrix<f64, 3, 1>,
 }
 
@@ -45,6 +66,36 @@ impl Default for OblateSpheroid {
     }
 }
 
+impl TryFrom<&(f64, f64)> for OblateSpheroid {
+    type Error = String;
+
+    /**
+     * Create OblateSpheroid and set coordinates to the origin on
+     * the surface (zero longitude and latitude).
+     *
+     * @param  eccentricity  Eccentricity defining parameter, 0 <= eccen < 1
+     * @param  semimajor     Semimajor axis defining parameter, smajor > 0
+     *
+     * @return  Ok:  OblateSpheroid
+     *          Err: String
+     */
+    fn try_from(osp: &(f64, f64)) -> Result<Self, Self::Error> {
+        let (eccentricity, semimajor) = osp;
+
+        if *eccentricity < 0.0  ||  *eccentricity >= 1.0 {
+            return Err("Invalid Eccentricity: ".to_string() +
+                        &eccentricity.to_string());
+        } else if *semimajor < 0.0 {
+            return Err("Invalid Semimajor Axis: ".to_string() +
+                       &semimajor.to_string());
+        }
+
+        let mut os = OblateSpheroid::default();
+        os.set_with_os(*eccentricity, *semimajor, 0.0, 0.0);
+        Ok(os)
+    }
+}
+
 impl TryFrom<&(f64, f64, f64, f64)> for OblateSpheroid {
     type Error = String;
 
@@ -63,14 +114,14 @@ impl TryFrom<&(f64, f64, f64, f64)> for OblateSpheroid {
     fn try_from(osp: &(f64, f64, f64, f64)) -> Result<Self, Self::Error> {
         let (eccentricity, semimajor, longitude, latitude) = osp;
 
-        if *eccentricity < 0.0   ||  *eccentricity >= 1.0 {
+        if *eccentricity < 0.0  ||  *eccentricity >= 1.0 {
             return Err("Invalid Eccentricity: ".to_string() +
                         &eccentricity.to_string());
         } else if *semimajor < 0.0 {
             return Err("Invalid Semimajor Axis: ".to_string() +
                        &semimajor.to_string());
-        } else if *longitude < -std::f64::consts::PI  ||
-                  *longitude >  std::f64::consts::PI {
+        } else if *longitude <= -std::f64::consts::PI  ||
+                  *longitude >   std::f64::consts::PI {
             return Err("Invalid Longitude: ".to_string() +
                        &(DEG_PER_RAD*longitude).to_string());
         } else if *latitude < -1.0  ||  *latitude >  1.0 {
@@ -324,14 +375,11 @@ mod tests {
     #[test]
     fn surface_tangent() {
         let eps = 1.0e-13;
-        // Define an oblate spheroid with an arbitrary location
-        // along with a position and pointing vector
+        // Define an oblate spheroid, a position, and pointing vector
         let ecc = 0.4;
         let smaj = 1.0;
-        let lon = 1.0;                                // Radians
-        let lat = 0.5;
         let mut os = crate::oblate_spheroid::OblateSpheroid::try_from(
-            &(ecc, smaj, lon, lat)).expect("Bad Oblate Spheroid ");
+            &(ecc, smaj)).expect("Bad Oblate Spheroid ");
         let pos = na::matrix![1.0 ; 1.0 ; 1.0];
         let pnt = na::matrix![-1.0 ; -1.0 ; 0.0];
         // Get tangent point.  Then, using the same eccentricity
