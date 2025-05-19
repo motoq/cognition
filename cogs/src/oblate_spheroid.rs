@@ -212,6 +212,25 @@ impl OblateSpheroid {
     }
 
     /**
+     * Creates the paritals of the Cartesian coordinates w.r.t.
+     * the oblate spheroidal coordinates;
+     *
+     * @return  Jacobian matrix
+     */
+    pub fn get_jacobian(&self) -> na::SMatrix<f64, 3, 3>
+    {
+        let a = self.sma;
+        let eta = self.lat;
+        let sqome2 = (1.0 - self.ecc*self.ecc).sqrt();
+        let sqometa2 = (1.0 - eta*eta).sqrt();
+        let cl = self.lon.cos();
+        let sl = self.lon.sin();
+        na::matrix![sqometa2*cl, -a*sqometa2*sl, -a*eta*cl/sqometa2 ;
+                    sqometa2*sl,  a*sqometa2*cl, -a*eta*sl/sqometa2 ;
+                    eta*sqome2,        0.0,       a*sqome2]
+    }
+
+    /**
      * @return  Covariant basis vectors at these coordinates
      */
     pub fn get_cov_basis(&self) -> (na::SMatrix<f64, 3, 1>,
@@ -228,6 +247,31 @@ impl OblateSpheroid {
         (na::matrix![sqometa2*cl ; sqometa2*sl ; eta*sqome2],
          na::matrix![-a*sqometa2*sl ; a*sqometa2*cl ; 0.0],
          na::matrix![-a*eta*cl/sqometa2 ; -a*eta*sl/sqometa2 ; a*sqome2])
+    }
+
+    /**
+     * Creates the paritals of the oblate spheroidal coordinates w.r.t.
+     * Cartesian coordinates;
+     *
+     * @return  Inverse Jacobian matrix
+     */
+    pub fn get_inverse_jacobian(&self) -> na::SMatrix<f64, 3, 3>
+    {
+        let a = self.sma;
+        let ainv = 1.0/a;
+        let ainv2 = ainv*ainv;
+        let ainv3 = ainv*ainv2;
+        let ome2 = 1.0 - self.ecc*self.ecc;
+        let sqome2inv = 1.0/ome2.sqrt();
+        let x = self.xyz[0];
+        let x2 = x*x;
+        let y = self.xyz[1];
+        let y2 = y*y;
+        let z = self.xyz[2];
+        na::matrix![ainv*x, ainv*y, ainv*z/ome2 ;
+                    -y/(x2 + y2),  1.0/(x*(1.0 + y2/x2)), 0.0 ;
+                    -ainv3*x*z*sqome2inv, -ainv3*y*z*sqome2inv,
+                     ainv*sqome2inv*(1.0 - z*z*ainv2/ome2)]
     }
 
     /**
@@ -395,6 +439,35 @@ mod tests {
         let det = rank_2m.determinant();
         let rank = rank_2m.rank(eps);
         assert!(det < eps  &&  rank == 2);
+    }
+
+    /**
+     * Unit test checking the Jacobians are consistent (inverse of each other)
+     */
+    #[test]
+    fn jacobian_inverse() {
+        let eps = 1.0e-13;
+        // Define an oblate spheroid
+        let ecc = 0.4;
+        let smaj = 1.0;
+        let lon = 1.0;
+        let lat = 0.5;
+        let os = crate::oblate_spheroid::OblateSpheroid::try_from(
+            &(ecc, smaj, lon, lat)).expect("Bad Oblate Spheroid ");
+        let dcart_dos = os.get_jacobian();
+        let dos_dcart = os.get_inverse_jacobian();
+        let eye = dcart_dos*dos_dcart;
+        let norm2 = (eye - na::SMatrix::<f64, 3, 3>::identity()).norm_squared();
+
+        // Reminder that in matrix form, the covariant and contravariant
+        // basis vectors are compatible as the transpose of each other
+        //let (e1, e2, e3) = os.get_cov_basis();
+        //let dcdo2 = na::Matrix3::from_columns(&[e1, e2, e3]);
+        //let (e1, e2, e3) = os.get_cont_basis();
+        //let dodc2 = na::Matrix3::from_columns(&[e1, e2, e3]);
+        //println!("Z_ij Zij: {}", dcdo2*dodc2.transpose());
+
+        assert!(norm2 < eps);
     }
 }
 
