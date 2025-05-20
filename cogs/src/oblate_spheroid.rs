@@ -91,7 +91,7 @@ impl TryFrom<&(f64, f64)> for OblateSpheroid {
         }
 
         let mut os = OblateSpheroid::default();
-        os.set_with_os(*eccentricity, *semimajor, 0.0, 0.0);
+        os.set_with_ose(*eccentricity, *semimajor, 0.0, 0.0);
         Ok(os)
     }
 }
@@ -130,7 +130,7 @@ impl TryFrom<&(f64, f64, f64, f64)> for OblateSpheroid {
         }
 
         let mut os = OblateSpheroid::default();
-        os.set_with_os(*eccentricity, *semimajor, *longitude, *latitude);
+        os.set_with_ose(*eccentricity, *semimajor, *longitude, *latitude);
         Ok(os)
     }
 }
@@ -233,9 +233,9 @@ impl OblateSpheroid {
     /**
      * @return  Covariant basis vectors at these coordinates
      */
-    pub fn get_cov_basis(&self) -> (na::SMatrix<f64, 3, 1>,
-                                    na::SMatrix<f64, 3, 1>,
-                                    na::SMatrix<f64, 3, 1>)
+    pub fn get_covariant_basis(&self) -> (na::SMatrix<f64, 3, 1>,
+                                          na::SMatrix<f64, 3, 1>,
+                                          na::SMatrix<f64, 3, 1>)
     {
         let a = self.sma;
         let eta = self.lat;
@@ -277,9 +277,9 @@ impl OblateSpheroid {
     /**
      * @return  Contravariant basis vectors at these coordinates
      */
-    pub fn get_cont_basis(&self) -> (na::SMatrix<f64, 3, 1>,
-                                     na::SMatrix<f64, 3, 1>,
-                                     na::SMatrix<f64, 3, 1>)
+    pub fn get_contravariant_basis(&self) -> (na::SMatrix<f64, 3, 1>,
+                                              na::SMatrix<f64, 3, 1>,
+                                              na::SMatrix<f64, 3, 1>)
     {
         let a = self.sma;
         let eta = self.lat;
@@ -353,14 +353,14 @@ impl OblateSpheroid {
 
 impl OblateSpheroid {
     /*
-     * Update Cartesian coords with previously validated OS coords
+     * Update Cartesian coords with previously validated OS elements
      *
      * @param  eccen  Eccentricity defining parameter, 0 <= eccen < 1
      * @param  smaj   Semimajor axis defining parameter, smajor > 0
      * @param  lam    Longitude/Azimuth coordinate, -pi/2 < lambda < pi/2
      * @param  eta    Latitude/elevation coordinate, -1 <= eta <= 1 
      */
-    fn set_with_os(&mut self, eccen: f64, smaj: f64, lam: f64, eta: f64) {
+    fn set_with_ose(&mut self, eccen: f64, smaj: f64, lam: f64, eta: f64) {
         self.ecc = eccen;
         self.sma = smaj;
         self.lon = lam;
@@ -409,6 +409,10 @@ impl std::fmt::Display for OblateSpheroid {
     }
 }
 
+/*
+ * Unit tests
+ */
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -433,7 +437,7 @@ mod tests {
         // The vector from the tangent point to the position should
         // be a linear combination of the tangent plane basis vectors
         let p2t = tp - pos;
-        let (_, e2, e3) = os.get_cov_basis();
+        let (_, e2, e3) = os.get_covariant_basis();
         let rank_2m = na::SMatrix::<f64, 3, 3>::from_columns(&[e2, e3, p2t]);
         // Check both determinant and rank just to illustrate use of both
         let det = rank_2m.determinant();

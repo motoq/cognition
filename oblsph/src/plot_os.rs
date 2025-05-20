@@ -40,12 +40,12 @@ pub fn plot_os(os: &oblate_spheroid::OblateSpheroid,
         match plt {
             OsPlotType::BasisCovariant => {
                 let xyz0 = os.get_cartesian();
-                let basis = os.get_cov_basis();
+                let basis = os.get_covariant_basis();
                 gp_plot_basis(&mut writer, &xyz0, &basis)?;
             }
             OsPlotType::BasisContravariant => {
                 let xyz0 = os.get_cartesian();
-                let basis = os.get_cont_basis();
+                let basis = os.get_contravariant_basis();
                 gp_plot_basis(&mut writer, &xyz0, &basis)?;
             }
         }

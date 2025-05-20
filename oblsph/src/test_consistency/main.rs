@@ -37,7 +37,7 @@ fn main() {
         while sma < 7.5 {
             let mut lat: f64 = -0.9;
             while lat < 0.9 {
-                let mut lon: f64 = RAD_PER_DEG*-180.0;
+                let mut lon: f64 = RAD_PER_DEG*-180.0 + dlon;
                 while lon < RAD_PER_DEG*180.0 {
                     // Define as OS coords
                     let os1 = oblate_spheroid::
@@ -56,8 +56,8 @@ fn main() {
                     let dt = os2.get_latitude() - os1.get_latitude();
                     rss_error += (de*de + da*da + dn*dn + dt*dt).sqrt();
                     // Check basis vectors
-                    let cov = os1.get_cov_basis();
-                    let cont = os1.get_cont_basis();
+                    let cov = os1.get_covariant_basis();
+                    let cont = os1.get_contravariant_basis();
                     // Orthoginal basis vectors
                     let d01 = cov.0.dot(&cont.1);
                     let d02 = cov.0.dot(&cont.2);
