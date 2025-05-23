@@ -6,6 +6,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+use nalgebra as na;
+
 use cogs::utl_const::RAD_PER_DEG;
 use cogs::oblate_spheroid;
 
@@ -30,6 +32,7 @@ fn main() {
     let mut count = 0;
     let mut rss_error: f64  = 0.0;
     let mut basis_error: f64 = 0.0;
+    let mut jacobian_error: f64 = 0.0;
     let mut ecc: f64 = 0.0;
     // Collect deviations
     while ecc < 0.9 {
@@ -68,6 +71,13 @@ fn main() {
                     let d22 = 1.0 - cov.2.dot(&cont.2);
                     basis_error += (d01*d01 + d02*d02 + d12*d12 +
                                     d00*d00 + d11*d11 + d22*d22).sqrt();
+                    // Check Jacobians
+                    let dcart_dos = os1.get_jacobian();
+                    let dos_dcart = os1.get_inverse_jacobian();
+                    let eye = dcart_dos*dos_dcart;
+                    let norm2 = (eye -
+                        na::SMatrix::<f64, 3, 3>::identity()).norm_squared();
+                    jacobian_error += norm2.sqrt();
                     count += 1;
                     lon += dlon;
                 }
@@ -79,4 +89,5 @@ fn main() {
     }
     println!("RSS Error over {} tests: {}", count, rss_error);
     println!("Basis Error: {}", basis_error);
+    println!("Jacobian Error: {}", jacobian_error);
 }
