@@ -250,6 +250,30 @@ impl OblateSpheroid {
     }
 
     /**
+     * @return  Covariant metric tensor at these coordinates
+     */
+    pub fn get_covariant_metric(&self) -> na::SMatrix<f64, 3, 3>
+    {
+        let a2 = self.sma*self.sma;
+        let e2 = self.ecc*self.ecc;
+        let eta2 = self.lat*self.lat;
+        let ometa2 = 1.0 - eta2;
+        let naetae2 = -1.0*self.sma*self.lat*e2;
+
+        na::matrix![1.0 - e2*eta2,       0.0,                     naetae2;
+                              0.0, a2*ometa2,                         0.0;
+                          naetae2,       0.0, a2*(1.0 - e2 + eta2/ometa2)  ]
+    }
+
+    /**
+     * @return  Volume element at these coordinates
+     */
+    pub fn get_volume_element(&self) -> f64
+    {
+        self.sma*self.sma*(1.0 - self.ecc*self.ecc).sqrt()
+    }
+
+    /**
      * Creates the paritals of the oblate spheroidal coordinates w.r.t.
      * Cartesian coordinates;
      *
@@ -292,6 +316,29 @@ impl OblateSpheroid {
         (na::matrix![sqometa2*cl ; sqometa2*sl ; eta/sqome2],
          na::matrix![-sl/(a*sqometa2) ; cl/(a*sqometa2) ; 0.0],
          na::matrix![-eta*sqometa2*cl/a;-eta*sqometa2*sl/a;ometa2/(a*sqome2)])
+    }
+
+    /**
+     * @return  Covariant metric tensor at these coordinates
+     */
+    pub fn get_contravariant_metric(&self) -> na::SMatrix<f64, 3, 3>
+    {
+        let e2 = self.ecc*self.ecc;
+        let eta2 = self.lat*self.lat;
+        let ome2 = 1.0 - e2;
+        let ometa2 = 1.0 - eta2;
+
+        let inv_a = 1.0/self.sma;
+        let inv_a2 = inv_a*inv_a;
+        let inv_ome2 = 1.0/ome2;
+     
+        let off_diag = self.lat*e2*ometa2*inv_ome2*inv_a;
+        let z_11 = 1.0 + e2*eta2*inv_ome2;
+        let z_33 = ometa2*(1.0 - e2*eta2)*inv_ome2*inv_a2;
+
+        na::matrix![z_11,           0.0, off_diag;
+                     0.0, inv_a2/ometa2,      0.0;
+                off_diag,           0.0,     z_33 ]
     }
 
     /**
@@ -472,6 +519,52 @@ mod tests {
         //println!("Z_ij Zij: {}", dcdo2*dodc2.transpose());
 
         assert!(norm2 < eps);
+    }
+
+    /**
+     * Unit test checking the covariant and contravariant metric tensors are
+     * are consistent (inverse of each other)
+     */
+    #[test]
+    fn metric_inverse() {
+        let eps = 1.0e-13;
+        // Define an oblate spheroid
+        let ecc = 0.4;
+        let smaj = 1.0;
+        let lon = 1.0;
+        let lat = 0.5;
+        let os = crate::oblate_spheroid::OblateSpheroid::try_from(
+            &(ecc, smaj, lon, lat)).expect("Bad Oblate Spheroid ");
+        let z_ij = os.get_covariant_metric();
+        let zij = os.get_contravariant_metric();
+        let eye = z_ij*zij;
+        let norm2 = (eye - na::SMatrix::<f64, 3, 3>::identity()).norm_squared();
+
+        assert!(norm2 < eps);
+    }
+
+    /**
+     * Unit test checking volume element which also tests the covariant
+     * metric tensor
+     */
+    #[test]
+    fn volume_element() {
+        let eps = 1.0e-13;
+        // Define an oblate spheroid
+        let ecc = 0.4;
+        let smaj = 1.0;
+        let lon = 1.0;
+        let lat = 0.5;
+        let os = crate::oblate_spheroid::OblateSpheroid::try_from(
+            &(ecc, smaj, lon, lat)).expect("Bad Oblate Spheroid ");
+        let z_ij = os.get_covariant_metric();
+        let ve = z_ij.determinant().sqrt();
+        let delta = (ve - os.get_volume_element()).abs();
+
+        //println!("ve: {} vs. {}", ve, os.get_volume_element());
+        //println!("z_ij: {}", z_ij);
+
+        assert!(delta < eps);
     }
 }
 
