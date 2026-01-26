@@ -8,7 +8,7 @@
 # Leaves plot up after run, but loses functionality once GP exits
 gnuplot -p ob_test.gp
 
-# Start gnuplot and run, remaining interactive
+# Start gnuplot and run, remaining interactive (probably the way to go)
 load 'ob_test.gp'
 
 

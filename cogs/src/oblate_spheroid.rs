@@ -17,7 +17,7 @@ use crate::unit_circle;
  * created, this struct defines a location in space using both Cartesian
  * and oblate spheroidal coordinates.  Properties related to this surface
  * are available at the location currently defined by the struct (e.g.,
- * basis vectors).  Some functionality (e.g., get_surface_tangent()) relies
+ * basis vectors).  Some functionality (e.g., surface_tangent()) relies
  * on only the oblate spheroid definition vs. a specific location.  In
  * these cases, initialization with the default location at the origin of
  * the surface coordinates is sufficient.
@@ -34,7 +34,7 @@ use crate::unit_circle;
  * with +1 being the north pole, and -1 the south pole.
  *
  * @author  Kurt Motekew  2024
- *                        2025/02/26  Added get_surface_tangent()
+ *                        2025/02/26  Added surface_tangent()
  */
 #[derive(Copy, Clone)]
 pub struct OblateSpheroid {
@@ -172,42 +172,42 @@ impl OblateSpheroid {
     /**
      * @return  Eccentricity
      */
-    pub fn get_eccentricity(&self) -> f64 {
+    pub fn eccentricity(&self) -> f64 {
         self.ecc
     }
 
     /**
      * @return  Semimajor axis
      */
-    pub fn get_semimajor(&self) -> f64 {
+    pub fn semimajor(&self) -> f64 {
         self.sma
     }
 
     /**
      * @return  Semiminor axis
      */
-    pub fn get_semiminor(&self) -> f64 {
+    pub fn semiminor(&self) -> f64 {
         self.sma*(1.0 - self.ecc*self.ecc).sqrt()
     }
 
     /**
      * @return  Longitude, radians
      */
-    pub fn get_longitude(&self) -> f64 {
+    pub fn longitude(&self) -> f64 {
         self.lon
     }
 
     /**
      * @return  Latitude
      */
-    pub fn get_latitude(&self) -> f64 {
+    pub fn latitude(&self) -> f64 {
         self.lat
     }
 
     /**
      * @return  Cartesian coordinates
      */
-    pub fn get_cartesian(&self) -> na::SMatrix<f64, 3, 1> {
+    pub fn cartesian(&self) -> na::SMatrix<f64, 3, 1> {
         self.xyz
     }
 
@@ -217,7 +217,7 @@ impl OblateSpheroid {
      *
      * @return  Jacobian matrix
      */
-    pub fn get_jacobian(&self) -> na::SMatrix<f64, 3, 3>
+    pub fn jacobian(&self) -> na::SMatrix<f64, 3, 3>
     {
         let a = self.sma;
         let eta = self.lat;
@@ -233,9 +233,9 @@ impl OblateSpheroid {
     /**
      * @return  Covariant basis vectors at these coordinates
      */
-    pub fn get_covariant_basis(&self) -> (na::SMatrix<f64, 3, 1>,
-                                          na::SMatrix<f64, 3, 1>,
-                                          na::SMatrix<f64, 3, 1>)
+    pub fn covariant_basis(&self) -> (na::SMatrix<f64, 3, 1>,
+                                      na::SMatrix<f64, 3, 1>,
+                                      na::SMatrix<f64, 3, 1>)
     {
         let a = self.sma;
         let eta = self.lat;
@@ -252,7 +252,7 @@ impl OblateSpheroid {
     /**
      * @return  Covariant metric tensor at these coordinates
      */
-    pub fn get_covariant_metric(&self) -> na::SMatrix<f64, 3, 3>
+    pub fn covariant_metric(&self) -> na::SMatrix<f64, 3, 3>
     {
         let a2 = self.sma*self.sma;
         let e2 = self.ecc*self.ecc;
@@ -268,7 +268,7 @@ impl OblateSpheroid {
     /**
      * @return  Volume element at these coordinates
      */
-    pub fn get_volume_element(&self) -> f64
+    pub fn volume_element(&self) -> f64
     {
         self.sma*self.sma*(1.0 - self.ecc*self.ecc).sqrt()
     }
@@ -279,7 +279,7 @@ impl OblateSpheroid {
      *
      * @return  Inverse Jacobian matrix
      */
-    pub fn get_inverse_jacobian(&self) -> na::SMatrix<f64, 3, 3>
+    pub fn inverse_jacobian(&self) -> na::SMatrix<f64, 3, 3>
     {
         let a = self.sma;
         let ainv = 1.0/a;
@@ -301,9 +301,9 @@ impl OblateSpheroid {
     /**
      * @return  Contravariant basis vectors at these coordinates
      */
-    pub fn get_contravariant_basis(&self) -> (na::SMatrix<f64, 3, 1>,
-                                              na::SMatrix<f64, 3, 1>,
-                                              na::SMatrix<f64, 3, 1>)
+    pub fn contravariant_basis(&self) -> (na::SMatrix<f64, 3, 1>,
+                                          na::SMatrix<f64, 3, 1>,
+                                          na::SMatrix<f64, 3, 1>)
     {
         let a = self.sma;
         let eta = self.lat;
@@ -321,7 +321,7 @@ impl OblateSpheroid {
     /**
      * @return  Covariant metric tensor at these coordinates
      */
-    pub fn get_contravariant_metric(&self) -> na::SMatrix<f64, 3, 3>
+    pub fn contravariant_metric(&self) -> na::SMatrix<f64, 3, 3>
     {
         let e2 = self.ecc*self.ecc;
         let eta2 = self.lat*self.lat;
@@ -353,15 +353,15 @@ impl OblateSpheroid {
      *
      * @return  Horizon point
      */
-    pub fn get_surface_tangent(&self, pos: &na::SMatrix<f64, 3, 1>,
-                                      pnt: &na::SMatrix<f64, 3, 1>) ->
-                                            na::SMatrix<f64, 3, 1>
+    pub fn surface_tangent(&self, pos: &na::SMatrix<f64, 3, 1>,
+                                  pnt: &na::SMatrix<f64, 3, 1>) ->
+                                        na::SMatrix<f64, 3, 1>
     {
         // Oblate spheroid to unit sphere affine transformation
         let mut aff: na::SMatrix<f64, 3, 3> = na::SMatrix::identity();
         aff[(0,0)] = 1.0/self.sma;
         aff[(1,1)] = 1.0/self.sma;
-        aff[(2,2)] = 1.0/self.get_semiminor();
+        aff[(2,2)] = 1.0/self.semiminor();
 
         // Oblate spheroid to spherical
         let pos_aff = aff*pos;
@@ -389,7 +389,7 @@ impl OblateSpheroid {
 
         aff[(0,0)] = self.sma;
         aff[(1,1)] = self.sma;
-        aff[(2,2)] = self.get_semiminor();
+        aff[(2,2)] = self.semiminor();
         aff*to_3d*xyz
     }
 }
@@ -479,12 +479,12 @@ mod tests {
         let pnt = na::matrix![-1.0 ; -1.0 ; 0.0];
         // Get tangent point.  Then, using the same eccentricity
         // update oblate spheroid point to pass through this point
-        let tp = os.get_surface_tangent(&pos, &pnt);
+        let tp = os.surface_tangent(&pos, &pnt);
         os.set_with_cartesian(ecc, &tp);
         // The vector from the tangent point to the position should
         // be a linear combination of the tangent plane basis vectors
         let p2t = tp - pos;
-        let (_, e2, e3) = os.get_covariant_basis();
+        let (_, e2, e3) = os.covariant_basis();
         let rank_2m = na::SMatrix::<f64, 3, 3>::from_columns(&[e2, e3, p2t]);
         // Check both determinant and rank just to illustrate use of both
         let det = rank_2m.determinant();
@@ -505,16 +505,16 @@ mod tests {
         let lat = 0.5;
         let os = crate::oblate_spheroid::OblateSpheroid::try_from(
             &(ecc, smaj, lon, lat)).expect("Bad Oblate Spheroid ");
-        let dcart_dos = os.get_jacobian();
-        let dos_dcart = os.get_inverse_jacobian();
+        let dcart_dos = os.jacobian();
+        let dos_dcart = os.inverse_jacobian();
         let eye = dcart_dos*dos_dcart;
         let norm2 = (eye - na::SMatrix::<f64, 3, 3>::identity()).norm_squared();
 
         // Reminder that in matrix form, the covariant and contravariant
         // basis vectors are compatible as the transpose of each other
-        //let (e1, e2, e3) = os.get_cov_basis();
+        //let (e1, e2, e3) = os.cov_basis();
         //let dcdo2 = na::Matrix3::from_columns(&[e1, e2, e3]);
-        //let (e1, e2, e3) = os.get_cont_basis();
+        //let (e1, e2, e3) = os.cont_basis();
         //let dodc2 = na::Matrix3::from_columns(&[e1, e2, e3]);
         //println!("Z_ij Zij: {}", dcdo2*dodc2.transpose());
 
@@ -535,8 +535,8 @@ mod tests {
         let lat = 0.5;
         let os = crate::oblate_spheroid::OblateSpheroid::try_from(
             &(ecc, smaj, lon, lat)).expect("Bad Oblate Spheroid ");
-        let z_ij = os.get_covariant_metric();
-        let zij = os.get_contravariant_metric();
+        let z_ij = os.covariant_metric();
+        let zij = os.contravariant_metric();
         let eye = z_ij*zij;
         let norm2 = (eye - na::SMatrix::<f64, 3, 3>::identity()).norm_squared();
 
@@ -557,11 +557,11 @@ mod tests {
         let lat = 0.5;
         let os = crate::oblate_spheroid::OblateSpheroid::try_from(
             &(ecc, smaj, lon, lat)).expect("Bad Oblate Spheroid ");
-        let z_ij = os.get_covariant_metric();
+        let z_ij = os.covariant_metric();
         let ve = z_ij.determinant().sqrt();
-        let delta = (ve - os.get_volume_element()).abs();
+        let delta = (ve - os.volume_element()).abs();
 
-        //println!("ve: {} vs. {}", ve, os.get_volume_element());
+        //println!("ve: {} vs. {}", ve, os.volume_element());
         //println!("z_ij: {}", z_ij);
 
         assert!(delta < eps);

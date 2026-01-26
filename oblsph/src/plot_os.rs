@@ -22,7 +22,7 @@ pub enum OsPlotType {
 pub fn plot_os(os: &oblate_spheroid::OblateSpheroid,
                cfg: &Config) -> std::io::Result<()> {
 
-    println!("Semiminor {}", os.get_semiminor());
+    println!("Semiminor {}", os.semiminor());
 
     let mut file_name = cfg.plot_prefix.clone();
     file_name.push_str(".gp");
@@ -32,20 +32,20 @@ pub fn plot_os(os: &oblate_spheroid::OblateSpheroid,
     write!(writer, "\nset parametric")?;
     write!(writer, "\nset isosamples 25")?;
     write!(writer, "\nsplot [-pi:pi][-pi/2:pi/2]")?;
-    write!(writer, " {:.3e}*cos(u)*cos(v)", os.get_semimajor())?;
-    write!(writer, ", {:.3e}*sin(u)*cos(v)", os.get_semimajor())?;
-    write!(writer, ", {:.3e}*sin(v)", os.get_semiminor())?;
+    write!(writer, " {:.3e}*cos(u)*cos(v)", os.semimajor())?;
+    write!(writer, ", {:.3e}*sin(u)*cos(v)", os.semimajor())?;
+    write!(writer, ", {:.3e}*sin(v)", os.semiminor())?;
 
     for plt in &cfg.plot_types {
         match plt {
             OsPlotType::BasisCovariant => {
-                let xyz0 = os.get_cartesian();
-                let basis = os.get_covariant_basis();
+                let xyz0 = os.cartesian();
+                let basis = os.covariant_basis();
                 gp_plot_basis(&mut writer, &xyz0, &basis)?;
             }
             OsPlotType::BasisContravariant => {
-                let xyz0 = os.get_cartesian();
-                let basis = os.get_contravariant_basis();
+                let xyz0 = os.cartesian();
+                let basis = os.contravariant_basis();
                 gp_plot_basis(&mut writer, &xyz0, &basis)?;
             }
         }

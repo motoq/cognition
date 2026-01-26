@@ -47,20 +47,20 @@ fn main() {
                               OblateSpheroid::try_from(&(ecc, sma, lon, lat))
                                   .expect("OblateSpheroid Construction: ");
                     // Convert to Cartesian
-                    let xyz = os1.get_cartesian();
+                    let xyz = os1.cartesian();
                     // ...and back
                     let os2 = oblate_spheroid::
                               OblateSpheroid::try_from(&(ecc, xyz))
                                   .expect("OblateSpheroid Construction: ");
                     // Accumulate coordinate errors
-                    let de = os2.get_eccentricity() - os1.get_eccentricity();
-                    let da = os2.get_semimajor() - os1.get_semimajor();
-                    let dn = os2.get_longitude() - os1.get_longitude();
-                    let dt = os2.get_latitude() - os1.get_latitude();
+                    let de = os2.eccentricity() - os1.eccentricity();
+                    let da = os2.semimajor() - os1.semimajor();
+                    let dn = os2.longitude() - os1.longitude();
+                    let dt = os2.latitude() - os1.latitude();
                     rss_error += (de*de + da*da + dn*dn + dt*dt).sqrt();
                     // Check basis vectors
-                    let cov = os1.get_covariant_basis();
-                    let cont = os1.get_contravariant_basis();
+                    let cov = os1.covariant_basis();
+                    let cont = os1.contravariant_basis();
                     // Orthoginal basis vectors
                     let d01 = cov.0.dot(&cont.1);
                     let d02 = cov.0.dot(&cont.2);
@@ -72,8 +72,8 @@ fn main() {
                     basis_error += (d01*d01 + d02*d02 + d12*d12 +
                                     d00*d00 + d11*d11 + d22*d22).sqrt();
                     // Check Jacobians
-                    let dcart_dos = os1.get_jacobian();
-                    let dos_dcart = os1.get_inverse_jacobian();
+                    let dcart_dos = os1.jacobian();
+                    let dos_dcart = os1.inverse_jacobian();
                     let eye = dcart_dos*dos_dcart;
                     let norm2 = (eye -
                         na::SMatrix::<f64, 3, 3>::identity()).norm_squared();
