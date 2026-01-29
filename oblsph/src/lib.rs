@@ -15,6 +15,7 @@ use cogs::utl_const::RAD_PER_DEG;
 
 use crate::plot_os::OsPlotType;
 
+
 /**
  * Configuration settings for the oblate spheroid (oblsph) application.
  * This includes a definition of the oblate spheroid, a location on it,
@@ -34,6 +35,7 @@ pub struct Config {
     // List of plot related commands, executed in order
     pub plot_types: Vec<OsPlotType>,
 }
+
 
 impl Config {
     /**

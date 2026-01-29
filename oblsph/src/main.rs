@@ -14,6 +14,7 @@ use oblsph::plot_os::plot_os;
 
 use cogs::oblate_spheroid;
 
+
 fn main() {
     // Read input file
     let args: Vec<String> = env::args().collect();

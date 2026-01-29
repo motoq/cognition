@@ -11,6 +11,7 @@ use nalgebra as na;
 use crate::utl_const::DEG_PER_RAD;
 use crate::unit_circle;
 
+
 /**
  * Oblate spheroid definition (eccentricity and semimajor axis length)
  * and coordinates (oblate spheroidal (os) and Cartesian) struct.  When
@@ -35,8 +36,10 @@ use crate::unit_circle;
  *
  * @author  Kurt Motekew  2024
  *                        2025/02/26  Added surface_tangent()
+ *                        2026/01/25  Added metric tensors and volume
+ *                                    element
  */
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct OblateSpheroid {
     ecc: f64,                                    // 0   <= e   < 1
     sma: f64,                                    // 0   <  a   < inf
@@ -44,6 +47,7 @@ pub struct OblateSpheroid {
     lat: f64,                                    // -1  <= lat <= 1
     xyz: na::SMatrix<f64, 3, 1>,
 }
+
 
 /*
  * Constructors
@@ -53,18 +57,19 @@ impl Default for OblateSpheroid {
     /**
      * Default oblate spheroid definition and coordinates
      *
-     * @return  Point sphere with location at origin
+     * @return  Unit sphere with coordinate at (1, 0, 0)
      */
     fn default() -> Self {
         Self {
             ecc: 0.0,
-            sma: 0.0,
+            sma: 1.0,
             lon: 0.0,
             lat: 0.0,
-            xyz: [0.0, 0.0, 0.0].into(),
+            xyz: [1.0, 0.0, 0.0].into(),
         }
     }
 }
+
 
 impl TryFrom<&(f64, f64)> for OblateSpheroid {
     type Error = String;
@@ -95,6 +100,7 @@ impl TryFrom<&(f64, f64)> for OblateSpheroid {
         Ok(os)
     }
 }
+
 
 impl TryFrom<&(f64, f64, f64, f64)> for OblateSpheroid {
     type Error = String;
@@ -135,6 +141,7 @@ impl TryFrom<&(f64, f64, f64, f64)> for OblateSpheroid {
     }
 }
 
+
 impl TryFrom<&(f64, na::SMatrix<f64, 3, 1>)> for OblateSpheroid {
     type Error = String;
 
@@ -163,6 +170,7 @@ impl TryFrom<&(f64, na::SMatrix<f64, 3, 1>)> for OblateSpheroid {
         Ok(os)
     }
 }
+
 
 /*
  * Public immutable methods
@@ -394,6 +402,7 @@ impl OblateSpheroid {
     }
 }
 
+
 /*
  * Private associated methods
  */
@@ -441,6 +450,7 @@ impl OblateSpheroid {
     }
 }
 
+
 /*
  * Utility
  */
@@ -456,6 +466,7 @@ impl std::fmt::Display for OblateSpheroid {
     }
 }
 
+
 /*
  * Unit tests
  */
@@ -463,6 +474,20 @@ impl std::fmt::Display for OblateSpheroid {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /**
+     * Unit test checking the Cartesian portion of the default
+     * oblate spheroid was manually set to the correct value.
+     */
+    #[test]
+    fn default() {
+        let os0 = OblateSpheroid::default();
+        let os1 = crate::oblate_spheroid::OblateSpheroid::try_from(
+            &(0.0, 1.0, 0.0, 0.0)).expect("Bad Oblate Spheroid ");
+        //    ecc  sma  lon  lat
+
+        assert!(os0.cartesian() == os1.cartesian());
+    }
 
     /**
      * Unit test for the surface oblate_spheroid::surface_tangent function
@@ -491,6 +516,7 @@ mod tests {
         let rank = rank_2m.rank(eps);
         assert!(det < eps  &&  rank == 2);
     }
+
 
     /**
      * Unit test checking the Jacobians are consistent (inverse of each other)
@@ -521,6 +547,7 @@ mod tests {
         assert!(norm2 < eps);
     }
 
+
     /**
      * Unit test checking the covariant and contravariant metric tensors are
      * are consistent (inverse of each other)
@@ -542,6 +569,7 @@ mod tests {
 
         assert!(norm2 < eps);
     }
+
 
     /**
      * Unit test checking volume element which also tests the covariant
@@ -565,6 +593,36 @@ mod tests {
         //println!("z_ij: {}", z_ij);
 
         assert!(delta < eps);
+    }
+
+
+    /**
+     * Unit test checking volume element which also tests the covariant
+     * metric tensor
+     */
+    #[test]
+    fn basis_vector() {
+        let eps = 1.0e-13;
+        // Define an oblate spheroid
+        let ecc = 0.4;
+        let smaj = 1.0;
+        let lon = 1.0;
+        let lat = 0.5;
+        let os = crate::oblate_spheroid::OblateSpheroid::try_from(
+            &(ecc, smaj, lon, lat)).expect("Bad Oblate Spheroid ");
+
+        // Check z_1 passes through origin
+        let (z_1, z_2, z_3) = os.covariant_basis();
+        let r = os.cartesian();
+        let zero_vec = r.cross(&z_1);
+        assert!(zero_vec.norm() < eps);
+
+        // Check z1 is orthogonal to z_2 and z_3 (orthogonal to
+        // the tangent plane).  Since z_ij zij = delta^i_j,
+        // this should pass by definition...
+        let (z1, _, _) = os.contravariant_basis();
+        assert!(z1.dot(&z_2).abs() < eps);
+        assert!(z1.dot(&z_3).abs() < eps);
     }
 }
 

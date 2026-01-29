@@ -11,6 +11,7 @@ use nalgebra as na;
 use cogs::utl_const::RAD_PER_DEG;
 use cogs::oblate_spheroid;
 
+
 /**
  * This program performs a consistency check on the oblate spheroidal
  * struct.  It iterates over a wide range of eccentricities, semimajor axes

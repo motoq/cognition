@@ -11,6 +11,7 @@ use std::io::{Write, BufWriter};
 
 use nalgebra as na;
 
+
 /**
  * Creates a Gnuplot command, as a String, to plot an arrow from one
  * Cartesian point to another.  The color must be indicated, but the
@@ -30,6 +31,7 @@ pub fn gp_arrow(orgn: &na::SMatrix<f64, 3, 1>,
         &format!(" to {:.3e}, {:.3e}, {:.3e}", dstn[0], dstn[1], dstn[2]) +
         &format!(" lw 3 lc rgb \"{}\"", rgb)
 }
+
 
 /**
  * Writes Gnuplot commands to a BufWriter that plots three vectors as

@@ -8,6 +8,7 @@
 
 use nalgebra as na;
 
+
 /**
  * Computes the tangent point on a unit circle given a location
  * and pointing vector from that location.  The side of the circle
@@ -56,6 +57,7 @@ pub fn tangent(pos: &na::SMatrix<f64, 2, 1>,
     }
 }
 
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -70,6 +72,7 @@ mod tests {
         assert!(err < 1.0e-10);
     }
 }
+
 
 /*
  * Computes the intersection point on a unit circle given a location
