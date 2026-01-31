@@ -6,23 +6,29 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+//! Contains functionality to generate Gnuplot commands as Strings
+//! to support graphic display functionality
+
 use std::fs::File;
 use std::io::{Write, BufWriter};
 
 use nalgebra as na;
 
 
-/**
- * Creates a Gnuplot command, as a String, to plot an arrow from one
- * Cartesian point to another.  The color must be indicated, but the
- * linewidth is fixed at '3'.
- *
- * @param  orgn  Origin, Cartesian coordinates
- * @param  dstn  Destination, Cartesian coordinates
- * @param  rgb   Gnuplot compatble rbg color
- *
- * @return  Gnuplot command to plot an arrow
- */
+/// Creates a Gnuplot command, as a String, to plot an arrow from one
+/// Cartesian point to another.  The color must be indicated, but the
+/// linewidth is fixed at '3'.
+///
+/// # Arguments
+///
+/// * orgn  Origin, Cartesian coordinates
+/// * dstn  Destination, Cartesian coordinates
+/// * rgb   Gnuplot compatble rbg color
+///
+/// #Return
+///
+/// * Gnuplot command to plot an arrow
+///
 pub fn gp_arrow(orgn: &na::SMatrix<f64, 3, 1>,
                 dstn: &na::SMatrix<f64, 3, 1>,
                 rgb: &str) -> String {
@@ -33,17 +39,20 @@ pub fn gp_arrow(orgn: &na::SMatrix<f64, 3, 1>,
 }
 
 
-/**
- * Writes Gnuplot commands to a BufWriter that plots three vectors as
- * with the arrow command, all originating from the same point.  The
- * vectors are color coded by order as red, green, blue (RGB - 1st, 2nd, 3rd).
- *
- * @param  writer  Destination for output
- * @param  xyz0    Origin for basis vectors
- * @param  basis   Three basis vectors to plot
- *
- * @return  Errors if a problem with writing to the BufWriter occurs
- */
+/// Writes Gnuplot commands to a BufWriter that plots three vectors as
+/// with the arrow command, all originating from the same point.  The
+/// vectors are color coded by order as red, green, blue (RGB - 1st, 2nd, 3rd).
+///
+/// # Arguments
+///
+/// * writer  Destination for output
+/// * xyz0    Origin for basis vectors
+/// * basis   Three basis vectors to plot
+///
+/// # Return
+///
+/// * Errors if a problem with writing to the BufWriter occurs
+///
 pub fn gp_plot_basis(writer: &mut BufWriter<File>,
                      xyz0: &na::SMatrix<f64, 3, 1>,
                      basis: &(na::SMatrix<f64, 3, 1>,

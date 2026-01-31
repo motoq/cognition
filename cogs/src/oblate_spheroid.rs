@@ -6,6 +6,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+//! This struct represents a location in 3D space with coordinates in
+//! the oblate spheroidal system.  Equivalent Cartesian coordinates,
+//! basis vectors, metric tensors, and other fundamental types can be
+//! computed for the current position.
+
 use nalgebra as na;
 
 use crate::utl_const::DEG_PER_RAD;

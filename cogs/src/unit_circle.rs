@@ -6,28 +6,38 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+//! Contains functions related to the unit circle.  Through the use of
+//! an affine transformation, these functions can be used with circles
+//! and ellipses of arbitrary size.  The unit circle is defined at the
+//! origin of the coordinate system unless specified otherwise.  Input
+//! units should be consistent and will result in the same output units.
+
 use nalgebra as na;
 
-
-/**
- * Computes the tangent point on a unit circle given a location
- * and pointing vector from that location.  The side of the circle
- * most closely aligns with the pointing vector is chosen for the
- * returned tangent point.
- *
- * @param  pos  Position external to circle, origin of pointing vector
- * @param  pnt  Pointing vector for which the tangent line will be
- *              closest to (there are two tangent points for each point
- *              not on the circle).
- *
- * @return   Location of the tangent point.  If the originating position
- *           is within the circle, then the location on the circle
- *           closest to the position is returned (the line from the
- *           origin through pos to the circle).
- *
- * @author  Kurt Motekew  2022/01/29  Initial, C++ version
- * @author  Kurt Motekew  2025/02/24  Rust version
- */
+/// Computes the tangent point on a unit circle given a location
+/// and pointing vector from that location.  The side of the circle
+/// most closely aligns with the pointing vector is chosen for the
+/// returned tangent point.
+///
+/// # Arguments
+///
+/// * pos  Position external to circle, origin of pointing vector
+/// * pnt  Pointing vector for which the tangent line will be
+///        closest to (there are two tangent points for each point
+///        not on the circle).
+///
+/// # Return
+///
+/// * Location of the tangent point.  If the originating position
+///   is within the circle, then the location on the circle
+///   closest to the position is returned (the line from the
+///   origin through pos to the circle).
+///
+/// # Authors
+///
+/// * Kurt Motekew  2022/01/29  Initial, C++ version
+/// * Kurt Motekew  2025/02/24  Rust version
+///
 pub fn tangent(pos: &na::SMatrix<f64, 2, 1>,
                pnt: &na::SMatrix<f64, 2, 1>) -> na::SMatrix<f64, 2, 1> {
     let r2 = pos.dot(&pos);

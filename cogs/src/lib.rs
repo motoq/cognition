@@ -1,3 +1,5 @@
+//! Export public modules from the cogs crate
+
 // High level simple utilities (constants)
 pub mod utl_const;
 
