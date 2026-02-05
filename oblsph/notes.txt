@@ -5,3 +5,4 @@ cargo build
 
 cargo run --bin oblsph inputs.txt
 cargo run --bin test_consistency
+cargo doc --no-deps --open

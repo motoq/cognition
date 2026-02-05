@@ -12,18 +12,17 @@ use cogs::utl_const::RAD_PER_DEG;
 use cogs::oblate_spheroid;
 
 
-/**
- * This program performs a consistency check on the oblate spheroidal
- * struct.  It iterates over a wide range of eccentricities, semimajor axes
- * longitudes, and latitude.  Each set is used to initialize an OblateSpheroid
- * object.  The Cartesian coordinates are then pulled to initialize another
- * OblateSpheroid struct.  The difference between all the elements are RSS'ed
- * and added to a total error that is printed upon completion.
- *
- * In addition, the covariant (Z^i) and contravariant (Z_i) basis vectors
- * for each point are generated and tested as orthonormal:
- * Z^i dot Z_j = delta^i_j
- */
+/// This program performs a consistency check on the oblate spheroidal
+/// struct.  It iterates over a wide range of eccentricities, semimajor axes
+/// longitudes, and latitude.  Each set is used to initialize an OblateSpheroid
+/// object.  The Cartesian coordinates are then pulled to initialize another
+/// OblateSpheroid struct.  The difference between all the elements are RSS'ed
+/// and added to a total error that is printed upon completion.
+///
+/// In addition, the covariant (Z^i) and contravariant (Z_i) basis vectors
+/// for each point are generated and tested as orthonormal:
+/// Z^i dot Z_j = delta^i_j
+///
 fn main() {
     let decc: f64 = 0.05;
     let dsma: f64 = 0.1;

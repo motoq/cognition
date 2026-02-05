@@ -17,53 +17,54 @@ use crate::utl_const::DEG_PER_RAD;
 use crate::unit_circle;
 
 
-/**
- * Oblate spheroid definition (eccentricity and semimajor axis length)
- * and coordinates (oblate spheroidal (os) and Cartesian) struct.  When
- * created, this struct defines a location in space using both Cartesian
- * and oblate spheroidal coordinates.  Properties related to this surface
- * are available at the location currently defined by the struct (e.g.,
- * basis vectors).  Some functionality (e.g., surface_tangent()) relies
- * on only the oblate spheroid definition vs. a specific location.  In
- * these cases, initialization with the default location at the origin of
- * the surface coordinates is sufficient.
- *
- * The oblate spheroid is a surface of revolution formed by rotating an
- * ellipse with a semiminor axis aligned with the Cartesian z-axis, rotated
- * about the z-axis.  For this implementation, the oblate spheroid itself
- * is defined by the eccentricity (ecc) and semimajor axis (sma).  This
- * is in contrast to traditional implementations that use the semiminor
- * axis as one of the os coordinates.  The longitude parameter (lon) is
- * identical to that defined for spherical or geodetic coordinates - it is
- * the angle measured in a right handed sense from the x-axis.  The latitude
- * (lat) is not an angle, but instead the +/- percentage along the z-axis,
- * with +1 being the north pole, and -1 the south pole.
- *
- * @author  Kurt Motekew  2024
- *                        2025/02/26  Added surface_tangent()
- *                        2026/01/25  Added metric tensors and volume
- *                                    element
- */
+/// Oblate spheroid definition (eccentricity and semimajor axis length)
+/// and coordinates (oblate spheroidal (os) and Cartesian) struct.  When
+/// created, this struct defines a location in space using both Cartesian
+/// and oblate spheroidal coordinates.  Properties related to this surface
+/// are available at the location currently defined by the struct (e.g.,
+/// basis vectors).  Some functionality (e.g., surface_tangent()) relies
+/// on only the oblate spheroid definition vs. a specific location.  In
+/// these cases, initialization with the default location at the origin of
+/// the surface coordinates is sufficient.
+///
+/// The oblate spheroid is a surface of revolution formed by rotating an
+/// ellipse with a semiminor axis aligned with the Cartesian z-axis, rotated
+/// about the z-axis.  For this implementation, the oblate spheroid itself
+/// is defined by the eccentricity (ecc) and semimajor axis (sma).  This
+/// is in contrast to traditional implementations that use the semiminor
+/// axis as one of the os coordinates.  The longitude parameter (lon) is
+/// identical to that defined for spherical or geodetic coordinates - it is
+/// the angle measured in a right handed sense from the x-axis.  The latitude
+/// (lat) is not an angle, but instead the +/- percentage along the z-axis,
+/// with +1 being the north pole, and -1 the south pole.
+///
+/// #Author
+///
+/// *  Kurt Motekew  2024        Initial
+/// *  Kurt Motekew  2025/02/26  Added surface_tangent()
+/// *  Kurt Motekew  2026/01/25  Added metric tensors and volume element
+///
 #[derive(Clone)]
 pub struct OblateSpheroid {
-    ecc: f64,                                    // 0   <= e   < 1
-    sma: f64,                                    // 0   <  a   < inf
-    lon: f64,                                    // -pi <  lon <= pi
-    lat: f64,                                    // -1  <= lat <= 1
-    xyz: na::SMatrix<f64, 3, 1>,
+    ecc: f64,                           // Eccentricity:     0 <= e < 1
+    sma: f64,                           // Semimajor axix:   0 < a < inf
+    lon: f64,                           // Longitude/RA:   -pi < lon <= pi
+    lat: f64,                           // Latitude/Dec:    -1 <= lat <= 1
+    xyz: na::SMatrix<f64, 3, 1>,        // Cartesian representation
 }
 
 
-/*
- * Constructors
- */
+//
+// Constructors
+//
 
 impl Default for OblateSpheroid {
-    /**
-     * Default oblate spheroid definition and coordinates
-     *
-     * @return  Unit sphere with coordinate at (1, 0, 0)
-     */
+    /// Creates default oblate spheroid system and coordinates
+    ///
+    /// # Return
+    ///
+    /// * Unit sphere system with coordinates (1, 0, 0)
+    ///
     fn default() -> Self {
         Self {
             ecc: 0.0,
@@ -79,16 +80,18 @@ impl Default for OblateSpheroid {
 impl TryFrom<&(f64, f64)> for OblateSpheroid {
     type Error = String;
 
-    /**
-     * Create OblateSpheroid and set coordinates to the origin on
-     * the surface (zero longitude and latitude).
-     *
-     * @param  eccentricity  Eccentricity defining parameter, 0 <= eccen < 1
-     * @param  semimajor     Semimajor axis defining parameter, smajor > 0
-     *
-     * @return  Ok:  OblateSpheroid
-     *          Err: String
-     */
+    /// Create OblateSpheroid and set coordinates to the origin on
+    /// the surface (zero longitude and latitude).
+    ///
+    /// # Arguments
+    ///
+    /// * .0  Eccentricity defining parameter, 0 <= eccen < 1
+    /// * .1  Semimajor axis defining parameter, smajor > 0
+    ///
+    /// # return
+    ///
+    /// * Result:  Initialized oblate spheroid or an error string
+    ///
     fn try_from(osp: &(f64, f64)) -> Result<Self, Self::Error> {
         let (eccentricity, semimajor) = osp;
 
@@ -110,18 +113,20 @@ impl TryFrom<&(f64, f64)> for OblateSpheroid {
 impl TryFrom<&(f64, f64, f64, f64)> for OblateSpheroid {
     type Error = String;
 
-    /**
-     * Create OblateSpheroid and set coordinates with oblate spheroidal
-     * coordinates.
-     *
-     * @param  eccentricity  Eccentricity defining parameter, 0 <= eccen < 1
-     * @param  semimajor     Semimajor axis defining parameter, smajor > 0
-     * @param  longitude     Longitude/Azimuth coordinate, -pi/2 < lambda < pi/2
-     * @param  latitude      Latitude/elevation coordinate, -1 <= eta <= 1 
-     *
-     * @return  Ok:  OblateSpheroid
-     *          Err: String
-     */
+    /// Create OblateSpheroid and set coordinates with oblate spheroidal
+    /// coordinates.
+    ///
+    /// # Arguments
+    ///
+    /// * .0  Eccentricity defining parameter, 0 <= eccen < 1
+    /// * .1  Semimajor axis defining parameter, smajor > 0
+    /// * .2  Longitude/RA coordinate, -pi/2 < lambda < pi/2
+    /// * .3  Latitude/Dec coordinate, -1 <= eta <= 1 
+    ///
+    /// # Return
+    ///
+    /// * Result:  Initialized oblate spheroid or an error string
+    ///
     fn try_from(osp: &(f64, f64, f64, f64)) -> Result<Self, Self::Error> {
         let (eccentricity, semimajor, longitude, latitude) = osp;
 
@@ -150,17 +155,18 @@ impl TryFrom<&(f64, f64, f64, f64)> for OblateSpheroid {
 impl TryFrom<&(f64, na::SMatrix<f64, 3, 1>)> for OblateSpheroid {
     type Error = String;
 
-    /**
-     * Create OblateSpheroid and set coordinates given Cartesian
-     * coordinates
-     *
-     * @param  osp  Oblate spheroidal parameters
-     *              .0  Eccentricity defining parameter, 0 <= eccen < 1
-     *              .1  Cartesian coordinates
-     *
-     * @return  Ok:  OblateSpheroid
-     *          Err: String
-     */
+    /// Create OblateSpheroid and set coordinates given Cartesian
+    /// coordinates
+    ///
+    /// # Arguments
+    ///
+    /// * .0  Eccentricity defining parameter, 0 <= eccen < 1
+    /// * .1  Cartesian coordinates
+    ///
+    /// # Return
+    ///
+    /// * Result:  Initialized oblate spheroid or an error string
+    ///
     fn try_from(osp: &(f64,
                       na::SMatrix<f64, 3, 1>)) -> Result<Self, Self::Error> {
 
@@ -177,59 +183,69 @@ impl TryFrom<&(f64, na::SMatrix<f64, 3, 1>)> for OblateSpheroid {
 }
 
 
-/*
- * Public immutable methods
- */
-
+/// Public immutable accessor methods
 impl OblateSpheroid {
-    /**
-     * @return  Eccentricity
-     */
+
+    /// # Return
+    ///
+    /// * Eccentricity:     0 <= e < 1
+    ///
     pub fn eccentricity(&self) -> f64 {
         self.ecc
     }
 
-    /**
-     * @return  Semimajor axis
-     */
+    /// # Return
+    ///
+    /// * Semimajor axis
+    ///
     pub fn semimajor(&self) -> f64 {
         self.sma
     }
 
-    /**
-     * @return  Semiminor axis
-     */
+    /// # Semimajor axix:   0 < a < inf
+    ///
+    /// * Semiminor axis
+    ///
     pub fn semiminor(&self) -> f64 {
         self.sma*(1.0 - self.ecc*self.ecc).sqrt()
     }
 
-    /**
-     * @return  Longitude, radians
-     */
+    /// # Return
+    ///
+    /// * Longitude/RA, radians, -pi < lon <= pi
+    ///
     pub fn longitude(&self) -> f64 {
         self.lon
     }
 
-    /**
-     * @return  Latitude
-     */
+    /// # Return
+    ///
+    /// * Latitude/Dec:    -1 <= lat <= 1
+    ///
     pub fn latitude(&self) -> f64 {
         self.lat
     }
 
-    /**
-     * @return  Cartesian coordinates
-     */
+    /// # Return
+    ///
+    /// * Cartesian coordinates
+    ///
     pub fn cartesian(&self) -> na::SMatrix<f64, 3, 1> {
         self.xyz
     }
+}
 
-    /**
-     * Creates the paritals of the Cartesian coordinates w.r.t.
-     * the oblate spheroidal coordinates;
-     *
-     * @return  Jacobian matrix
-     */
+/// Public immutable properties as a function of the oblate spheroid
+/// definition and location
+impl OblateSpheroid {
+
+    /// Generate the partials of the Cartesian coordinates w.r.t.
+    /// the oblate spheroidal coordinates;
+    ///
+    /// # Return
+    ///
+    /// * Jacobian matrix.  Partials of x, y, z w.r.t. sma, lon, lat
+    ///
     pub fn jacobian(&self) -> na::SMatrix<f64, 3, 3>
     {
         let a = self.sma;
@@ -243,9 +259,12 @@ impl OblateSpheroid {
                     eta*sqome2,        0.0,       a*sqome2]
     }
 
-    /**
-     * @return  Covariant basis vectors at these coordinates
-     */
+    /// Generate the covariant basis vectors at these coordinates
+    ///
+    /// # Return
+    ///
+    /// * Covariant basis vectors: (semimajor, longitude, latitude)
+    ///
     pub fn covariant_basis(&self) -> (na::SMatrix<f64, 3, 1>,
                                       na::SMatrix<f64, 3, 1>,
                                       na::SMatrix<f64, 3, 1>)
@@ -262,9 +281,12 @@ impl OblateSpheroid {
          na::matrix![-a*eta*cl/sqometa2 ; -a*eta*sl/sqometa2 ; a*sqome2])
     }
 
-    /**
-     * @return  Covariant metric tensor at these coordinates
-     */
+    /// Generate the covariant metric tensor
+    ///
+    /// # Return
+    ///
+    /// * Covariant metric tensor, semimajor, longitude, latitude
+    ///
     pub fn covariant_metric(&self) -> na::SMatrix<f64, 3, 3>
     {
         let a2 = self.sma*self.sma;
@@ -278,20 +300,25 @@ impl OblateSpheroid {
                           naetae2,       0.0, a2*(1.0 - e2 + eta2/ometa2)  ]
     }
 
-    /**
-     * @return  Volume element at these coordinates
-     */
+    /// Generate square root of the determinant of the covariant
+    /// metric tensor
+    ///
+    /// # Return
+    ///
+    /// * Volume element
+    ///
     pub fn volume_element(&self) -> f64
     {
         self.sma*self.sma*(1.0 - self.ecc*self.ecc).sqrt()
     }
 
-    /**
-     * Creates the paritals of the oblate spheroidal coordinates w.r.t.
-     * Cartesian coordinates;
-     *
-     * @return  Inverse Jacobian matrix
-     */
+    /// Generate the partials of the oblate spheroidal coordinates w.r.t.
+    /// Cartesian coordinates;
+    ///
+    /// # Return
+    ///
+    /// * Jacobian matrix.  Partials of sma, lon, lat w.r.t. x, y, z
+    ///
     pub fn inverse_jacobian(&self) -> na::SMatrix<f64, 3, 3>
     {
         let a = self.sma;
@@ -311,9 +338,12 @@ impl OblateSpheroid {
                      ainv*sqome2inv*(1.0 - z*z*ainv2/ome2)]
     }
 
-    /**
-     * @return  Contravariant basis vectors at these coordinates
-     */
+    /// Generate the contravariant basis vectors at these coordinates
+    ///
+    /// # Return
+    ///
+    /// * Contravariant basis vectors: (semimajor, longitude, latitude)
+    ///
     pub fn contravariant_basis(&self) -> (na::SMatrix<f64, 3, 1>,
                                           na::SMatrix<f64, 3, 1>,
                                           na::SMatrix<f64, 3, 1>)
@@ -331,9 +361,12 @@ impl OblateSpheroid {
          na::matrix![-eta*sqometa2*cl/a;-eta*sqometa2*sl/a;ometa2/(a*sqome2)])
     }
 
-    /**
-     * @return  Covariant metric tensor at these coordinates
-     */
+    /// Generate the contravariant metric tensor
+    ///
+    /// # Return
+    ///
+    /// * Contravariant metric tensor, semimajor, longitude, latitude
+    ///
     pub fn contravariant_metric(&self) -> na::SMatrix<f64, 3, 3>
     {
         let e2 = self.ecc*self.ecc;
@@ -354,18 +387,27 @@ impl OblateSpheroid {
                 off_diag,           0.0,     z_33 ]
     }
 
-    /**
-     * Given a cartesian location and pointing vector, return the
-     * surface point tangent to the line from the position vector,
-     * in the direction of the pointing vector and in the plane formed
-     * by the position and pointing vectors.
-     *
-     * @param  pos  Cartesian position w.r.t. the origin of the oblate
-     *              spheroid
-     * @param  pnt  Cartesian pointing vector
-     *
-     * @return  Horizon point
-     */
+}
+
+
+/// Public immutable methods operating on inputs
+impl OblateSpheroid {
+
+
+    ///
+    /// Given a cartesian location and pointing vector, return the
+    /// surface point tangent to the line from the position vector,
+    /// in the direction of the pointing vector and in the plane formed
+    /// by the position and pointing vectors.
+    ///
+    /// # Arguments
+    ///
+    /// *  pos  Cartesian position w.r.t. the origin of the oblate spheroid
+    /// *  pnt  Cartesian pointing vector originating at pos
+    ///
+    /// # Return
+    /// * Horizon point
+    ///
     pub fn surface_tangent(&self, pos: &na::SMatrix<f64, 3, 1>,
                                   pnt: &na::SMatrix<f64, 3, 1>) ->
                                         na::SMatrix<f64, 3, 1>
@@ -408,19 +450,18 @@ impl OblateSpheroid {
 }
 
 
-/*
- * Private associated methods
- */
-
+/// Private associated methods
 impl OblateSpheroid {
-    /*
-     * Update Cartesian coords with previously validated OS elements
-     *
-     * @param  eccen  Eccentricity defining parameter, 0 <= eccen < 1
-     * @param  smaj   Semimajor axis defining parameter, smajor > 0
-     * @param  lam    Longitude/Azimuth coordinate, -pi/2 < lambda < pi/2
-     * @param  eta    Latitude/elevation coordinate, -1 <= eta <= 1 
-     */
+
+    // Update Cartesian coords with previously validated OS elements
+    //
+    // # Arguments
+    //
+    // * eccen  Eccentricity defining parameter, 0 <= eccen < 1
+    // * smaj   Semimajor axis defining parameter, smajor > 0
+    // * lam    Longitude/Azimuth coordinate, -pi/2 < lambda < pi/2
+    // * eta    Latitude/elevation coordinate, -1 <= eta <= 1
+    //
     fn set_with_ose(&mut self, eccen: f64, smaj: f64, lam: f64, eta: f64) {
         self.ecc = eccen;
         self.sma = smaj;
@@ -434,12 +475,14 @@ impl OblateSpheroid {
         self.xyz[2] = smaj*eta*(1.0 - eccen*eccen).sqrt();
     }
 
-    /*
-     * Update OS coords with Cartesian
-     *
-     * @param  eccen  Eccentricity defining parameter, 0 <= eccen < 1
-     * @param  cart   Cartesian coordinates
-     */
+
+    // Update OS coords with Cartesian
+    // 
+    // # Arguments
+    //
+    // * eccen  Eccentricity defining parameter, 0 <= eccen < 1
+    // * cart   Cartesian coordinates
+    //
     fn set_with_cartesian(&mut self, eccen: f64,
                           cart: &na::SMatrix<f64, 3, 1>) {
         self.ecc = eccen;
@@ -455,15 +498,18 @@ impl OblateSpheroid {
     }
 }
 
-
-/*
- * Utility
- */
+//
+// General utility
+//
 
 impl std::fmt::Display for OblateSpheroid {
-    /**
-     * @return  Printable form of OblateSpheroid
-     */
+
+    /// Write oblate spheroidal coordinates
+    ///
+    /// # Return
+    ///
+    /// * Printable form of OblateSpheroid
+    ///
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "(Eccentricity: {};  Semimajor: {}\
                    ;  Azimuth: {};  Elevation: {})",
@@ -472,20 +518,18 @@ impl std::fmt::Display for OblateSpheroid {
 }
 
 
-/*
- * Unit tests
- */
+//
+// Unit tests
+//
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    /**
-     * Unit test checking the Cartesian portion of the default
-     * oblate spheroid was manually set to the correct value.
-     */
+    // Unit test checking the Cartesian portion of the default
+    // oblate spheroid was manually set to the correct value.
     #[test]
-    fn default() {
+    fn os_default() {
         let os0 = OblateSpheroid::default();
         let os1 = crate::oblate_spheroid::OblateSpheroid::try_from(
             &(0.0, 1.0, 0.0, 0.0)).expect("Bad Oblate Spheroid ");
@@ -494,11 +538,9 @@ mod tests {
         assert!(os0.cartesian() == os1.cartesian());
     }
 
-    /**
-     * Unit test for the surface oblate_spheroid::surface_tangent function
-     */
+    // Unit test for the surface oblate_spheroid::surface_tangent function
     #[test]
-    fn surface_tangent() {
+    fn os_surface_tangent() {
         let eps = 1.0e-13;
         // Define an oblate spheroid, a position, and pointing vector
         let ecc = 0.4;
@@ -523,11 +565,9 @@ mod tests {
     }
 
 
-    /**
-     * Unit test checking the Jacobians are consistent (inverse of each other)
-     */
+    // Unit test checking the Jacobians are consistent (inverse of each other)
     #[test]
-    fn jacobian_inverse() {
+    fn os_jacobian_inverse() {
         let eps = 1.0e-13;
         // Define an oblate spheroid
         let ecc = 0.4;
@@ -553,12 +593,10 @@ mod tests {
     }
 
 
-    /**
-     * Unit test checking the covariant and contravariant metric tensors are
-     * are consistent (inverse of each other)
-     */
+    // Unit test checking the covariant and contravariant metric tensors are
+    // are consistent (inverse of each other)
     #[test]
-    fn metric_inverse() {
+    fn os_metric_inverse() {
         let eps = 1.0e-13;
         // Define an oblate spheroid
         let ecc = 0.4;
@@ -576,12 +614,10 @@ mod tests {
     }
 
 
-    /**
-     * Unit test checking volume element which also tests the covariant
-     * metric tensor
-     */
+    // Unit test checking volume element which also tests the covariant
+    // metric tensor
     #[test]
-    fn volume_element() {
+    fn os_volume_element() {
         let eps = 1.0e-13;
         // Define an oblate spheroid
         let ecc = 0.4;
@@ -601,12 +637,14 @@ mod tests {
     }
 
 
-    /**
-     * Unit test checking volume element which also tests the covariant
-     * metric tensor
-     */
+    // Verify covariant basis vector Z_1 passes through the origin
+    // and that the contravariant basis vector Z1 is orthogonal to
+    // the covariant basis vectors Z_2 and Z_3 (that span a tangent
+    // plane to the surface.  If this was the surface of the earth, Z_1
+    // would align with a geocentric radius while Z1 would coincide with
+    // the geodetic normal (see WGS 84 Fig 4.2, Jan 3 2000 edition).
     #[test]
-    fn basis_vector() {
+    fn os_basis_vector() {
         let eps = 1.0e-13;
         // Define an oblate spheroid
         let ecc = 0.4;

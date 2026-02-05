@@ -14,7 +14,8 @@ use oblsph::plot_os::plot_os;
 
 use cogs::oblate_spheroid;
 
-
+/// Plots requested aspects related to the oblate spheroidal reference
+/// frame given an input file.
 fn main() {
     // Read input file
     let args: Vec<String> = env::args().collect();

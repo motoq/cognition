@@ -15,23 +15,28 @@ use cogs::oblate_spheroid;
 use crate::Config;
 
 
+/// Available plotting options
 pub enum OsPlotType {
+    /// Plot the covariant basis vectors at the specified location
     BasisCovariant,
+    /// Plot the contravariant basis vectors at the specified location
     BasisContravariant,
 }
 
 
-/**
- * Creates a file with Gnuplot commands that plots the oblate spheroid
- * defined in the Config struct.  Additional features may be plotted
- * depending on the Config.plot_types entries.
- *
- * @param  cfg  Contains all info needed to plot the oblate spheroid,
- *              features, and file to output to.
- *
- * @return  Ok(()) if the file can be created.  Otherwise, the error
- *          is propagated back to the caller.
- */
+/// Creates a file with Gnuplot commands that plots the oblate spheroid
+/// defined in the Config struct.  Additional features may be plotted
+/// depending on the Config.plot_types entries.
+///
+/// # Arguments
+///
+/// * cfg  Contains all info needed to plot the oblate spheroid,
+///        features, and file to output to.
+/// # Return
+///
+/// * Ok(()) if the file can be created.  Otherwise, the error
+///          is propagated back to the caller.
+///
 pub fn plot_os(os: &oblate_spheroid::OblateSpheroid,
                cfg: &Config) -> std::io::Result<()> {
 

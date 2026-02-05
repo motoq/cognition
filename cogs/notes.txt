@@ -8,3 +8,5 @@ cargo build
 
 
 cargo test -- --nocapture
+
+cargo doc --no-deps --open
