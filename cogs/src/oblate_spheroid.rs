@@ -38,7 +38,7 @@ use crate::unit_circle;
 /// (lat) is not an angle, but instead the +/- percentage along the z-axis,
 /// with +1 being the north pole, and -1 the south pole.
 ///
-/// #Author
+/// # Author
 ///
 /// *  Kurt Motekew  2024        Initial
 /// *  Kurt Motekew  2025/02/26  Added surface_tangent()
