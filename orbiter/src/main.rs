@@ -1,5 +1,6 @@
-
 use kiss3d::prelude::*;
+
+use orbiter::orbiter_gx2i;
 
 #[kiss3d::main]
 async fn main() {
@@ -64,7 +65,7 @@ fn add_axes(scene: &mut SceneNode3d, length: f32) -> SceneNode3d {
     let rot = Quat::from_axis_angle(Vec3::X, 0.5*std::f64::consts::PI as f32);
     axis.rotate(rot);
 
-    let rot = Quat::from_axis_angle(Vec3::X, -0.5*std::f64::consts::PI as f32);
+    let rot = orbiter_gx2i();
     grp.rotate(rot);
 
     grp
