@@ -1,7 +1,114 @@
-use kiss3d::prelude::{Vec3, Quat}; 
+/*
+ * Copyright 2026 Kurt Motekew
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+//! Primarily graphics and graphical environment related utilities
+//! including rotations from the computational frame to the graphics
+//! environment, loadking of orbiter app specific objects, and creation
+//! of some graphics related content.
+
+use kiss3d::prelude::*;
+use std::path::Path;
+//use kiss3d::prelude::{Vec3, Quat}; 
 //use kiss3d::nalgebra::{UnitQuaternion, Vector3};
 
-pub fn orbiter_gx2i() -> Quat {
+/// Rotation from the graphics environment (y-axis up, z-axis out of the
+/// paper) to the computational (inertial) reference frame (z-axis up).
+///
+/// # Return
+///
+/// * Graphics to computational rotation quaternion
+///
+pub fn gx2inertial() -> Quat {
   Quat::from_axis_angle(Vec3::X, -0.5*std::f64::consts::PI as f32)
 }
+
+/// Creates a sphere with an earth image texture and adds it to the scene,
+/// returning the earth for further manipulation
+///
+/// # Arguments
+///
+/// * scene  Scene graph to update
+/// * er     Earth radius to use in graphics environment
+///
+/// # Return
+///
+/// * Sphere representing the earth object rotated such that the
+///   inertial z-axis is through the north pole and the x-axis is
+///   through (0, 0) latitude and longitude.
+///
+pub fn add_earth(scene: &mut SceneNode3d, er: f32) -> SceneNode3d {
+    let mut earth =scene.add_sphere(er)
+        .set_texture_from_file(Path::new("./media/earth_lights_exp.jpg"),
+                               "earth_texture");
+    // Flip then align initial x-axis with Null Island
+    let rot1 = Quat::from_axis_angle(Vec3::X, std::f64::consts::PI as f32);
+    let rot2 = Quat::from_axis_angle(Vec3::Y, std::f64::consts::PI as f32);
+    let rot = rot1*rot2;
+    earth.rotate(rot);
+
+    earth
+}
+
+/// Creates the object representing Sparky the spacecraft
+///
+/// # Argument
+///
+/// * scene  Scene graph to update
+///
+/// # Return
+///
+/// * Sparky object with body x-axis out the nose and z-axis up.
+///   No transformations are performed to align this body with
+///   the inertial frame.
+///
+pub fn add_sparky(scene: &mut SceneNode3d) -> SceneNode3d {
+    let sparky_obj_path = Path::new("./media/sparkymatmesh.obj");
+    let sparky_mtl_path = Path::new("./media");
+    let sparky = scene
+        .add_obj(sparky_obj_path, sparky_mtl_path,
+                 Vec3::new(0.005, 0.005, 0.005))
+        .set_position(Vec3::new(1.0, 1.0, 1.0));
+
+    sparky
+}
+
+pub fn add_axis(scene: &mut SceneNode3d, length: f32,
+                                         color: Color) -> SceneNode3d {
+    let mut grp = scene.add_group();
+    let cone_length = 0.05*length;
+    let cone_width = 0.25*cone_length;
+    let width = 0.25*cone_width;
+    grp.add_cylinder(width, length)
+        .set_color(color)
+        .set_position(Vec3::new(0.0, length/2.0, 0.0));
+    grp.add_cone(cone_width, cone_length)
+        .set_color(color)
+        .set_position(Vec3::new(0.0, length, 0.0));
+
+    grp
+}
+
+pub fn add_axes(scene: &mut SceneNode3d, length: f32) -> SceneNode3d {
+    let mut grp = scene.add_group();
+    _ = add_axis(&mut grp,
+                 length, Color::new(0.0, 1.0, 0.0, 1.0));
+    let mut axis = add_axis(&mut grp,
+                            length, Color::new(1.0, 0.0, 0.0, 1.0));
+    let rot = Quat::from_axis_angle(Vec3::Z,
+                                    -0.5*std::f64::consts::PI as f32);
+    axis.rotate(rot);
+    let mut axis = add_axis(&mut grp,
+                            length, Color::new(0.0, 0.0, 1.0, 1.0));
+    let rot = Quat::from_axis_angle(Vec3::X, 0.5*std::f64::consts::PI as f32);
+    axis.rotate(rot);
+    grp.rotate(gx2inertial());
+
+    grp
+}
+
 
