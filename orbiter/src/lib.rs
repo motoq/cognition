@@ -9,7 +9,8 @@
 //! Primarily graphics and graphical environment related utilities
 //! including rotations from the computational frame to the graphics
 //! environment, loadking of orbiter app specific objects, and creation
-//! of some graphics related content.
+//! of some graphics related content.  Objects created are aligned with
+//! the graphics reference frame.
 
 use kiss3d::prelude::*;
 use std::path::Path;
@@ -27,6 +28,10 @@ pub fn gx2inertial() -> Quat {
   Quat::from_axis_angle(Vec3::X, -0.5*std::f64::consts::PI as f32)
 }
 
+pub fn sparky2inertial() -> Quat {
+  Quat::from_axis_angle(Vec3::Y, 0.5*std::f64::consts::PI as f32)
+}
+
 /// Creates a sphere with an earth image texture and adds it to the scene,
 /// returning the earth for further manipulation
 ///
@@ -37,9 +42,10 @@ pub fn gx2inertial() -> Quat {
 ///
 /// # Return
 ///
-/// * Sphere representing the earth object rotated such that the
-///   inertial z-axis is through the north pole and the x-axis is
-///   through (0, 0) latitude and longitude.
+/// * Sphere representing the earth object rotated to align with the
+///   graphics coordinate sysytem such that the GX z-axis is through
+///   the north pole and the GX x-axis is through (0, 0) latitude and
+///   longitude.
 ///
 pub fn add_earth(scene: &mut SceneNode3d, er: f32) -> SceneNode3d {
     let mut earth =scene.add_sphere(er)
@@ -48,7 +54,8 @@ pub fn add_earth(scene: &mut SceneNode3d, er: f32) -> SceneNode3d {
     // Flip then align initial x-axis with Null Island
     let rot1 = Quat::from_axis_angle(Vec3::X, std::f64::consts::PI as f32);
     let rot2 = Quat::from_axis_angle(Vec3::Y, std::f64::consts::PI as f32);
-    let rot = rot1*rot2;
+    let rot3 = Quat::from_axis_angle(Vec3::X, -0.5*std::f64::consts::PI as f32);
+    let rot = rot1*rot2*rot3;
     earth.rotate(rot);
 
     earth
@@ -63,20 +70,34 @@ pub fn add_earth(scene: &mut SceneNode3d, er: f32) -> SceneNode3d {
 /// # Return
 ///
 /// * Sparky object with body x-axis out the nose and z-axis up.
-///   No transformations are performed to align this body with
-///   the inertial frame.
+///   Aligned with grapchics reference frame
 ///
 pub fn add_sparky(scene: &mut SceneNode3d) -> SceneNode3d {
     let sparky_obj_path = Path::new("./media/sparkymatmesh.obj");
     let sparky_mtl_path = Path::new("./media");
-    let sparky = scene
+    let mut sparky = scene
         .add_obj(sparky_obj_path, sparky_mtl_path,
                  Vec3::new(0.005, 0.005, 0.005))
         .set_position(Vec3::new(1.0, 1.0, 1.0));
+    sparky.rotate(gx2inertial().conjugate()*sparky2inertial());
 
     sparky
 }
 
+/// Creates axes for a Cartesian coordinate system with RGB representing
+/// XYX
+///
+/// # Arguments
+///
+/// * scene   Scene graph to update
+/// * length  Length of the axis, not including ending arrows
+/// * color   Axis color
+///
+/// # Return
+///
+/// * Axis aligned starting from the origin and extending along the
+///   y-axis of the graphics reference frame.
+///
 pub fn add_axis(scene: &mut SceneNode3d, length: f32,
                                          color: Color) -> SceneNode3d {
     let mut grp = scene.add_group();
@@ -93,6 +114,18 @@ pub fn add_axis(scene: &mut SceneNode3d, length: f32,
     grp
 }
 
+/// Creates axes for a Cartesian coordinate system with RGB representing
+/// XYX
+///
+/// # Arguments
+///
+/// * scene   Scene graph to update
+/// * length  Length of each axis, not including ending arrows
+///
+/// # Return
+///
+/// * XYZ/RGB axes aligned with the graphics reference frame
+///
 pub fn add_axes(scene: &mut SceneNode3d, length: f32) -> SceneNode3d {
     let mut grp = scene.add_group();
     _ = add_axis(&mut grp,
@@ -106,7 +139,6 @@ pub fn add_axes(scene: &mut SceneNode3d, length: f32) -> SceneNode3d {
                             length, Color::new(0.0, 0.0, 1.0, 1.0));
     let rot = Quat::from_axis_angle(Vec3::X, 0.5*std::f64::consts::PI as f32);
     axis.rotate(rot);
-    grp.rotate(gx2inertial());
 
     grp
 }
