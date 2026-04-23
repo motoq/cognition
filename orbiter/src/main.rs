@@ -7,10 +7,11 @@
  */
 use kiss3d::prelude::*;
 
-use orbiter::gx2inertial;
+use orbiter::gx2inertial_rot;
 use orbiter::add_sparky;
 use orbiter::add_axes;
 use orbiter::add_earth;
+use orbiter::update_earth;
 
 #[kiss3d::main]
 async fn main() {
@@ -33,9 +34,10 @@ async fn main() {
 
 
     let mut axes = add_axes(&mut scene, AXIS_LENGTH);
-    axes.rotate(gx2inertial());
+    axes.rotate(gx2inertial_rot());
     let mut earth = add_earth(&mut scene, DU as f32);
-    earth.rotate(gx2inertial());
+    let q_i2f = Quat::from_axis_angle(Vec3::Z, 0.0);
+    update_earth(&mut earth,  &q_i2f);
 
     scene.add_sphere(0.1*DU as f32)
         .set_color(RED)
@@ -63,8 +65,9 @@ async fn main() {
 
         let sim_time = TU_PER_SEC*seconds;
         let earth_rot = sim_time*OMEGA_EARTH;
-        let rot: Quat = Quat::from_axis_angle(Vec3::Y, earth_rot as f32);
-        earth.set_rotation(rot);
+        let q_i2f = Quat::from_axis_angle(Vec3::Z,
+                                          -1.0*earth_rot as f32);
+        update_earth(&mut earth,  &q_i2f);
 
         for event in window.events().iter() {
             match event.value {

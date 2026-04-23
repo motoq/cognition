@@ -24,12 +24,20 @@ use std::path::Path;
 ///
 /// * Graphics to computational rotation quaternion
 ///
-pub fn gx2inertial() -> Quat {
+pub fn gx2inertial_rot() -> Quat {
   Quat::from_axis_angle(Vec3::X, -0.5*std::f64::consts::PI as f32)
 }
 
-pub fn sparky2inertial() -> Quat {
-  Quat::from_axis_angle(Vec3::Y, 0.5*std::f64::consts::PI as f32)
+/// Rotation from texture to earth fixed (body)
+///
+/// # Return
+///
+/// * Texture coordinates to earth fixed
+///
+pub fn earthtexture2fixed_rot() -> Quat {
+    let rot1 = Quat::from_axis_angle(Vec3::Z, -std::f64::consts::PI as f32);
+    let rot2 = Quat::from_axis_angle(Vec3::X, 0.5*std::f64::consts::PI as f32);
+    rot2*rot1
 }
 
 /// Creates a sphere with an earth image texture and adds it to the scene,
@@ -48,17 +56,16 @@ pub fn sparky2inertial() -> Quat {
 ///   longitude.
 ///
 pub fn add_earth(scene: &mut SceneNode3d, er: f32) -> SceneNode3d {
-    let mut earth =scene.add_sphere(er)
+    let earth = scene
+        .add_sphere(er)
         .set_texture_from_file(Path::new("./media/earth_lights_exp.jpg"),
                                "earth_texture");
-    // Flip then align initial x-axis with Null Island
-    let rot1 = Quat::from_axis_angle(Vec3::X, std::f64::consts::PI as f32);
-    let rot2 = Quat::from_axis_angle(Vec3::Y, std::f64::consts::PI as f32);
-    let rot3 = Quat::from_axis_angle(Vec3::X, -0.5*std::f64::consts::PI as f32);
-    let rot = rot1*rot2*rot3;
-    earth.rotate(rot);
-
     earth
+}
+
+/// q_i2f  Inertial to Fixed reference frame transformation
+pub fn update_earth(earth_node: &mut SceneNode3d, q_i2f: &Quat) {
+    earth_node.set_rotation(gx2inertial_rot()*q_i2f.conjugate()*earthtexture2fixed_rot());
 }
 
 /// Creates the object representing Sparky the spacecraft
@@ -79,7 +86,6 @@ pub fn add_sparky(scene: &mut SceneNode3d) -> SceneNode3d {
         .add_obj(sparky_obj_path, sparky_mtl_path,
                  Vec3::new(0.005, 0.005, 0.005))
         .set_position(Vec3::new(1.0, 1.0, 1.0));
-    sparky.rotate(gx2inertial().conjugate()*sparky2inertial());
 
     sparky
 }
