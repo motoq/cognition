@@ -12,12 +12,13 @@ use orbiter::add_sparky;
 use orbiter::add_axes;
 use orbiter::add_earth;
 use orbiter::update_earth;
+use orbiter::update_sparky;
 
 #[kiss3d::main]
 async fn main() {
     // GX related - define as f32
     const AXIS_LENGTH: f32 = 10.0;
-    const DANG: f32 = (45.0*std::f64::consts::PI/180.0) as f32;
+    const DANG: f32 = (15.0*std::f64::consts::PI/180.0) as f32;
     // Physics for this simulation - cast to f32 when needed for GX
     const DU: f64 = 1.0;
     const OMEGA_EARTH: f64 = 0.06;  // rad/TU
@@ -50,11 +51,13 @@ async fn main() {
         .set_position(Vec3::new(0.0, 0.0, AXIS_LENGTH));
 
     let mut sparky = add_sparky(&mut scene);
-    //sparky.rotate(gx2inertial());
+    let q_i2b = Quat::from_axis_angle(Vec3::Z, 0.0);
+    update_sparky(&mut sparky, &q_i2b);
 
     // Per-frame loop
     let epoch = std::time::Instant::now();
     let mut count = 0;
+    let mut q_i2b_rot = Quat::from_axis_angle(Vec3::Z, 0.0);
     while window.render_3d(&mut scene, &mut camera).await {
         count += 1;
         let now = std::time::Instant::now();
@@ -73,12 +76,38 @@ async fn main() {
             match event.value {
                 WindowEvent::Key(button, Action::Press, _) => {
                     if button == Key::A {
-                      let yawport: Quat =
-                          Quat::from_axis_angle(Vec3::Z, DANG);
-                      sparky.set_rotation(yawport);
+                        q_i2b_rot = q_i2b_rot*
+                                    Quat::from_axis_angle(Vec3::Z, DANG);
+                        let q_i2b = q_i2b_rot.conjugate();
+                        update_sparky(&mut sparky, &q_i2b);
+                    } else if button == Key::G {
+                        q_i2b_rot = q_i2b_rot*
+                                    Quat::from_axis_angle(Vec3::Z, -DANG);
+                        let q_i2b = q_i2b_rot.conjugate();
+                        update_sparky(&mut sparky, &q_i2b);
+                    } else if button == Key::E {
+                        q_i2b_rot = q_i2b_rot*
+                                    Quat::from_axis_angle(Vec3::Y, DANG);
+                        let q_i2b = q_i2b_rot.conjugate();
+                        update_sparky(&mut sparky, &q_i2b);
+                    } else if button == Key::D {
+                        q_i2b_rot = q_i2b_rot*
+                                    Quat::from_axis_angle(Vec3::Y, -DANG);
+                        let q_i2b = q_i2b_rot.conjugate();
+                        update_sparky(&mut sparky, &q_i2b);
+                    } else if button == Key::F {
+                        q_i2b_rot = q_i2b_rot*
+                                    Quat::from_axis_angle(Vec3::X, DANG);
+                        let q_i2b = q_i2b_rot.conjugate();
+                        update_sparky(&mut sparky, &q_i2b);
+                    } else if button == Key::S {
+                        q_i2b_rot = q_i2b_rot*
+                                    Quat::from_axis_angle(Vec3::X, -DANG);
+                        let q_i2b = q_i2b_rot.conjugate();
+                        update_sparky(&mut sparky, &q_i2b);
                     }
-                    // override default keyboard handler
                     //event.inhibited = true
+                    // override default keyboard handler
                 }
                 _ => {}
             }

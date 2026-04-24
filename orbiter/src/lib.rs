@@ -40,6 +40,12 @@ pub fn earthtexture2fixed_rot() -> Quat {
     rot2*rot1
 }
 
+pub fn sparkymodel2body_rot() -> Quat {
+    let rot1 = Quat::from_axis_angle(Vec3::Y, 0.5*std::f64::consts::PI as f32);
+    let rot2 = Quat::from_axis_angle(Vec3::X, 0.5*std::f64::consts::PI as f32);
+    rot2*rot1
+}
+
 /// Creates a sphere with an earth image texture and adds it to the scene,
 /// returning the earth for further manipulation
 ///
@@ -65,7 +71,9 @@ pub fn add_earth(scene: &mut SceneNode3d, er: f32) -> SceneNode3d {
 
 /// q_i2f  Inertial to Fixed reference frame transformation
 pub fn update_earth(earth_node: &mut SceneNode3d, q_i2f: &Quat) {
-    earth_node.set_rotation(gx2inertial_rot()*q_i2f.conjugate()*earthtexture2fixed_rot());
+    earth_node.set_rotation(gx2inertial_rot()*
+                            q_i2f.conjugate()*
+                            earthtexture2fixed_rot());
 }
 
 /// Creates the object representing Sparky the spacecraft
@@ -82,12 +90,18 @@ pub fn update_earth(earth_node: &mut SceneNode3d, q_i2f: &Quat) {
 pub fn add_sparky(scene: &mut SceneNode3d) -> SceneNode3d {
     let sparky_obj_path = Path::new("./media/sparkymatmesh.obj");
     let sparky_mtl_path = Path::new("./media");
-    let mut sparky = scene
+    let sparky = scene
         .add_obj(sparky_obj_path, sparky_mtl_path,
                  Vec3::new(0.005, 0.005, 0.005))
         .set_position(Vec3::new(1.0, 1.0, 1.0));
 
     sparky
+}
+
+pub fn update_sparky(sparky_node: &mut SceneNode3d, q_i2b: &Quat) {
+    sparky_node.set_rotation(gx2inertial_rot()*
+                             q_i2b.conjugate()*
+                             sparkymodel2body_rot());
 }
 
 /// Creates axes for a Cartesian coordinate system with RGB representing
