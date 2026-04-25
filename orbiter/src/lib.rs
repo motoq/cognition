@@ -9,8 +9,9 @@
 //! Primarily graphics and graphical environment related utilities
 //! including rotations from the computational frame to the graphics
 //! environment, loadking of orbiter app specific objects, and creation
-//! of some graphics related content.  Objects created are aligned with
-//! the graphics reference frame.
+//! of some graphics related content.  External useers of objects should
+//! use the add_*() functions to create objects, and the update_*()
+//! functions to set their states.
 
 use kiss3d::prelude::*;
 use std::path::Path;
@@ -28,11 +29,12 @@ pub fn gx2inertial_rot() -> Quat {
   Quat::from_axis_angle(Vec3::X, -0.5*std::f64::consts::PI as f32)
 }
 
-/// Rotation from texture to earth fixed (body)
+/// Rotation from texture to earth fixed (body), where the z-axis
+/// is out the north pole and the x-axis Null Island.
 ///
 /// # Return
 ///
-/// * Texture coordinates to earth fixed
+/// * Earth image coordinates to earth fixed
 ///
 pub fn earthtexture2fixed_rot() -> Quat {
     let rot1 = Quat::from_axis_angle(Vec3::Z, -std::f64::consts::PI as f32);
@@ -40,6 +42,13 @@ pub fn earthtexture2fixed_rot() -> Quat {
     rot2*rot1
 }
 
+
+/// Rotation from orbiter model to body
+///
+/// # Return
+///
+/// * Orbiter model coordinates to body
+///
 pub fn sparkymodel2body_rot() -> Quat {
     let rot1 = Quat::from_axis_angle(Vec3::Y, 0.5*std::f64::consts::PI as f32);
     let rot2 = Quat::from_axis_angle(Vec3::X, 0.5*std::f64::consts::PI as f32);
@@ -56,10 +65,7 @@ pub fn sparkymodel2body_rot() -> Quat {
 ///
 /// # Return
 ///
-/// * Sphere representing the earth object rotated to align with the
-///   graphics coordinate sysytem such that the GX z-axis is through
-///   the north pole and the GX x-axis is through (0, 0) latitude and
-///   longitude.
+/// * Sphere representing the earth object
 ///
 pub fn add_earth(scene: &mut SceneNode3d, er: f32) -> SceneNode3d {
     let earth = scene
@@ -69,14 +75,21 @@ pub fn add_earth(scene: &mut SceneNode3d, er: f32) -> SceneNode3d {
     earth
 }
 
-/// q_i2f  Inertial to Fixed reference frame transformation
+/// Updates the orientation of the earth as displayed in the graphics
+/// environment given an inertial to earth fixed (body) reference frame
+/// transformation.
+///
+/// # Return
+///
+/// * q_i2f  Inertial to Fixed reference frame transformation
+///
 pub fn update_earth(earth_node: &mut SceneNode3d, q_i2f: &Quat) {
     earth_node.set_rotation(gx2inertial_rot()*
                             q_i2f.conjugate()*
                             earthtexture2fixed_rot());
 }
 
-/// Creates the object representing Sparky the spacecraft
+/// Creates the orbiter object
 ///
 /// # Argument
 ///
@@ -84,8 +97,7 @@ pub fn update_earth(earth_node: &mut SceneNode3d, q_i2f: &Quat) {
 ///
 /// # Return
 ///
-/// * Sparky object with body x-axis out the nose and z-axis up.
-///   Aligned with grapchics reference frame
+/// * Sparky orbiter
 ///
 pub fn add_sparky(scene: &mut SceneNode3d) -> SceneNode3d {
     let sparky_obj_path = Path::new("./media/sparkymatmesh.obj");
@@ -94,10 +106,17 @@ pub fn add_sparky(scene: &mut SceneNode3d) -> SceneNode3d {
         .add_obj(sparky_obj_path, sparky_mtl_path,
                  Vec3::new(0.005, 0.005, 0.005))
         .set_position(Vec3::new(1.0, 1.0, 1.0));
-
     sparky
 }
 
+/// Updates the orientation of the orbiter object as displayed in the
+/// graphics environment given an inertial to body reference frame 
+/// transformation.
+///
+/// # Return
+///
+/// * q_i2b  Inertial to body reference frame transformation
+///
 pub fn update_sparky(sparky_node: &mut SceneNode3d, q_i2b: &Quat) {
     sparky_node.set_rotation(gx2inertial_rot()*
                              q_i2b.conjugate()*
@@ -130,7 +149,6 @@ pub fn add_axis(scene: &mut SceneNode3d, length: f32,
     grp.add_cone(cone_width, cone_length)
         .set_color(color)
         .set_position(Vec3::new(0.0, length, 0.0));
-
     grp
 }
 
@@ -159,7 +177,6 @@ pub fn add_axes(scene: &mut SceneNode3d, length: f32) -> SceneNode3d {
                             length, Color::new(0.0, 0.0, 1.0, 1.0));
     let rot = Quat::from_axis_angle(Vec3::X, 0.5*std::f64::consts::PI as f32);
     axis.rotate(rot);
-
     grp
 }
 

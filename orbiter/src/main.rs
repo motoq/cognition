@@ -20,11 +20,12 @@ async fn main() {
     const AXIS_LENGTH: f32 = 10.0;
     const DANG: f32 = (15.0*std::f64::consts::PI/180.0) as f32;
     // Physics for this simulation - cast to f32 when needed for GX
-    const DU: f64 = 1.0;
+    const DU: f64 = 1.0;            // Distance units
     const OMEGA_EARTH: f64 = 0.06;  // rad/TU
-    const TU_PER_SEC: f64 = 1.0;
+    const TU_PER_SEC: f64 = 1.0;    // Time units per real time
 
-    let mut window = Window::new("Orbiter").await;
+      // Graphics window
+    let mut gx_window = Window::new("Orbiter").await;
     let mut camera =
         OrbitCamera3d::new(Vec3::new(2.0*AXIS_LENGTH, 0.0, 2.0*AXIS_LENGTH),
                            Vec3::new(0.0, 0.0, 0.0));
@@ -58,7 +59,7 @@ async fn main() {
     let epoch = std::time::Instant::now();
     let mut count = 0;
     let mut q_i2b_rot = Quat::from_axis_angle(Vec3::Z, 0.0);
-    while window.render_3d(&mut scene, &mut camera).await {
+    while gx_window.render_3d(&mut scene, &mut camera).await {
         count += 1;
         let now = std::time::Instant::now();
         let seconds = now.duration_since(epoch).as_secs_f64();
@@ -72,7 +73,7 @@ async fn main() {
                                           -1.0*earth_rot as f32);
         update_earth(&mut earth,  &q_i2f);
 
-        for event in window.events().iter() {
+        for event in gx_window.events().iter() {
             match event.value {
                 WindowEvent::Key(button, Action::Press, _) => {
                     if button == Key::A {
