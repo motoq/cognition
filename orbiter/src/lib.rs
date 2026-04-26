@@ -16,7 +16,6 @@
 use kiss3d::prelude::*;
 use std::path::Path;
 //use kiss3d::prelude::{Vec3, Quat}; 
-//use kiss3d::nalgebra::{UnitQuaternion, Vector3};
 
 /// Rotation from the graphics environment (y-axis up, z-axis out of the
 /// paper) to the computational (inertial) reference frame (z-axis up).
@@ -70,7 +69,7 @@ pub fn sparkymodel2body_rot() -> Quat {
 pub fn add_earth(scene: &mut SceneNode3d, er: f32) -> SceneNode3d {
     let earth = scene
         .add_sphere(er)
-        .set_texture_from_file(Path::new("./media/earth_lights_exp.jpg"),
+        .set_texture_from_file(Path::new("./resources/earth_lights_exp.jpg"),
                                "earth_texture");
     earth
 }
@@ -100,8 +99,8 @@ pub fn update_earth(earth_node: &mut SceneNode3d, q_i2f: &Quat) {
 /// * Sparky orbiter
 ///
 pub fn add_sparky(scene: &mut SceneNode3d) -> SceneNode3d {
-    let sparky_obj_path = Path::new("./media/sparkymatmesh.obj");
-    let sparky_mtl_path = Path::new("./media");
+    let sparky_obj_path = Path::new("./resources/sparkymatmesh.obj");
+    let sparky_mtl_path = Path::new("./resources");
     let sparky = scene
         .add_obj(sparky_obj_path, sparky_mtl_path,
                  Vec3::new(0.005, 0.005, 0.005))

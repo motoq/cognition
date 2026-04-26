@@ -7,6 +7,8 @@
  */
 use kiss3d::prelude::*;
 
+use nalgebra as na;
+
 use orbiter::gx2inertial_rot;
 use orbiter::add_sparky;
 use orbiter::add_axes;
@@ -39,6 +41,8 @@ async fn main() {
     let mut txt_camera = OrbitCamera3d::default();
     let mut txt_scene = SceneNode3d::empty();
     let font = Font::default();
+    //let font = Font::new(std::path::Path::new("...")).unwrap();
+    //let font =  std::sync::Arc::new(font);
 
     let mut axes = add_axes(&mut gx_scene, AXIS_LENGTH);
     axes.rotate(gx2inertial_rot());
@@ -60,13 +64,16 @@ async fn main() {
     let q_i2b = Quat::from_axis_angle(Vec3::Z, 0.0);
     update_sparky(&mut sparky, &q_i2b);
 
+    //let ihat  = Vector3::x_axis();
+    let na_q_i2b = na::UnitQuaternion::from_axis_angle(&na::Vector3::x_axis(), 1.78);
+
     //
     // Simulation and render loop
     //
 
     // Per-frame loop
     let epoch = std::time::Instant::now();
-    let mut count = 0;
+    let mut seconds: f64 = 0.0;
     let mut q_i2b_rot = Quat::from_axis_angle(Vec3::Z, 0.0);
     // Continue simulation while graphics window is open
     while gx_window.is_some() {
@@ -75,12 +82,8 @@ async fn main() {
                 gx_window = None;
                 continue;
             }
-            count += 1;
             let now = std::time::Instant::now();
-            let seconds = now.duration_since(epoch).as_secs_f64();
-            if count % 100 == 0 {
-              println!("Elapsed Time: {} seconds", seconds);
-            }
+            seconds = now.duration_since(epoch).as_secs_f64();
     
             let sim_time = TU_PER_SEC*seconds;
             let earth_rot = sim_time*OMEGA_EARTH;
@@ -135,8 +138,18 @@ async fn main() {
                 txt_window = None;
                 continue;
             }
-            window.draw_text("Sparky Telemetry",
-                             Vec2::ZERO, 15.0, &font, WHITE);
+            let time_txt = format!("Elapsed Time (TU): {:>8.2}",
+                                   seconds*TU_PER_SEC);
+            window.draw_text(&time_txt,
+                             Vec2::ZERO, 20.0, &font, WHITE);
+            let time_txt = format!("AbcDefGHiJKLMNopq:");
+            window.draw_text(&time_txt,
+                             Vec2::new(0.0, 20.0), 20.0, &font, WHITE);
         }
     }
 }
+
+            //count += 1;
+            //if count % 100 != 0 {
+            //    continue;
+            //}
