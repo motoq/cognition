@@ -14,8 +14,26 @@
 //! functions to set their states.
 
 use kiss3d::prelude::*;
+use nalgebra as na;
 use std::path::Path;
 //use kiss3d::prelude::{Vec3, Quat}; 
+
+/// Convert an nalgebra UnitQuaternion to a Glam Quat
+///
+/// # Arguments
+///
+/// * nq  nalgebra quaternion
+///
+/// # Return
+///
+/// * Glam quaternion
+///
+pub fn q_na2glamt(nq: &na::UnitQuaternion::<f64>) -> Quat {
+    Quat::from_xyzw(nq.vector()[0] as f32,
+                    nq.vector()[1] as f32,
+                    nq.vector()[2] as f32,
+                    nq.scalar() as f32)
+}
 
 /// Rotation from the graphics environment (y-axis up, z-axis out of the
 /// paper) to the computational (inertial) reference frame (z-axis up).
@@ -116,9 +134,10 @@ pub fn add_sparky(scene: &mut SceneNode3d) -> SceneNode3d {
 ///
 /// * q_i2b  Inertial to body reference frame transformation
 ///
-pub fn update_sparky(sparky_node: &mut SceneNode3d, q_i2b: &Quat) {
+pub fn update_sparky(sparky_node: &mut SceneNode3d,
+                     q_i2b: &na::UnitQuaternion::<f64>) {
     sparky_node.set_rotation(gx2inertial_rot()*
-                             q_i2b.conjugate()*
+                             q_na2glamt(q_i2b).conjugate()*
                              sparkymodel2body_rot());
 }
 

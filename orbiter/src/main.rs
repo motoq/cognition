@@ -16,11 +16,17 @@ use orbiter::add_earth;
 use orbiter::update_earth;
 use orbiter::update_sparky;
 
+
+
 #[kiss3d::main]
 async fn main() {
+    let ihat = na::Vector3::<f64>::x_axis();
+    let jhat = na::Vector3::<f64>::y_axis();
+    let khat = na::Vector3::<f64>::z_axis();
+
     // GX related - define as f32
     const AXIS_LENGTH: f32 = 10.0;
-    const DANG: f32 = (5.0*std::f64::consts::PI/180.0) as f32;
+    const DANG: f64 = 5.0*std::f64::consts::PI/180.0;
     // Physics for this simulation - cast to f32 when needed for GX
     const DU: f64 = 1.0;            // Distance units
     const OMEGA_EARTH: f64 = 0.06;  // rad/TU
@@ -61,11 +67,10 @@ async fn main() {
         .set_position(Vec3::new(0.0, 0.0, AXIS_LENGTH));
 
     let mut sparky = add_sparky(&mut gx_scene);
-    let q_i2b = Quat::from_axis_angle(Vec3::Z, 0.0);
+    //let q_i2b = Quat::from_axis_angle(Vec3::Z, 0.0);
+    let q_i2b = na::UnitQuaternion::<f64>::from_axis_angle(&khat, 0.0);
     update_sparky(&mut sparky, &q_i2b);
 
-    //let ihat  = Vector3::x_axis();
-    let na_q_i2b = na::UnitQuaternion::from_axis_angle(&na::Vector3::x_axis(), 1.78);
 
     //
     // Simulation and render loop
@@ -74,7 +79,7 @@ async fn main() {
     // Per-frame loop
     let epoch = std::time::Instant::now();
     let mut seconds: f64 = 0.0;
-    let mut q_i2b_rot = Quat::from_axis_angle(Vec3::Z, 0.0);
+    let mut q_i2b_rot = na::UnitQuaternion::<f64>::from_axis_angle(&khat, 0.0);
     // Continue simulation while graphics window is open
     while gx_window.is_some() {
         if let Some(window) = &mut gx_window {
@@ -96,32 +101,38 @@ async fn main() {
                     WindowEvent::Key(button, Action::Press, _) => {
                         if button == Key::A {
                             q_i2b_rot = q_i2b_rot*
-                                        Quat::from_axis_angle(Vec3::Z, DANG);
+                                na::UnitQuaternion::<f64>::
+                                    from_axis_angle(&khat, DANG);
                             let q_i2b = q_i2b_rot.conjugate();
                             update_sparky(&mut sparky, &q_i2b);
                         } else if button == Key::G {
                             q_i2b_rot = q_i2b_rot*
-                                        Quat::from_axis_angle(Vec3::Z, -DANG);
+                                na::UnitQuaternion::<f64>::
+                                    from_axis_angle(&khat, -DANG);
                             let q_i2b = q_i2b_rot.conjugate();
                             update_sparky(&mut sparky, &q_i2b);
                         } else if button == Key::E {
                             q_i2b_rot = q_i2b_rot*
-                                        Quat::from_axis_angle(Vec3::Y, DANG);
+                                na::UnitQuaternion::<f64>::
+                                    from_axis_angle(&jhat, DANG);
                             let q_i2b = q_i2b_rot.conjugate();
                             update_sparky(&mut sparky, &q_i2b);
                         } else if button == Key::D {
                             q_i2b_rot = q_i2b_rot*
-                                        Quat::from_axis_angle(Vec3::Y, -DANG);
+                                na::UnitQuaternion::<f64>::
+                                    from_axis_angle(&jhat, -DANG);
                             let q_i2b = q_i2b_rot.conjugate();
                             update_sparky(&mut sparky, &q_i2b);
                         } else if button == Key::F {
                             q_i2b_rot = q_i2b_rot*
-                                        Quat::from_axis_angle(Vec3::X, DANG);
+                                na::UnitQuaternion::<f64>::
+                                    from_axis_angle(&ihat, DANG);
                             let q_i2b = q_i2b_rot.conjugate();
                             update_sparky(&mut sparky, &q_i2b);
                         } else if button == Key::S {
                             q_i2b_rot = q_i2b_rot*
-                                        Quat::from_axis_angle(Vec3::X, -DANG);
+                                na::UnitQuaternion::<f64>::
+                                    from_axis_angle(&ihat, -DANG);
                             let q_i2b = q_i2b_rot.conjugate();
                             update_sparky(&mut sparky, &q_i2b);
                         }
