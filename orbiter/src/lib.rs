@@ -135,7 +135,7 @@ pub fn add_sparky(scene: &mut SceneNode3d) -> SceneNode3d {
 /// * q_i2b  Inertial to body reference frame transformation
 ///
 pub fn update_sparky(sparky_node: &mut SceneNode3d,
-                     q_i2b: &na::UnitQuaternion::<f64>) {
+                     q_i2b: &na::UnitQuaternion<f64>) {
     sparky_node.set_rotation(gx2inertial_rot()*
                              q_na2glamt(q_i2b).conjugate()*
                              sparkymodel2body_rot());
@@ -196,6 +196,21 @@ pub fn add_axes(scene: &mut SceneNode3d, length: f32) -> SceneNode3d {
     let rot = Quat::from_axis_angle(Vec3::X, 0.5*std::f64::consts::PI as f32);
     axis.rotate(rot);
     grp
+}
+
+/// Formats a quaternion for text output
+///
+/// # Arguments
+///
+/// * q_i2b  Quaternion to convert to a String
+///
+/// # Return
+///
+/// * String representation of quaternion in scalar + vector format
+///
+pub fn attitude_string(q_i2b: &na::UnitQuaternion<f64>) -> String {
+    format!("{:1.6} + [{:1.6} {:1.6} {:1.6}]",
+        q_i2b.scalar(), q_i2b.imag().x, q_i2b.imag().y, q_i2b.imag().z)
 }
 
 

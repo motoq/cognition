@@ -15,6 +15,7 @@ use orbiter::add_axes;
 use orbiter::add_earth;
 use orbiter::update_earth;
 use orbiter::update_sparky;
+use orbiter::attitude_string;
 
 
 
@@ -149,13 +150,11 @@ async fn main() {
                 txt_window = None;
                 continue;
             }
-            let time_txt = format!("Elapsed Time (TU): {:>8.2}",
-                                   seconds*TU_PER_SEC);
-            window.draw_text(&time_txt,
-                             Vec2::ZERO, 20.0, &font, WHITE);
-            let time_txt = format!("AbcDefGHiJKLMNopq:");
-            window.draw_text(&time_txt,
-                             Vec2::new(0.0, 20.0), 20.0, &font, WHITE);
+            let txt = format!("Elapsed Time (TU): {:>8.2}", seconds*TU_PER_SEC);
+            window.draw_text(&txt, Vec2::ZERO, 20.0, &font, WHITE);
+            let txt = format!("Inertial to Body:  {}",
+                              attitude_string(&q_i2b_rot));
+            window.draw_text(&txt, Vec2::new(0.0, 20.0), 20.0, &font, WHITE);
         }
     }
 }
