@@ -16,18 +16,18 @@ use orbiter::add_earth;
 use orbiter::update_earth;
 use orbiter::update_sparky;
 use orbiter::attitude_string;
+use orbiter::dynamics_off_event_handler;
 
 
 
 #[kiss3d::main]
 async fn main() {
-    let ihat = na::Vector3::<f64>::x_axis();
-    let jhat = na::Vector3::<f64>::y_axis();
+//    let ihat = na::Vector3::<f64>::x_axis();
+//    let jhat = na::Vector3::<f64>::y_axis();
     let khat = na::Vector3::<f64>::z_axis();
 
     // GX related - define as f32
     const AXIS_LENGTH: f32 = 10.0;
-    const DANG: f64 = 5.0*std::f64::consts::PI/180.0;
     // Physics for this simulation - cast to f32 when needed for GX
     const DU: f64 = 1.0;            // Distance units
     const OMEGA_EARTH: f64 = 0.06;  // rad/TU
@@ -96,7 +96,12 @@ async fn main() {
             let q_i2f = Quat::from_axis_angle(Vec3::Z,
                                               -1.0*earth_rot as f32);
             update_earth(&mut earth,  &q_i2f);
+
+            q_i2b_rot = dynamics_off_event_handler(&mut window.events(),
+                                                   &mut sparky,
+                                                   &q_i2b_rot);
     
+            /*
             for event in window.events().iter() {
                 match event.value {
                     WindowEvent::Key(button, Action::Press, _) => {
@@ -143,6 +148,7 @@ async fn main() {
                     _ => {}
                 }
             }
+            */
         }
         // If still active, update text window
         if let Some(window) = &mut txt_window {

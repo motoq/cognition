@@ -130,6 +130,10 @@ pub fn add_sparky(scene: &mut SceneNode3d) -> SceneNode3d {
 /// graphics environment given an inertial to body reference frame 
 /// transformation.
 ///
+/// # Argument
+///
+/// * sparky_node  Node for which to update display state
+///
 /// # Return
 ///
 /// * q_i2b  Inertial to body reference frame transformation
@@ -213,4 +217,71 @@ pub fn attitude_string(q_i2b: &na::UnitQuaternion<f64>) -> String {
         q_i2b.scalar(), q_i2b.imag().x, q_i2b.imag().y, q_i2b.imag().z)
 }
 
+/// Handles keyboard events for the case where are dynamics are turned off
+/// and keyboard inputs manually orient the spacecraft w.r.t. inertial space.
+/// Each keyboard input increments the attitude of the corresponding axis
+/// by DANG defined below.
+///
+/// # Arguments
+///
+/// * events  EventManager from which events will be matched and consumed
+/// * sparky  Node for which to update inertial to body rotation
+/// * qrot    Current inertial to body transformation
+///
+/// # Return
+///
+/// * Updated inertial to body rotation
+///
+pub fn dynamics_off_event_handler(events: &mut EventManager,
+                                  mut sparky: &mut SceneNode3d,
+                                  qrot: &na::UnitQuaternion<f64>) ->
+                                                 na::UnitQuaternion<f64> {
+    let ihat = na::Vector3::<f64>::x_axis();
+    let jhat = na::Vector3::<f64>::y_axis();
+    let khat = na::Vector3::<f64>::z_axis();
+    const DANG: f64 = 5.0*std::f64::consts::PI/180.0;
 
+    let mut q_i2b_rot = qrot.clone();
+
+    for event in events.iter() {
+        match event.value {
+            WindowEvent::Key(button, Action::Press, _) => {
+                if button == Key::A {
+                    q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
+                        from_axis_angle(&khat, DANG);
+                    let q_i2b = q_i2b_rot.conjugate();
+                    update_sparky(&mut sparky, &q_i2b);
+                } else if button == Key::G {
+                    q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
+                        from_axis_angle(&khat, -DANG);
+                    let q_i2b = q_i2b_rot.conjugate();
+                    update_sparky(&mut sparky, &q_i2b);
+                } else if button == Key::E {
+                    q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
+                        from_axis_angle(&jhat, DANG);
+                    let q_i2b = q_i2b_rot.conjugate();
+                    update_sparky(&mut sparky, &q_i2b);
+                } else if button == Key::D {
+                    q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
+                        from_axis_angle(&jhat, -DANG);
+                    let q_i2b = q_i2b_rot.conjugate();
+                    update_sparky(&mut sparky, &q_i2b);
+                } else if button == Key::F {
+                    q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
+                        from_axis_angle(&ihat, DANG);
+                    let q_i2b = q_i2b_rot.conjugate();
+                    update_sparky(&mut sparky, &q_i2b);
+                } else if button == Key::S {
+                    q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
+                        from_axis_angle(&ihat, -DANG);
+                    let q_i2b = q_i2b_rot.conjugate();
+                    update_sparky(&mut sparky, &q_i2b);
+                }
+                //event.inhibited = true
+                // override default keyboard handler
+            }
+            _ => {}
+        }
+    }
+    q_i2b_rot
+}
