@@ -9,6 +9,7 @@ use kiss3d::prelude::*;
 
 use nalgebra as na;
 
+use orbiter::OrbiterConfig;
 use orbiter::gx2inertial_rot;
 use orbiter::add_sparky;
 use orbiter::add_axes;
@@ -19,9 +20,28 @@ use orbiter::attitude_string;
 use orbiter::dynamics_off_event_handler;
 
 
-
 #[kiss3d::main]
 async fn main() {
+
+    let config = r#"
+        name = "Sparky"
+        dynamic = true 
+        [others]
+        x = 1.0
+        y = 2.0
+        z = 3.0
+    "#;
+
+    let config: OrbiterConfig = toml::from_str(config).unwrap();
+    println!("name: {}\ndynamic: {}\nx: {}\ny: {}\nz: {}",
+        config.name,
+        config.dynamic,
+        config.others.x,
+        config.others.y,
+        config.others.z,
+    );
+
+
 //    let ihat = na::Vector3::<f64>::x_axis();
 //    let jhat = na::Vector3::<f64>::y_axis();
     let khat = na::Vector3::<f64>::z_axis();

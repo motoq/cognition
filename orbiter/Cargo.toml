@@ -6,3 +6,5 @@ edition = "2024"
 [dependencies]
 kiss3d = "0.41.0"
 nalgebra = "0.34.2"
+serde = { version = "1.0.228", features = ["derive"] }
+toml = "1.1.2"

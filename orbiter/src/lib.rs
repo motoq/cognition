@@ -13,10 +13,28 @@
 //! use the add_*() functions to create objects, and the update_*()
 //! functions to set their states.
 
+//use kiss3d::prelude::{Vec3, Quat}; 
 use kiss3d::prelude::*;
 use nalgebra as na;
+
+use serde::Deserialize;
 use std::path::Path;
-//use kiss3d::prelude::{Vec3, Quat}; 
+
+/// Configuration structs, in progress
+#[derive(Deserialize)]
+pub struct OrbiterConfig {
+    pub name: String,
+    pub dynamic: bool,
+    pub others: Others,
+}
+
+#[derive(Deserialize)]
+pub struct Others {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
 
 /// Convert an nalgebra UnitQuaternion to a Glam Quat
 ///
@@ -221,6 +239,12 @@ pub fn attitude_string(q_i2b: &na::UnitQuaternion<f64>) -> String {
 /// and keyboard inputs manually orient the spacecraft w.r.t. inertial space.
 /// Each keyboard input increments the attitude of the corresponding axis
 /// by DANG defined below.
+///
+/// # Keyboard Inputs
+///
+/// * A/G  Yaw
+/// * D/E  Pitch
+/// * S/F  Roll
 ///
 /// # Arguments
 ///
