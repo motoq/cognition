@@ -35,6 +35,10 @@ pub struct Others {
     pub z: f64,
 }
 
+// Axis and related scale factors
+const LS1: f32 = 0.05;
+const LS2: f32 = 0.25;
+const LS3: f32 = 0.25;
 
 /// Convert an nalgebra UnitQuaternion to a Glam Quat
 ///
@@ -102,11 +106,15 @@ pub fn sparkymodel2body_rot() -> Quat {
 ///
 /// * Sphere representing the earth object
 ///
-pub fn add_earth(scene: &mut SceneNode3d, er: f32) -> SceneNode3d {
-    let earth = scene
-        .add_sphere(er)
-        .set_texture_from_file(Path::new("./resources/earth_lights_exp.jpg"),
-                               "earth_texture");
+pub fn add_earth(scene: &mut SceneNode3d,
+                 config: &OrbiterConfig,  er: f32) -> SceneNode3d {
+    let earth = if config.dynamic {
+        scene.add_sphere(er)
+             .set_texture_from_file(
+                 Path::new("./resources/earth_lights_exp.jpg"), "earth_texture")
+    } else {
+        scene.add_sphere(LS1*LS2*LS3*er)
+    };
     earth
 }
 
@@ -134,13 +142,18 @@ pub fn update_earth(earth_node: &mut SceneNode3d, q_i2f: &Quat) {
 ///
 /// * Sparky orbiter
 ///
-pub fn add_sparky(scene: &mut SceneNode3d) -> SceneNode3d {
+pub fn add_sparky(scene: &mut SceneNode3d,
+                  config: &OrbiterConfig) -> SceneNode3d {
     let sparky_obj_path = Path::new("./resources/sparkymatmesh.obj");
     let sparky_mtl_path = Path::new("./resources");
-    let sparky = scene
-        .add_obj(sparky_obj_path, sparky_mtl_path,
-                 Vec3::new(0.005, 0.005, 0.005))
-        .set_position(Vec3::new(1.0, 1.0, 1.0));
+    let sparky = if config.dynamic {
+        scene.add_obj(sparky_obj_path, sparky_mtl_path,
+                      Vec3::new(0.005, 0.005, 0.005))
+             .set_position(Vec3::new(1.0, 1.0, 1.0))
+    } else {
+        scene.add_obj(sparky_obj_path, sparky_mtl_path,
+                      Vec3::new(0.005, 0.005, 0.005))
+    };
     sparky
 }
 
@@ -180,9 +193,9 @@ pub fn update_sparky(sparky_node: &mut SceneNode3d,
 pub fn add_axis(scene: &mut SceneNode3d, length: f32,
                                          color: Color) -> SceneNode3d {
     let mut grp = scene.add_group();
-    let cone_length = 0.05*length;
-    let cone_width = 0.25*cone_length;
-    let width = 0.25*cone_width;
+    let cone_length = LS1*length;
+    let cone_width = LS2*cone_length;
+    let width = LS3*cone_width;
     grp.add_cylinder(width, length)
         .set_color(color)
         .set_position(Vec3::new(0.0, length/2.0, 0.0));

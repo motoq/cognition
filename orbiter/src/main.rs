@@ -5,6 +5,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
+
+use std::env;
+use std::fs;
+use std::process;
+
 use kiss3d::prelude::*;
 
 use nalgebra as na;
@@ -23,16 +28,17 @@ use orbiter::dynamics_off_event_handler;
 #[kiss3d::main]
 async fn main() {
 
-    let config = r#"
-        name = "Sparky"
-        dynamic = true 
-        [others]
-        x = 1.0
-        y = 2.0
-        z = 3.0
-    "#;
+    let args: Vec<String> = env::args().collect();
+    println!("{} Arguments", args.len());
+    if args.len() != 2 {
+        println!("Correct use is: {} {}", &args[0], "<config_file>"); 
+        process::exit(0);
+    }
 
-    let config: OrbiterConfig = toml::from_str(config).unwrap();
+    let config = fs::read_to_string(&args[1])
+        .expect(&("Error reading ".to_owned() + &args[1]));
+
+    let config: OrbiterConfig = toml::from_str(&config).unwrap();
     println!("name: {}\ndynamic: {}\nx: {}\ny: {}\nz: {}",
         config.name,
         config.dynamic,
@@ -48,15 +54,22 @@ async fn main() {
 
     // GX related - define as f32
     const AXIS_LENGTH: f32 = 10.0;
+    const NO_DNY_SF:   f32 = 0.025;
     // Physics for this simulation - cast to f32 when needed for GX
     const DU: f64 = 1.0;            // Distance units
     const OMEGA_EARTH: f64 = 0.06;  // rad/TU
     const TU_PER_SEC: f64 = 1.0;    // Time units per real time
 
+    let camera_offset = if config.dynamic {
+        2.0*AXIS_LENGTH
+    } else {
+        NO_DNY_SF*2.0*AXIS_LENGTH
+    };
+
     // Graphics window, etc.
     let mut gx_window = Some(Window::new("Orbiter").await);
     let mut gx_camera =
-        OrbitCamera3d::new(Vec3::new(2.0*AXIS_LENGTH, 0.0, 2.0*AXIS_LENGTH),
+        OrbitCamera3d::new(Vec3::new(camera_offset, 0.0, camera_offset),
                            Vec3::new(0.0, 0.0, 0.0));
     let mut gx_scene = SceneNode3d::empty();
     gx_scene
@@ -71,9 +84,13 @@ async fn main() {
     //let font = Font::new(std::path::Path::new("...")).unwrap();
     //let font =  std::sync::Arc::new(font);
 
-    let mut axes = add_axes(&mut gx_scene, AXIS_LENGTH);
+    let mut axes = if config.dynamic {
+        add_axes(&mut gx_scene, AXIS_LENGTH)
+    } else {
+        add_axes(&mut gx_scene, NO_DNY_SF*AXIS_LENGTH)
+    };
     axes.rotate(gx2inertial_rot());
-    let mut earth = add_earth(&mut gx_scene, DU as f32);
+    let mut earth = add_earth(&mut gx_scene, &config, DU as f32);
     let q_i2f = Quat::from_axis_angle(Vec3::Z, 0.0);
     update_earth(&mut earth,  &q_i2f);
 
@@ -87,7 +104,7 @@ async fn main() {
         .set_color(BLUE)
         .set_position(Vec3::new(0.0, 0.0, AXIS_LENGTH));
 
-    let mut sparky = add_sparky(&mut gx_scene);
+    let mut sparky = add_sparky(&mut gx_scene, &config);
     //let q_i2b = Quat::from_axis_angle(Vec3::Z, 0.0);
     let q_i2b = na::UnitQuaternion::<f64>::from_axis_angle(&khat, 0.0);
     update_sparky(&mut sparky, &q_i2b);

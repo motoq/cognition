@@ -1,0 +1,7 @@
+name = "Sparky"                                                         
+dynamic = true                                                          
+
+[others]                                                                
+x = 1.0                                                                 
+y = 2.0                                                                 
+z = 3.0
