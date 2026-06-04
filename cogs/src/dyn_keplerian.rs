@@ -28,6 +28,114 @@ pub enum KeplerianElement {
     W,
     V,
 }
+/// # Author
+///
+/// *  Kurt Motekew  2026/05/02  Initial, based on eom::Keplerian
+///
+//#[derive(Clone)]
+pub struct Keplerian {
+    oe: [f64; 6],
+    cart: na::SMatrix<f64, 6, 1>,
+}
+
+
+
+//
+// Constructors
+//
+
+impl Default for Keplerian {
+    /// Creates default 
+    ///
+    /// # Return
+    ///
+    /// * Keplerian orbit
+    ///
+    fn default() -> Self {
+        let inc = ((4.0/5.0 as f64).sqrt()).asin();
+        let node = std::f64::consts::PI/6.0;
+        let argp = 1.5*std::f64::consts::PI;
+        let tanon = std::f64::consts::PI/12.0;
+        let kep = [4.1632, 0.741, inc, node, argp, tanon];
+        let rv = kep_to_cart(&kep).unwrap();
+        Self {
+            oe: kep,
+            cart: rv,
+        }
+    }
+}
+
+impl Keplerian {
+    pub fn try_from_oe(oe: &[(KeplerianElement, f64); 6])
+        -> Result<Self, String> {
+
+        let mut a = 0.0;
+        let mut e = 0.0;
+        let mut i = 0.0;
+        let mut o = 0.0;
+        let mut w = 0.0;
+        let mut v = 0.0;
+        for element in oe {
+            let (oe_type, oe_value) = element;
+            match oe_type {
+                KeplerianElement::A => a = *oe_value,
+                KeplerianElement::E => e = *oe_value,
+                KeplerianElement::I => i = *oe_value,
+                KeplerianElement::O => o = *oe_value,
+                KeplerianElement::W => w = *oe_value,
+                KeplerianElement::V => v = *oe_value,
+            }
+        }
+        let kep = [a, e, i, o, w, v];
+        let rv: na::SMatrix<f64, 6, 1> = kep_to_cart(&kep)?;
+
+        Ok(Self {
+            oe: kep,
+            cart: rv,
+        })
+
+    }
+}
+
+/// Public immutable accessor methods
+impl Keplerian {
+    pub fn oe(&self, elem: KeplerianElement) -> f64 {
+        self.oe[elem as usize]
+    }
+
+    /// # Return
+    ///
+    /// * Cartesian coordinates
+    ///
+    pub fn cartesian(&self) -> na::SMatrix<f64, 6, 1> {
+        self.cart
+    }
+}
+
+impl std::fmt::Display for Keplerian {
+    /// Write Keplerian and Cartesian coordinates
+    ///
+    /// # Return
+    ///
+    /// * Printable form of OblateSpheroid
+    ///
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "(Semimajor:    {} (DU)\n \
+                    Eccentricity: {}\n \
+                    Inclination:  {} (deg)\n \
+                    RAAN:         {} (deg)\n \
+                    ArgPerigee    {} (deg)\n \
+                    TrueAnomaly   {} (deg)\n \
+                    Cartesian     {})",
+            self.oe[KeplerianElement::A as usize],
+            self.oe[KeplerianElement::E as usize],
+            DEG_PER_RAD*self.oe[KeplerianElement::I as usize],
+            DEG_PER_RAD*self.oe[KeplerianElement::O as usize],
+            DEG_PER_RAD*self.oe[KeplerianElement::W as usize],
+            DEG_PER_RAD*self.oe[KeplerianElement::V as usize],
+            self.cart)
+    }
+}
 
 fn kep_to_cart(kepv: &[f64; 6]) -> Result<na::SMatrix<f64, 6, 1>, String> {
     let a = kepv[0];
@@ -85,86 +193,6 @@ fn kep_to_cart(kepv: &[f64; 6]) -> Result<na::SMatrix<f64, 6, 1>, String> {
                  v_cart[2]])
 }
 
-/// Keplerian orbit
-///
-/// # Author
-///
-/// *  Kurt Motekew  2026/05/02  Initial, based on eom::Keplerian
-///
-//#[derive(Clone)]
-pub struct Keplerian {
-    oe: [f64; 6],
-    cart: na::SMatrix<f64, 6, 1>,
-}
-
-
-
-//
-// Constructors
-//
-
-impl Default for Keplerian {
-    /// Creates default 
-    ///
-    /// # Return
-    ///
-    /// * Keplerian orbit
-    ///
-    fn default() -> Self {
-        let inc = ((4.0/5.0 as f64).sqrt()).asin();
-        let node = std::f64::consts::PI/6.0;
-        let argp = 1.5*std::f64::consts::PI;
-        let tanon = std::f64::consts::PI/12.0;
-        let kep = [4.1632, 0.741, inc, node, argp, tanon];
-        let rv = kep_to_cart(&kep).unwrap();
-        Self {
-            oe: kep,
-            cart: rv,
-        }
-    }
-}
-
-/// Public immutable accessor methods
-impl Keplerian {
-    pub fn oe(&self, elem: KeplerianElement) -> f64 {
-        self.oe[elem as usize]
-    }
-
-    /// # Return
-    ///
-    /// * Cartesian coordinates
-    ///
-    pub fn cartesian(&self) -> na::SMatrix<f64, 6, 1> {
-        self.cart
-    }
-}
-
-impl std::fmt::Display for Keplerian {
-    /// Write Keplerian and Cartesian coordinates
-    ///
-    /// # Return
-    ///
-    /// * Printable form of OblateSpheroid
-    ///
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "(Semimajor:    {} (DU)\n \
-                    Eccentricity: {}\n \
-                    Inclination:  {} (deg)\n \
-                    RAAN:         {} (deg)\n \
-                    ArgPerigee    {} (deg)\n \
-                    TrueAnomaly   {} (deg)\n \
-                    Cartesian     {})",
-            self.oe[KeplerianElement::A as usize],
-            self.oe[KeplerianElement::E as usize],
-            DEG_PER_RAD*self.oe[KeplerianElement::I as usize],
-            DEG_PER_RAD*self.oe[KeplerianElement::O as usize],
-            DEG_PER_RAD*self.oe[KeplerianElement::W as usize],
-            DEG_PER_RAD*self.oe[KeplerianElement::V as usize],
-            self.cart)
-    }
-}
-
-
 
 //
 // Unit tests
@@ -177,15 +205,25 @@ mod tests {
     // Unit test checking the Cartesian portion of the default
     // oblate spheroid was manually set to the correct value.
     #[test]
-    fn os_default() {
-        let oe0 = Keplerian::default();
-        let oe1 = Keplerian::default();
-        //let os1 = crate::oblate_spheroid::OblateSpheroid::try_from(
-        //    &(0.0, 1.0, 0.0, 0.0)).expect("Bad Oblate Spheroid ");
-        //    ecc  sma  lon  lat
+    fn from_oe() {
+        let eps = 1.0e-13;
+        let oelmn: [(KeplerianElement, f64); 6] = [(KeplerianElement::A, 4.2),
+                                                   (KeplerianElement::E, 0.7),
+                                                   (KeplerianElement::I, 1.1),
+                                                   (KeplerianElement::O, 0.5),
+                                                   (KeplerianElement::W, 4.7),
+                                                   (KeplerianElement::V, 0.25)];
 
-        println!("OE: \n{}", oe0);
-        assert!(oe0.cartesian() == oe1.cartesian());
+        let kep = Keplerian::try_from_oe(&oelmn).expect("Bad Oblate Spheroid ");
+
+        println!("delta: {}", delta);
+        println!("cart: {}", kep.cartesian());
+        assert!((kep.cartesian()[0] -  5.3340990173540748e-01).abs() < eps);
+        assert!((kep.cartesian()[1] - -3.4976218240773604e-01).abs() < eps);
+        assert!((kep.cartesian()[2] - -1.1055221648157516e+00).abs() < eps);
+        assert!((kep.cartesian()[3] -  9.6879318804014558e-01).abs() < eps);
+        assert!((kep.cartesian()[4] -  6.0931883443767210e-01).abs() < eps);
+        assert!((kep.cartesian()[5] -  1.3805066965568535e-01).abs() < eps);
     }
 }
 
