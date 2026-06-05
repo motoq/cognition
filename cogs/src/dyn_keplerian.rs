@@ -193,6 +193,42 @@ fn kep_to_cart(kepv: &[f64; 6]) -> Result<na::SMatrix<f64, 6, 1>, String> {
                  v_cart[2]])
 }
 
+// Based on Vallado's "Fundamentals of Astrodynamics and Applications",
+// 4th edition, Algorithm 9: RV2COE
+//
+fn cart_to_kep(rv: &na::SMatrix<f64, 6, 1>) -> Result<[f64; 6], String> {
+    if rv[0] < 0.0 {
+        return Err("X".to_string());
+    }
+
+    let rvec: na::SMatrix<f64, 3, 1> = rv.fixed_view::<3, 1>(0, 0).into();
+    let vvec: na::SMatrix<f64, 3, 1> = rv.fixed_view::<3, 1>(3, 0).into();
+    let rdotv = rvec.dot(&vvec);
+    let rmag = rvec.norm();
+    let vmag = vvec.norm();
+    let v2 = vmag*vmag;
+    let muor = GM/rmag;
+
+    let hvec = rvec.cross(&vvec);
+    let hmag = hvec.norm();
+
+    let khat = na::Vector3::<f64>::z_axis();
+    let mut nvec = khat.cross(&hvec);
+    let nmag =  nvec.norm();
+    // By definition - potential numerical roundoff with cross product
+    nvec[2] = 0.0;
+
+
+
+
+
+
+
+
+
+    Ok([rv[0], rv[1], rv[2], rv[3], rv[4], rv[5]])
+}
+
 
 //
 // Unit tests
@@ -216,8 +252,11 @@ mod tests {
 
         let kep = Keplerian::try_from_oe(&oelmn).expect("Bad Oblate Spheroid ");
 
-        println!("delta: {}", delta);
-        println!("cart: {}", kep.cartesian());
+        println!("cart: {}", &kep.cartesian());
+        let r: na::SMatrix<f64, 3, 1> = kep.cartesian()
+                                           .fixed_view::<3, 1>(0, 0).into();
+        println!("cart: {}", &r);
+        //println!("cart: {}", kep.cartesian().view((0,0), (3,1)));
         assert!((kep.cartesian()[0] -  5.3340990173540748e-01).abs() < eps);
         assert!((kep.cartesian()[1] - -3.4976218240773604e-01).abs() < eps);
         assert!((kep.cartesian()[2] - -1.1055221648157516e+00).abs() < eps);
@@ -235,60 +274,28 @@ mod tests {
 
 namespace {
     // Gravitational parameter
-  constexpr double gm {phy_const::gm};
-    // Indexing
-  constexpr int ia {0};           // Semimajor axis
-  constexpr int ie {1};           // Eccentricity
-  constexpr int ii {2};           // Inclination
-  constexpr int io {3};           // RAAN
-  constexpr int iw {4};           // Argument of perigee
-  constexpr int iv {5};           // True anomaly
     // Convergence
   constexpr int niter {100};
   constexpr double eps {1.e-10};
     // oe_eps
 }
 
-namespace eom {
-
-Keplerian::Keplerian()
-{
-    // Create default placeholder orbit
-  std::array<double, 6> oe = {7.5, 0.75, 1.1, 0.5, 4.7, 0.0};
-  this->set(oe);
-}
 
 
-Keplerian::Keplerian(const std::array<double, 6>& oe)
-{
-  this->set(oe);
-}
 
-
-/*
- * Based on Vallado's "Fundamentals of Astrodynamics and Applications",
- * 4th edition, Algorithm 9: RV2COE
- */
 Keplerian::Keplerian(const Eigen::Matrix<double, 6, 1>& cart)
 {
   m_cart = cart;
 
-  Eigen::Matrix<double, 3, 1> rvec {m_cart.block<3,1>(0,0)};
-  Eigen::Matrix<double, 3, 1> vvec {m_cart.block<3,1>(3,0)};
 
-  Eigen::Matrix<double, 3, 1> hvec {rvec.cross(vvec)};
-  Eigen::Matrix<double, 3, 1> khat {Eigen::Vector3d::UnitZ()};
-  Eigen::Matrix<double, 3, 1> nvec {khat.cross(hvec)};
-  double nmag {nvec.norm()};
-    // By definition - potential numerical roundoff with cross product
-  nvec(2) = 0.0;
 
-  double rmag {rvec.norm()};
-  double vmag {vvec.norm()};
-  m_hmag = hvec.norm();
-  double v2 {vmag*vmag};
-  double rdotv {rvec.dot(vvec)};
-  double muor {gm/rmag};
+
+
+
+
+
+
+
 
     // Eccentricity
   Eigen::Matrix<double, 3, 1> evec {((v2 - muor)*rvec - rdotv*vvec)/gm};
@@ -327,7 +334,7 @@ Keplerian::Keplerian(const Eigen::Matrix<double, 6, 1>& cart)
       inc = utl_const::pi; 
     }
   } else {
-    inc = std::acos(hvec(2)/m_hmag);
+    inc = std::acos(hvec(2)/hmag);
   }
     // RAAN
   double raan {};
@@ -383,7 +390,7 @@ double Keplerian::getEnergy() const
 
 double Keplerian::getAngularMomentum() const
 {
-  return m_hmag;
+  return hmag;
 }
 
 
@@ -583,7 +590,6 @@ std::ostream& operator<<(std::ostream& out, const Keplerian& kep)
 }
 
 
-}
 
 
 
