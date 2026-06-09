@@ -1,12 +1,22 @@
 /*
- * Copyright 2026, 2025 Kurt Motekew
+ * Copyright 2026 Kurt Motekew
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-//! This struct represents
+//! This struct contains osculating Keplerian element sets and the equivalent
+//! Cartesian state vector.  It can be set with either, providing access to
+//! individual orbital elements or position and velocity vectors.  Radians
+//! and canonical distance and time units (see phy_const.rs) are used.  Minimal
+//! eccentricity and inclination constraints are enforced as this structure is
+//! limited to classical orbital elements.  Maximum eccentricity is also
+//! enforced as parabolic and hyperbolic orbits are not considered.
+//!
+//! # Author
+//!
+//! *  Kurt Motekew  2026/05/02  Initial, based on eom::Keplerian
 
 use nalgebra as na;
 
@@ -15,30 +25,37 @@ use crate::utl_const::RAD_PER_DEG;
 use crate::phy_const::GM;
 use crate::phy_const::RE;
 
+use crate::mth_angle;
+
 /// Minimum allowable eccentricty for this type of orbital element set
 const ECC_EPS: f64 = 1.0e-5;
 /// Minimum allowable inclination for this type of orbital element set
 const INC_EPS: f64 = RAD_PER_DEG*0.05;
+/// Generic minimum orbital element value
+const OE_EPS: f64 = 1.0e-5;
 
+/// Keplerian Elements
 pub enum KeplerianElement {
+    /// Semimajor axis
     A,
+    /// Eccentricity
     E,
+    /// Inclination
     I,
+    /// Right ascension of the ascending node
     O,
+    /// Argument of perigee
     W,
+    /// True anomaly
     V,
 }
-/// # Author
-///
-/// *  Kurt Motekew  2026/05/02  Initial, based on eom::Keplerian
+
 ///
 //#[derive(Clone)]
 pub struct Keplerian {
     oe: [f64; 6],
     cart: na::SMatrix<f64, 6, 1>,
 }
-
-
 
 //
 // Constructors
@@ -56,26 +73,25 @@ impl Default for Keplerian {
         let node = std::f64::consts::PI/6.0;
         let argp = 1.5*std::f64::consts::PI;
         let tanon = std::f64::consts::PI/12.0;
-        let kep = [4.1632, 0.741, inc, node, argp, tanon];
-        let rv = kep_to_cart(&kep).unwrap();
+        let oelmn = [4.1632, 0.741, inc, node, argp, tanon];
+        let rv = kep_to_cart(&oelmn).unwrap();
         Self {
-            oe: kep,
+            oe: oelmn,
             cart: rv,
         }
     }
 }
 
 impl Keplerian {
-    pub fn try_from_oe(oe: &[(KeplerianElement, f64); 6])
-        -> Result<Self, String> {
-
+    pub fn try_from_oe(oelmn: &[(KeplerianElement, f64); 6]) -> Result<Self,
+                                                                    String> {
         let mut a = 0.0;
         let mut e = 0.0;
         let mut i = 0.0;
         let mut o = 0.0;
         let mut w = 0.0;
         let mut v = 0.0;
-        for element in oe {
+        for element in oelmn {
             let (oe_type, oe_value) = element;
             match oe_type {
                 KeplerianElement::A => a = *oe_value,
@@ -86,20 +102,28 @@ impl Keplerian {
                 KeplerianElement::V => v = *oe_value,
             }
         }
-        let kep = [a, e, i, o, w, v];
-        let rv: na::SMatrix<f64, 6, 1> = kep_to_cart(&kep)?;
+        let oelmn = [a, e, i, o, w, v];
+        let rv: na::SMatrix<f64, 6, 1> = kep_to_cart(&oelmn)?;
 
         Ok(Self {
-            oe: kep,
+            oe: oelmn,
             cart: rv,
         })
+    }
 
+    pub fn try_from_cart(rv: &na::SMatrix<f64, 6, 1>) -> Result<Self, String> {
+        let oelmn: [f64; 6] = cart_to_kep(&rv)?;
+
+        Ok(Self {
+            oe: oelmn,
+            cart: *rv,
+        })
     }
 }
 
 /// Public immutable accessor methods
 impl Keplerian {
-    pub fn oe(&self, elem: KeplerianElement) -> f64 {
+    pub fn orbital_element(&self, elem: KeplerianElement) -> f64 {
         self.oe[elem as usize]
     }
 
@@ -109,6 +133,14 @@ impl Keplerian {
     ///
     pub fn cartesian(&self) -> na::SMatrix<f64, 6, 1> {
         self.cart
+    }
+
+    pub fn position(&self) -> na::SMatrix<f64, 3, 1> {
+        self.cart.fixed_view::<3, 1>(0, 0).into()
+    }
+
+    pub fn velocity(&self) -> na::SMatrix<f64, 3, 1> {
+        self.cart.fixed_view::<3, 1>(3, 0).into()
     }
 }
 
@@ -127,16 +159,20 @@ impl std::fmt::Display for Keplerian {
                     ArgPerigee    {} (deg)\n \
                     TrueAnomaly   {} (deg)\n \
                     Cartesian     {})",
-            self.oe[KeplerianElement::A as usize],
-            self.oe[KeplerianElement::E as usize],
-            DEG_PER_RAD*self.oe[KeplerianElement::I as usize],
-            DEG_PER_RAD*self.oe[KeplerianElement::O as usize],
-            DEG_PER_RAD*self.oe[KeplerianElement::W as usize],
-            DEG_PER_RAD*self.oe[KeplerianElement::V as usize],
+            self.orbital_element(KeplerianElement::A),
+            self.orbital_element(KeplerianElement::E),
+            DEG_PER_RAD*self.orbital_element(KeplerianElement::I),
+            DEG_PER_RAD*self.orbital_element(KeplerianElement::O),
+            DEG_PER_RAD*self.orbital_element(KeplerianElement::W),
+            DEG_PER_RAD*self.orbital_element(KeplerianElement::V),
             self.cart)
     }
 }
 
+/*
+ * Based on Vallado's "Fundamentals of Astrodynamics and Applications",
+ * 4th edition, Algorithm 10: COE2RV
+ */
 fn kep_to_cart(kepv: &[f64; 6]) -> Result<na::SMatrix<f64, 6, 1>, String> {
     let a = kepv[0];
     let e = kepv[1];
@@ -197,10 +233,6 @@ fn kep_to_cart(kepv: &[f64; 6]) -> Result<na::SMatrix<f64, 6, 1>, String> {
 // 4th edition, Algorithm 9: RV2COE
 //
 fn cart_to_kep(rv: &na::SMatrix<f64, 6, 1>) -> Result<[f64; 6], String> {
-    if rv[0] < 0.0 {
-        return Err("X".to_string());
-    }
-
     let rvec: na::SMatrix<f64, 3, 1> = rv.fixed_view::<3, 1>(0, 0).into();
     let vvec: na::SMatrix<f64, 3, 1> = rv.fixed_view::<3, 1>(3, 0).into();
     let rdotv = rvec.dot(&vvec);
@@ -209,6 +241,13 @@ fn cart_to_kep(rv: &na::SMatrix<f64, 6, 1>) -> Result<[f64; 6], String> {
     let v2 = vmag*vmag;
     let muor = GM/rmag;
 
+    // Vis-viva eqn - first check this is an elliptical orbit
+    let sme = v2/2.0 - muor;
+    if sme >= 0.0 {
+        return Err("Orbit must be elliptical Energy >= 0:  ".to_string() +
+                   &sme.to_string());
+    }
+    
     let hvec = rvec.cross(&vvec);
     let hmag = hvec.norm();
 
@@ -217,16 +256,75 @@ fn cart_to_kep(rv: &na::SMatrix<f64, 6, 1>) -> Result<[f64; 6], String> {
     let nmag =  nvec.norm();
     // By definition - potential numerical roundoff with cross product
     nvec[2] = 0.0;
+      // Potential divide by zero error later on - check now
+    if nmag < OE_EPS {
+        return Err("hxk too small:  ".to_string() + &nmag.to_string());
+    }
 
+    // Eccentricity
+    let evec = ((v2 - muor)*rvec - rdotv*vvec)/GM;
+    let emag = evec.norm();
+    if emag < ECC_EPS {
+        return Err("Eccentricity too small or negative:  ".to_string() +
+                   &emag.to_string());
+    }
 
+    // Semimajor axis, perigee radius, final error check
+    let sma = -0.5*GM/sme;
+    let rp = sma*(1.0 - emag);
+    if rp < RE {
+        return Err("Perigee distance less than 1 DU:  ".to_string() +
+                   &rp.to_string());
+    }
 
+    // Inclination
+    let inc: f64 = if hvec[0] == 0.0  &&  hvec[1] == 0.0 {
+        if hvec[2] > 0.0 {
+            0.0
+        } else {
+            std::f64::consts::PI
+        }
+    } else {
+        (hvec[2]/hmag).acos()
+    };
 
+    // RAAN
+    let raan: f64 = if nvec[1] == 0.0 {
+        0.0
+    } else {
+        let tmp = (nvec[0]/nmag).acos();
+        if nvec[1] < 0.0 {
+            std::f64::consts::TAU - tmp
+        } else {
+            tmp
+        }
+    };
 
+    // Argument of perigee
+    let ehat = evec/emag;
+    let nhat = nvec/nmag;
+    let tmp  = mth_angle::unit_vec_angle(&nhat, &ehat);
+    let argp: f64 = if evec[2] < 0.0 {
+        std::f64::consts::TAU - tmp
+    } else {
+        tmp
+    };
 
+    // True anomaly
+    let rhat = rvec/rmag;
+    let tmp = mth_angle::unit_vec_angle(&ehat, &rhat);
+    let tmp: f64 = if rdotv < 0.0 {
+        std::f64::consts::TAU - tmp
+    } else {
+        tmp
+    };
+    let ta: f64 = if tmp >= std::f64::consts::TAU {
+        tmp - std::f64::consts::TAU
+    } else {
+        tmp
+    };
 
-
-
-    Ok([rv[0], rv[1], rv[2], rv[3], rv[4], rv[5]])
+    Ok([sma, emag, inc, raan, argp, ta])
 }
 
 
@@ -250,19 +348,31 @@ mod tests {
                                                    (KeplerianElement::W, 4.7),
                                                    (KeplerianElement::V, 0.25)];
 
-        let kep = Keplerian::try_from_oe(&oelmn).expect("Bad Oblate Spheroid ");
+        let kep1 = Keplerian::try_from_oe(&oelmn).expect("Bad Cartesian Orbit");
+        let kep2 = Keplerian::try_from_cart(&kep1.cartesian())
+                                                 .expect("Bad Keplerain OE");
 
-        println!("cart: {}", &kep.cartesian());
-        let r: na::SMatrix<f64, 3, 1> = kep.cartesian()
-                                           .fixed_view::<3, 1>(0, 0).into();
-        println!("cart: {}", &r);
-        //println!("cart: {}", kep.cartesian().view((0,0), (3,1)));
-        assert!((kep.cartesian()[0] -  5.3340990173540748e-01).abs() < eps);
-        assert!((kep.cartesian()[1] - -3.4976218240773604e-01).abs() < eps);
-        assert!((kep.cartesian()[2] - -1.1055221648157516e+00).abs() < eps);
-        assert!((kep.cartesian()[3] -  9.6879318804014558e-01).abs() < eps);
-        assert!((kep.cartesian()[4] -  6.0931883443767210e-01).abs() < eps);
-        assert!((kep.cartesian()[5] -  1.3805066965568535e-01).abs() < eps);
+        println!("cart: {}", &kep1.cartesian());
+        println!("oelm: {}", &kep2);
+        assert!((kep1.cartesian()[0] -  5.3340990173540748e-01).abs() < eps);
+        assert!((kep1.cartesian()[1] - -3.4976218240773604e-01).abs() < eps);
+        assert!((kep1.cartesian()[2] - -1.1055221648157516e+00).abs() < eps);
+        assert!((kep1.cartesian()[3] -  9.6879318804014558e-01).abs() < eps);
+        assert!((kep1.cartesian()[4] -  6.0931883443767210e-01).abs() < eps);
+        assert!((kep1.cartesian()[5] -  1.3805066965568535e-01).abs() < eps);
+
+        assert!((kep1.orbital_element(KeplerianElement::A) -
+                 kep2.orbital_element(KeplerianElement::A).abs()) < eps);
+        assert!((kep1.orbital_element(KeplerianElement::E) -
+                 kep2.orbital_element(KeplerianElement::E).abs()) < eps);
+        assert!((kep1.orbital_element(KeplerianElement::I) -
+                 kep2.orbital_element(KeplerianElement::I).abs()) < eps);
+        assert!((kep1.orbital_element(KeplerianElement::O) -
+                 kep2.orbital_element(KeplerianElement::O).abs()) < eps);
+        assert!((kep1.orbital_element(KeplerianElement::W) -
+                 kep2.orbital_element(KeplerianElement::W).abs()) < eps);
+        assert!((kep1.orbital_element(KeplerianElement::V) -
+                 kep2.orbital_element(KeplerianElement::V).abs()) < eps);
     }
 }
 
@@ -270,7 +380,6 @@ mod tests {
 
 
 /*
-
 
 namespace {
     // Gravitational parameter
@@ -279,156 +388,6 @@ namespace {
   constexpr double eps {1.e-10};
     // oe_eps
 }
-
-
-
-
-Keplerian::Keplerian(const Eigen::Matrix<double, 6, 1>& cart)
-{
-  m_cart = cart;
-
-
-
-
-
-
-
-
-
-
-
-    // Eccentricity
-  Eigen::Matrix<double, 3, 1> evec {((v2 - muor)*rvec - rdotv*vvec)/gm};
-  double emag {evec.norm()};
-    // Vis-viva eqn
-  m_sme = v2/2.0 - muor;
-
-    // Some initial error checking
-  if (emag < oe_eps) {
-    throw std::invalid_argument(
-        "Keplerian::Keplerian(): Eccentricity too close to zero");
-  }
-  if (nmag < oe_eps) {
-    throw std::invalid_argument(
-        "Keplerian::Keplerian(): Inclination too close to zero");
-  }
-  if (m_sme >= 0.0) {
-    throw std::invalid_argument(
-        "Keplerian::Keplerian(): Orbit must be elliptical");
-  }
-    // Semimajor axis, perigee radius, final error check
-  double sma {-0.5*gm/m_sme};
-  m_rp = sma*(1.0 - emag);
-  m_ra = sma*(1.0 + emag);
-  if (m_rp < phy_const::re) {
-    throw std::invalid_argument(
-        "Keplerian::set(): Perigee distance less than 1 DU");
-  }
-
-    // Inclination
-  double inc {};
-  if (hvec(0) == 0.0  &&  hvec(1) == 0.0) {
-    if (hvec(2) > 0.0) {
-      inc = 0.0;
-    } else {
-      inc = utl_const::pi; 
-    }
-  } else {
-    inc = std::acos(hvec(2)/hmag);
-  }
-    // RAAN
-  double raan {};
-  if (nvec(1) == 0.0) {
-    raan = 0.0;
-  } else {
-    raan = std::acos(nvec(0)/nmag);
-  }
-  if (nvec(1) < 0.0) {
-    raan = utl_const::tpi - raan;
-  }
-    // Argument of perigee
-  Eigen::Matrix<double, 3, 1> ehat {evec/emag};
-  Eigen::Matrix<double, 3, 1> nhat {nvec/nmag};
-  double argp {mth_angle::unit_vec_angle<double>(nhat, ehat)};
-  if (evec(2) < 0.0) {
-    argp = utl_const::tpi - argp;
-  }
-    // True anomaly
-  Eigen::Matrix<double, 3, 1> rhat {rvec/rmag};
-  double ta {mth_angle::unit_vec_angle<double>(ehat, rhat)};
-  if (rdotv < 0.0) {
-    ta = utl_const::tpi - ta;
-  }
-  if (ta >= utl_const::tpi) {
-    ta -= utl_const::tpi;
-  }
-
-  m_oe[ia] = sma;
-  m_oe[ie] = emag;
-  m_oe[ii] = inc;
-  m_oe[io] = raan;
-  m_oe[iw] = argp;
-  m_oe[iv] = ta;
-
-}
-
-
-/*
- * Based on Vallado's "Fundamentals of Astrodynamics and Applications",
- * 4th edition, Algorithm 10: COE2RV
- */
-void Keplerian::set(const std::array<double, 6>& oe)
-{
-}
-
-
-double Keplerian::getEnergy() const
-{
-  return m_sme;
-}
-
-
-double Keplerian::getAngularMomentum() const
-{
-  return hmag;
-}
-
-
-double Keplerian::getSemimajorAxis() const
-{
-  return m_oe[ia];
-}
-
-
-double Keplerian::getEccentricity() const
-{
-  return m_oe[ie];
-}
-
-
-double Keplerian::getInclination() const
-{
-  return m_oe[ii];
-}
-
-
-double Keplerian::getRaan() const
-{
-  return m_oe[io];
-}
-
-
-double Keplerian::getArgumentOfPerigee() const
-{
-  return m_oe[iw];
-}
-
-
-double Keplerian::getTrueAnomaly() const
-{
-  return m_oe[iv];
-}
-
 
 /*
  * Based on Vallado's "Fundamentals of Astrodynamics and Applications",
@@ -445,50 +404,11 @@ double Keplerian::getEccentricAnomaly() const
   return std::atan2(se, ce);
 }
 
-
 double Keplerian::getMeanAnomaly() const
 {
   double ea {this->getEccentricAnomaly()};
   return  ea - m_oe[ie]*std::sin(ea);
 }
-
-
-double Keplerian::getMeanMotion() const
-{
-  return  std::sqrt(gm/(m_oe[ia]*m_oe[ia]*m_oe[ia]));
-}
-
-
-double Keplerian::getPeriod() const
-{
-  double a {m_oe[ia]};
-  return utl_const::tpi*std::sqrt(a*a*a/gm);
-}
-
-
-double Keplerian::getPerigeeSpeed() const
-{
-  return std::sqrt(gm*(2.0/m_rp - 1.0/m_oe[ia]));
-}
-
-
-double Keplerian::getApogeeSpeed() const
-{
-  return std::sqrt(gm*(2.0/m_ra - 1.0/m_oe[ia]));
-}
-
-
-double Keplerian::getSemilatusRectum() const noexcept
-{
-  return m_oe[ia]*(1.0 - m_oe[ie]*m_oe[ie]);
-}
-
-
-double Keplerian::getSpeed(double r) const
-{
-  return std::sqrt(gm*(2.0/r - 1.0/m_oe[ia]));
-}
-
 
 /*
  * Based on Vallado's "Fundamentals of Astrodynamics and Applications",
@@ -527,70 +447,5 @@ void Keplerian::setWithMeanAnomaly(double ma)
   oe[iv] = std::atan2(sv, cv);
   this->set(oe);
 }
-
-
-Eigen::Matrix<double, 3, 3> Keplerian::getEciToPerifocal() const
-{
-  Eigen::Matrix<double, 3, 1> rvec {m_cart.block<3,1>(0,0)};
-  Eigen::Matrix<double, 3, 1> vvec {m_cart.block<3,1>(3,0)};
-
-    // Angular momentum
-  Eigen::Matrix<double, 3, 1> hvec {rvec.cross(vvec)};
-  hvec.normalize();
-    // Eccentricity
-  double v2 {vvec.dot(vvec)};
-  double muor {gm/rvec.norm()};
-  double rdotv {rvec.dot(vvec)};
-  Eigen::Matrix<double, 3, 1> evec {((v2 - muor)*rvec - rdotv*vvec)/gm};
-  evec.normalize();
-    // y-axis
-  Eigen::Matrix<double, 3, 1> fvec {hvec.cross(evec)};
-  fvec.normalize();
-    // eci to pef
-  Eigen::Matrix<double, 3, 3> c_pi;
-  c_pi.row(0) = evec;
-  c_pi.row(1) = fvec;
-  c_pi.row(2) = hvec;
-
-  return c_pi;
-}
-
-
-std::ostream& operator<<(std::ostream& out, const Keplerian& kep)
-{
-  std::array<double, 6> oe = kep.getOrbitalElements();
-  Eigen::Matrix<double, 6, 1> cart = kep.getCartesian();
-  return out << std::fixed <<
-                std::setprecision(2) <<
-                "    (" <<
-                phy_const::tu_per_day/kep.getPeriod() << " rev/day, " <<
-                phy_const::min_per_tu*kep.getPeriod() << " minutes)" <<
-                std::setprecision(3) <<
-                "\n  a: " << phy_const::km_per_du*oe[0] << " km" <<
-               std::setprecision(6) <<
-               "  e: " << oe[1] <<
-               "  i: " << utl_const::deg_per_rad*oe[2] << "\u00B0" <<
-               "  o: " << utl_const::deg_per_rad*oe[3] << "\u00B0" <<
-               "  w: " << utl_const::deg_per_rad*oe[4] << "\u00B0" <<
-               "\n  v: " << utl_const::deg_per_rad*oe[5] << "\u00B0" <<
-               "  M: " <<
-               utl_const::deg_per_rad*kep.getMeanAnomaly() << "\u00B0" <<
-               "  E: " <<
-               utl_const::deg_per_rad*kep.getEccentricAnomaly() << "\u00B0" <<
-               std::setprecision(3) <<
-               "\n    {" << phy_const::km_per_du*cart(0) << "  " <<
-                            phy_const::km_per_du*cart(1) << "  " <<
-                            phy_const::km_per_du*cart(2) << "} km" <<
-               std::setprecision(6) <<
-               "\n    {" <<
-               phy_const::km_per_du*cart(3)*phy_const::tu_per_sec << "  " <<
-               phy_const::km_per_du*cart(4)*phy_const::tu_per_sec << "  " <<
-               phy_const::km_per_du*cart(5)*phy_const::tu_per_sec <<
-               "} km/sec";
-}
-
-
-
-
 
 */

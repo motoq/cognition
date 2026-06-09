@@ -6,6 +6,7 @@ pub mod utl_const;
 
 // Models, algorithms, etc.
 pub mod dyn_keplerian;
+pub mod mth_angle;
 pub mod mth_dcm;
 pub mod oblate_spheroid;
 pub mod unit_circle;
