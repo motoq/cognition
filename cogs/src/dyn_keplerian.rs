@@ -144,30 +144,6 @@ impl Keplerian {
     }
 }
 
-impl std::fmt::Display for Keplerian {
-    /// Write Keplerian and Cartesian coordinates
-    ///
-    /// # Return
-    ///
-    /// * Printable form of OblateSpheroid
-    ///
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "(Semimajor:    {} (DU)\n \
-                    Eccentricity: {}\n \
-                    Inclination:  {} (deg)\n \
-                    RAAN:         {} (deg)\n \
-                    ArgPerigee    {} (deg)\n \
-                    TrueAnomaly   {} (deg)\n \
-                    Cartesian     {})",
-            self.orbital_element(KeplerianElement::A),
-            self.orbital_element(KeplerianElement::E),
-            DEG_PER_RAD*self.orbital_element(KeplerianElement::I),
-            DEG_PER_RAD*self.orbital_element(KeplerianElement::O),
-            DEG_PER_RAD*self.orbital_element(KeplerianElement::W),
-            DEG_PER_RAD*self.orbital_element(KeplerianElement::V),
-            self.cart)
-    }
-}
 
 /*
  * Based on Vallado's "Fundamentals of Astrodynamics and Applications",
@@ -329,6 +305,36 @@ fn cart_to_kep(rv: &na::SMatrix<f64, 6, 1>) -> Result<[f64; 6], String> {
 
 
 //
+// I/O
+//
+
+impl std::fmt::Display for Keplerian {
+    /// Write Keplerian and Cartesian coordinates
+    ///
+    /// # Return
+    ///
+    /// * Printable form of OblateSpheroid
+    ///
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "(Semimajor:    {} (DU)\n \
+                    Eccentricity: {}\n \
+                    Inclination:  {} (deg)\n \
+                    RAAN:         {} (deg)\n \
+                    ArgPerigee    {} (deg)\n \
+                    TrueAnomaly   {} (deg)\n \
+                    Cartesian     {})",
+            self.orbital_element(KeplerianElement::A),
+            self.orbital_element(KeplerianElement::E),
+            DEG_PER_RAD*self.orbital_element(KeplerianElement::I),
+            DEG_PER_RAD*self.orbital_element(KeplerianElement::O),
+            DEG_PER_RAD*self.orbital_element(KeplerianElement::W),
+            DEG_PER_RAD*self.orbital_element(KeplerianElement::V),
+            self.cart)
+    }
+}
+
+
+//
 // Unit tests
 //
 
@@ -336,11 +342,15 @@ fn cart_to_kep(rv: &na::SMatrix<f64, 6, 1>) -> Result<[f64; 6], String> {
 mod tests {
     use super::*;
 
-    // Unit test checking the Cartesian portion of the default
-    // oblate spheroid was manually set to the correct value.
+    // Check that a specific Keplerian orbital element converts to the
+    // expected Cartesian state vector and check consistency of converting
+    // back to Keplerian
     #[test]
-    fn from_oe() {
+    fn oe_cart() {
+        // Allowable error in conversions
         let eps = 1.0e-13;
+        // Hard coded reference orbital elements with hard coded expected
+        // Cartesian below
         let oelmn: [(KeplerianElement, f64); 6] = [(KeplerianElement::A, 4.2),
                                                    (KeplerianElement::E, 0.7),
                                                    (KeplerianElement::I, 1.1),
@@ -348,19 +358,22 @@ mod tests {
                                                    (KeplerianElement::W, 4.7),
                                                    (KeplerianElement::V, 0.25)];
 
+        // first convert to Cartesian, then from Cartesian back to Keplerian
         let kep1 = Keplerian::try_from_oe(&oelmn).expect("Bad Cartesian Orbit");
         let kep2 = Keplerian::try_from_cart(&kep1.cartesian())
                                                  .expect("Bad Keplerain OE");
 
-        println!("cart: {}", &kep1.cartesian());
-        println!("oelm: {}", &kep2);
+        // Test print format
+        println!("kep1: {}", &kep1);
+        println!("kep2: {}", &kep2);
         assert!((kep1.cartesian()[0] -  5.3340990173540748e-01).abs() < eps);
+        // Check hard coded Cartesian vs. Keplerian
         assert!((kep1.cartesian()[1] - -3.4976218240773604e-01).abs() < eps);
         assert!((kep1.cartesian()[2] - -1.1055221648157516e+00).abs() < eps);
         assert!((kep1.cartesian()[3] -  9.6879318804014558e-01).abs() < eps);
         assert!((kep1.cartesian()[4] -  6.0931883443767210e-01).abs() < eps);
         assert!((kep1.cartesian()[5] -  1.3805066965568535e-01).abs() < eps);
-
+        // Consistency check back to Keplerian
         assert!((kep1.orbital_element(KeplerianElement::A) -
                  kep2.orbital_element(KeplerianElement::A).abs()) < eps);
         assert!((kep1.orbital_element(KeplerianElement::E) -
