@@ -6,13 +6,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-//! This struct contains osculating Keplerian element sets and the equivalent
+//! This struct contains an osculating Keplerian element set and the equivalent
 //! Cartesian state vector.  It can be set with either, providing access to
 //! individual orbital elements or position and velocity vectors.  Radians
 //! and canonical distance and time units (see phy_const.rs) are used.  Minimal
 //! eccentricity and inclination constraints are enforced as this structure is
 //! limited to classical orbital elements.  Maximum eccentricity is also
-//! enforced as parabolic and hyperbolic orbits are not considered.
+//! enforced as parabolic and hyperbolic orbits are not supported.
 //!
 //! # Author
 //!
@@ -28,7 +28,7 @@ use crate::phy_const::RE;
 use crate::mth_angle;
 
 /// Minimum allowable eccentricty for this type of orbital element set
-const ECC_EPS: f64 = 1.0e-5;
+const ECC_EPS: f64 = 1.0e-6;
 /// Minimum allowable inclination for this type of orbital element set
 const INC_EPS: f64 = RAD_PER_DEG*0.05;
 /// Generic minimum orbital element value
@@ -50,10 +50,11 @@ pub enum KeplerianElement {
     V,
 }
 
-///
 //#[derive(Clone)]
 pub struct Keplerian {
+    /// Holds orbital elements, DU and rad
     oe: [f64; 6],
+    /// Cartesian position and velocity, DU and DU/TU
     cart: na::SMatrix<f64, 6, 1>,
 }
 
@@ -62,7 +63,7 @@ pub struct Keplerian {
 //
 
 impl Default for Keplerian {
-    /// Creates default 
+    /// Creates a valid Keplerian orbital element set
     ///
     /// # Return
     ///

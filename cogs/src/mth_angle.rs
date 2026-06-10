@@ -6,8 +6,22 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+//! Utility functionality related to working with angles
+
 use nalgebra as na;
 
+/// Computes the angle between two unit vectors.  Does not check that
+/// input vectors are of unit length
+///
+/// # Arguments
+///
+/// * u1  First vector of unit length
+/// * u2  Second vector of unit length
+///
+/// # Return
+///
+/// * Angle between the two vectors, radians
+///
 pub fn unit_vec_angle(u1: &na::SMatrix<f64, 3, 1>,
                       u2: &na::SMatrix<f64, 3, 1>) -> f64 {
     let eps: f64 = 0.00001;
