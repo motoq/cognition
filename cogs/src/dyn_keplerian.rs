@@ -12,7 +12,8 @@
 //! and canonical distance and time units (see phy_const.rs) are used.  Minimal
 //! eccentricity and inclination constraints are enforced as this structure is
 //! limited to classical orbital elements.  Maximum eccentricity is also
-//! enforced as parabolic and hyperbolic orbits are not supported.
+//! enforced as parabolic and hyperbolic orbits are not supported.  The
+//! argument of perigee must exceed 1 DU.
 //!
 //! # Author
 //!
@@ -84,6 +85,24 @@ impl Default for Keplerian {
 }
 
 impl Keplerian {
+    /// Create a Keplerian element set from an array of orbital elements.
+    /// Six values must be supplied although no enforcement is in place to
+    /// ensure six unique values are supplied.  Repeated pairs will override
+    /// ones that came before.  Skipped values remain set to zero.  Currently,
+    /// there is no choice but to supply true anomaly based orbital elements.
+    ///
+    /// # Arguments
+    ///
+    /// * oelmn  Array of pairs of KeplerianElements and values.  Repeats are
+    ///          overriden at the expense of leaving others set to zero.
+    ///          Inclination and eccentricity must not be zero.  Units are
+    ///          DU for the semimajor axis and radians for all angular values.
+    ///
+    /// # Return
+    ///
+    /// * Result  If a valid set of orbital elements can be created, a
+    ///           Keplerian orbit definition
+    ///
     pub fn try_from_oe(oelmn: &[(KeplerianElement, f64); 6]) -> Result<Self,
                                                                     String> {
         let mut a = 0.0;
@@ -112,6 +131,18 @@ impl Keplerian {
         })
     }
 
+    /// Create a Keplerian element set from a Cartesian position and
+    /// velocity vector.
+    ///
+    /// # Argument
+    ///
+    /// * rv  Position and velocity with units of DU and DU/TU
+    ///
+    /// # Return
+    ///
+    /// * Result  If a valid set of orbital elements can be created, a
+    ///           Keplerian orbit definition
+    ///
     pub fn try_from_cart(rv: &na::SMatrix<f64, 6, 1>) -> Result<Self, String> {
         let oelmn: [f64; 6] = cart_to_kep(&rv)?;
 
@@ -124,32 +155,56 @@ impl Keplerian {
 
 /// Public immutable accessor methods
 impl Keplerian {
+    /// Returns the value of the indicated orbital element
+    ///
+    /// # Argument
+    ///
+    /// * elem  Orbital element value to return
+    ///
+    /// # Return
+    ///
+    /// * Value of the indicated orbital element
+    ///
     pub fn orbital_element(&self, elem: KeplerianElement) -> f64 {
         self.oe[elem as usize]
     }
 
+    /// Cartesian state vector of the orbit represented by
+    /// this osculating orbital element set.
+    ///
     /// # Return
     ///
-    /// * Cartesian coordinates
+    /// * Position and velocity, DU and DU/TU
     ///
     pub fn cartesian(&self) -> na::SMatrix<f64, 6, 1> {
         self.cart
     }
 
+    /// # Return
+    ///
+    /// * Cartesian position vector, DU
+    ///
     pub fn position(&self) -> na::SMatrix<f64, 3, 1> {
         self.cart.fixed_view::<3, 1>(0, 0).into()
     }
 
+    /// # Return
+    ///
+    /// * Cartesian velocity vector, DU/TU
+    ///
     pub fn velocity(&self) -> na::SMatrix<f64, 3, 1> {
         self.cart.fixed_view::<3, 1>(3, 0).into()
     }
 }
 
+//
+// Local Functions
+//
 
-/*
- * Based on Vallado's "Fundamentals of Astrodynamics and Applications",
- * 4th edition, Algorithm 10: COE2RV
- */
+//
+// Based on Vallado's "Fundamentals of Astrodynamics and Applications",
+// 4th edition, Algorithm 10: COE2RV
+//
 fn kep_to_cart(kepv: &[f64; 6]) -> Result<na::SMatrix<f64, 6, 1>, String> {
     let a = kepv[0];
     let e = kepv[1];
@@ -175,35 +230,36 @@ fn kep_to_cart(kepv: &[f64; 6]) -> Result<na::SMatrix<f64, 6, 1>, String> {
                    &i.to_string());
     }
 
-  let semip = a*(1.0 - e*e);
-  let cv = v.cos();
-  let sv = v.sin();
-  let ecv = e*cv;
-  let suop = (GM/semip).sqrt();
+    let semip = a*(1.0 - e*e);                             // Semilatus Rectum
+    let cv = v.cos();
+    let sv = v.sin();
+    let ecv = e*cv;
+    let suop = (GM/semip).sqrt();
 
-  let r_pqw = na::matrix![semip*cv/(1.0 + ecv) ;
-                          semip*sv/(1.0 + ecv) ;
-                          0.0];
-  let v_pqw = na::matrix![-suop*sv ;
-                           suop*(e + cv) ;
-                           0.0];
-  let qw = na::UnitQuaternion::<f64>::from_axis_angle(
-      &na::Vector3::<f64>::z_axis(), w);
-  let qi = na::UnitQuaternion::<f64>::from_axis_angle(
-      &na::Vector3::<f64>::x_axis(), i);
-  let qo = na::UnitQuaternion::<f64>::from_axis_angle(
-      &na::Vector3::<f64>::z_axis(), o);
-  let q_pqw2eci = qo*qi*qw;
+    // Perifocal system
+    let r_pqw = na::matrix![semip*cv/(1.0 + ecv) ;
+                            semip*sv/(1.0 + ecv) ;
+                            0.0];
+    let v_pqw = na::matrix![-suop*sv ;
+                             suop*(e + cv) ;
+                             0.0];
+    let qw = na::UnitQuaternion::<f64>::from_axis_angle(
+        &na::Vector3::<f64>::z_axis(), w);
+    let qi = na::UnitQuaternion::<f64>::from_axis_angle(
+        &na::Vector3::<f64>::x_axis(), i);
+    let qo = na::UnitQuaternion::<f64>::from_axis_angle(
+        &na::Vector3::<f64>::z_axis(), o);
+    let q_pqw2eci = qo*qi*qw;
 
-  let r_cart = q_pqw2eci*r_pqw;
-  let v_cart = q_pqw2eci*v_pqw;
+    let r_cart = q_pqw2eci*r_pqw;
+    let v_cart = q_pqw2eci*v_pqw;
 
-  Ok(na::matrix![r_cart[0] ;
-                 r_cart[1] ;
-                 r_cart[2] ;
-                 v_cart[0] ;
-                 v_cart[1] ;
-                 v_cart[2]])
+    Ok(na::matrix![r_cart[0] ;
+                   r_cart[1] ;
+                   r_cart[2] ;
+                   v_cart[0] ;
+                   v_cart[1] ;
+                   v_cart[2]])
 }
 
 // Based on Vallado's "Fundamentals of Astrodynamics and Applications",
@@ -233,7 +289,7 @@ fn cart_to_kep(rv: &na::SMatrix<f64, 6, 1>) -> Result<[f64; 6], String> {
     let nmag =  nvec.norm();
     // By definition - potential numerical roundoff with cross product
     nvec[2] = 0.0;
-      // Potential divide by zero error later on - check now
+    // Potential divide by zero error later on - check now
     if nmag < OE_EPS {
         return Err("hxk too small:  ".to_string() + &nmag.to_string());
     }
