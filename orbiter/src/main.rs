@@ -39,12 +39,16 @@ async fn main() {
         .expect(&("Error reading ".to_owned() + &args[1]));
 
     let config: OrbiterConfig = toml::from_str(&config).unwrap();
-    println!("name: {}\ndynamic: {}\nx: {}\ny: {}\nz: {}",
+    println!("name: {}\ndynamic: {}\na: {}\ne: {}\ni: {}\
+                                   \no: {}\nw: {}\nv: {}",
         config.name,
         config.dynamic,
-        config.others.x,
-        config.others.y,
-        config.others.z,
+        config.orbit.semimajor_axis,
+        config.orbit.eccentricity,
+        config.orbit.inclination,
+        config.orbit.raan,
+        config.orbit.arg_perigee,
+        config.orbit.true_anomaly,
     );
 
 

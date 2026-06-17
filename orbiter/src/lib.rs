@@ -25,14 +25,17 @@ use std::path::Path;
 pub struct OrbiterConfig {
     pub name: String,
     pub dynamic: bool,
-    pub others: Others,
+    pub orbit: OrbitDef,
 }
 
 #[derive(Deserialize)]
-pub struct Others {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
+pub struct OrbitDef {
+    pub semimajor_axis: f64,
+    pub eccentricity: f64,
+    pub inclination: f64,
+    pub raan: f64,
+    pub arg_perigee: f64,
+    pub true_anomaly: f64,
 }
 
 // Axis and related scale factors

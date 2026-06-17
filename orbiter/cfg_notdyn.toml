@@ -1,7 +1,10 @@
 name = "Sparky"                                                         
 dynamic = false
 
-[others]                                                                
-x = 1.0                                                                 
-y = 2.0                                                                 
-z = 3.0
+[orbit]                                                                
+semimajor_axis = 0.0
+eccentricity = 0.0
+inclination = 0.0
+raan = 0.0
+arg_perigee = 0.0
+true_anomaly = 0.0

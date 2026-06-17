@@ -198,10 +198,38 @@ impl Keplerian {
 }
 
 //
+// I/O
+//
+
+impl std::fmt::Display for Keplerian {
+    /// Display Keplerian and Cartesian coordinates
+    ///
+    /// # Return
+    ///
+    /// * Printable form of OblateSpheroid
+    ///
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "(Semimajor:    {} (DU)\n \
+                    Eccentricity: {}\n \
+                    Inclination:  {} (deg)\n \
+                    RAAN:         {} (deg)\n \
+                    ArgPerigee    {} (deg)\n \
+                    TrueAnomaly   {} (deg)\n \
+                    Cartesian     {})",
+            self.orbital_element(KeplerianElement::A),
+            self.orbital_element(KeplerianElement::E),
+            DEG_PER_RAD*self.orbital_element(KeplerianElement::I),
+            DEG_PER_RAD*self.orbital_element(KeplerianElement::O),
+            DEG_PER_RAD*self.orbital_element(KeplerianElement::W),
+            DEG_PER_RAD*self.orbital_element(KeplerianElement::V),
+            self.cart)
+    }
+}
+
+//
 // Local Functions
 //
 
-//
 // Based on Vallado's "Fundamentals of Astrodynamics and Applications",
 // 4th edition, Algorithm 10: COE2RV
 //
@@ -360,37 +388,6 @@ fn cart_to_kep(rv: &na::SMatrix<f64, 6, 1>) -> Result<[f64; 6], String> {
     Ok([sma, emag, inc, raan, argp, ta])
 }
 
-
-//
-// I/O
-//
-
-impl std::fmt::Display for Keplerian {
-    /// Write Keplerian and Cartesian coordinates
-    ///
-    /// # Return
-    ///
-    /// * Printable form of OblateSpheroid
-    ///
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "(Semimajor:    {} (DU)\n \
-                    Eccentricity: {}\n \
-                    Inclination:  {} (deg)\n \
-                    RAAN:         {} (deg)\n \
-                    ArgPerigee    {} (deg)\n \
-                    TrueAnomaly   {} (deg)\n \
-                    Cartesian     {})",
-            self.orbital_element(KeplerianElement::A),
-            self.orbital_element(KeplerianElement::E),
-            DEG_PER_RAD*self.orbital_element(KeplerianElement::I),
-            DEG_PER_RAD*self.orbital_element(KeplerianElement::O),
-            DEG_PER_RAD*self.orbital_element(KeplerianElement::W),
-            DEG_PER_RAD*self.orbital_element(KeplerianElement::V),
-            self.cart)
-    }
-}
-
-
 //
 // Unit tests
 //
@@ -445,8 +442,6 @@ mod tests {
                  kep2.orbital_element(KeplerianElement::V).abs()) < eps);
     }
 }
-
-
 
 
 /*
