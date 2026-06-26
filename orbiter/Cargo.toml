@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+cogs = { path = "../cogs" }
 kiss3d = "0.41.0"
 nalgebra = "0.34.2"
 serde = { version = "1.0.228", features = ["derive"] }

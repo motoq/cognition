@@ -24,6 +24,10 @@ use orbiter::update_sparky;
 use orbiter::attitude_string;
 use orbiter::dynamics_off_event_handler;
 
+use cogs::utl_const::RAD_PER_DEG;
+use cogs::dyn_keplerian::KeplerianElement;
+use cogs::dyn_keplerian::Keplerian;
+
 
 #[kiss3d::main]
 async fn main() {
@@ -39,17 +43,21 @@ async fn main() {
         .expect(&("Error reading ".to_owned() + &args[1]));
 
     let config: OrbiterConfig = toml::from_str(&config).unwrap();
-    println!("name: {}\ndynamic: {}\na: {}\ne: {}\ni: {}\
-                                   \no: {}\nw: {}\nv: {}",
+    println!("Flying {} in dynamic = {} mode.",
         config.name,
         config.dynamic,
-        config.orbit.semimajor_axis,
-        config.orbit.eccentricity,
-        config.orbit.inclination,
-        config.orbit.raan,
-        config.orbit.arg_perigee,
-        config.orbit.true_anomaly,
     );
+
+    let oelmn: [(KeplerianElement, f64); 6] =
+        [(KeplerianElement::A, config.orbit.semimajor_axis),
+         (KeplerianElement::E, config.orbit.eccentricity),
+         (KeplerianElement::I, RAD_PER_DEG*config.orbit.inclination),
+         (KeplerianElement::O, RAD_PER_DEG*config.orbit.raan),
+         (KeplerianElement::W, RAD_PER_DEG*config.orbit.arg_perigee),
+         (KeplerianElement::V, RAD_PER_DEG*config.orbit.true_anomaly)];
+    let kep_oe = Keplerian::try_from_oe(&oelmn).expect("Bad orbital elements");
+
+    println!("Orbit Definition\n{}", &kep_oe);
 
 
 //    let ihat = na::Vector3::<f64>::x_axis();
