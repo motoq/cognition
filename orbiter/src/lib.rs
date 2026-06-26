@@ -102,8 +102,11 @@ pub fn sparkymodel2body_rot() -> Quat {
 ///
 /// # Arguments
 ///
-/// * scene  Scene graph to update
-/// * er     Earth radius to use in graphics environment
+/// * scene   Scene graph to update
+/// * config  If dynamic, a sphere with a 1 er radius will be created
+///           using an earth image texture.  Otherwise, just a small
+///           sphere object will be created.
+/// * er      Earth radius to use in graphics environment
 ///
 /// # Return
 ///

@@ -88,6 +88,11 @@ async fn main() {
     //let font = Font::new(std::path::Path::new("...")).unwrap();
     //let font =  std::sync::Arc::new(font);
 
+    // A dynamic simulation will show the earth with axes
+    // The static simulation will create a small non-textured
+    // sphere that will be hidden by the orbiter.  The dummy
+    // earth is created in this case simply to avoid complicating
+    // logic with the need to check if the sim is dynamic or not.
     let mut axes = if config.dynamic {
         add_axes(&mut gx_scene, AXIS_LENGTH)
     } else {
@@ -98,6 +103,8 @@ async fn main() {
     let q_i2f = Quat::from_axis_angle(Vec3::Z, 0.0);
     update_earth(&mut earth,  &q_i2f);
 
+    // The RBG spheres are references for the graphics environment
+    // basis vectors (vs. the dynamics environment plotted with "arrows"
     gx_scene.add_sphere(0.1*DU as f32)
         .set_color(RED)
         .set_position(Vec3::new(AXIS_LENGTH, 0.0, 0.0));
@@ -109,7 +116,6 @@ async fn main() {
         .set_position(Vec3::new(0.0, 0.0, AXIS_LENGTH));
 
     let mut sparky = add_sparky(&mut gx_scene, &config);
-    //let q_i2b = Quat::from_axis_angle(Vec3::Z, 0.0);
     let q_i2b = na::UnitQuaternion::<f64>::from_axis_angle(&khat, 0.0);
     update_sparky(&mut sparky, &q_i2b);
 
@@ -138,6 +144,7 @@ async fn main() {
                                               -1.0*earth_rot as f32);
             update_earth(&mut earth,  &q_i2f);
 
+            // Once dynamics are in place, don't run this
             q_i2b_rot = dynamics_off_event_handler(&mut window.events(),
                                                    &mut sparky,
                                                    &q_i2b_rot);
