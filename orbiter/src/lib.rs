@@ -43,6 +43,34 @@ const LS1: f32 = 0.05;
 const LS2: f32 = 0.25;
 const LS3: f32 = 0.25;
 
+/// Convert an nalgebra SMatrix<f64, 6, 1> to a Glam Vec3
+///
+/// # Arguments
+///
+/// * nv3  nalgebra 3x1 vector
+///
+/// # Return
+///
+/// * Glam 3x1 vector
+///
+pub fn v_na2glamt(nv3: &na::SMatrix<f64, 3, 1>) -> Vec3 {
+    Vec3::new(nv3[0] as f32, nv3[1] as f32, nv3[2] as f32)
+}
+
+/// Convert a Glam Vec3 to an nalgebra SMatrix<f64, 6, 1>
+///
+/// # Arguments
+///
+/// * Glam 3x1 vector
+///
+/// # Return
+///
+/// * nv3  nalgebra 3x1 vector
+///
+pub fn v_glam2nat(gv3: &Vec3) -> na::SMatrix<f64, 3, 1> {
+    na::matrix![gv3[0] as f64 ; gv3[1] as f64 ; gv3[2] as f64]
+}
+
 /// Convert an nalgebra UnitQuaternion to a Glam Quat
 ///
 /// # Arguments
@@ -176,7 +204,9 @@ pub fn add_sparky(scene: &mut SceneNode3d,
 /// * q_i2b  Inertial to body reference frame transformation
 ///
 pub fn update_sparky(sparky_node: &mut SceneNode3d,
+                     pos: &na::SMatrix<f64, 3, 1>,
                      q_i2b: &na::UnitQuaternion<f64>) {
+    sparky_node.set_position(v_na2glamt(&pos));
     sparky_node.set_rotation(gx2inertial_rot()*
                              q_na2glamt(q_i2b).conjugate()*
                              sparkymodel2body_rot());
@@ -284,6 +314,7 @@ pub fn dynamics_off_event_handler(events: &mut EventManager,
     let khat = na::Vector3::<f64>::z_axis();
     const DANG: f64 = 5.0*std::f64::consts::PI/180.0;
 
+    let pos = v_glam2nat(&sparky.position());
     let mut q_i2b_rot = qrot.clone();
 
     for event in events.iter() {
@@ -293,32 +324,32 @@ pub fn dynamics_off_event_handler(events: &mut EventManager,
                     q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
                         from_axis_angle(&khat, DANG);
                     let q_i2b = q_i2b_rot.conjugate();
-                    update_sparky(&mut sparky, &q_i2b);
+                    update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::G {
                     q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
                         from_axis_angle(&khat, -DANG);
                     let q_i2b = q_i2b_rot.conjugate();
-                    update_sparky(&mut sparky, &q_i2b);
+                    update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::E {
                     q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
                         from_axis_angle(&jhat, DANG);
                     let q_i2b = q_i2b_rot.conjugate();
-                    update_sparky(&mut sparky, &q_i2b);
+                    update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::D {
                     q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
                         from_axis_angle(&jhat, -DANG);
                     let q_i2b = q_i2b_rot.conjugate();
-                    update_sparky(&mut sparky, &q_i2b);
+                    update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::F {
                     q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
                         from_axis_angle(&ihat, DANG);
                     let q_i2b = q_i2b_rot.conjugate();
-                    update_sparky(&mut sparky, &q_i2b);
+                    update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::S {
                     q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
                         from_axis_angle(&ihat, -DANG);
                     let q_i2b = q_i2b_rot.conjugate();
-                    update_sparky(&mut sparky, &q_i2b);
+                    update_sparky(&mut sparky, &pos, &q_i2b);
                 }
                 //event.inhibited = true
                 // override default keyboard handler

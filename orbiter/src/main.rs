@@ -55,9 +55,15 @@ async fn main() {
          (KeplerianElement::O, RAD_PER_DEG*config.orbit.raan),
          (KeplerianElement::W, RAD_PER_DEG*config.orbit.arg_perigee),
          (KeplerianElement::V, RAD_PER_DEG*config.orbit.true_anomaly)];
-    let kep_oe = Keplerian::try_from_oe(&oelmn).expect("Bad orbital elements");
+    let kep_oe = if config.dynamic {
+        Keplerian::try_from_oe(&oelmn).expect("Bad orbital elements")
+    } else {
+        Keplerian::default()
+    };
 
-    println!("Orbit Definition\n{}", &kep_oe);
+    if config.dynamic {
+        println!("Orbit Definition\n{}", &kep_oe);
+    }
 
 
 //    let ihat = na::Vector3::<f64>::x_axis();
@@ -123,10 +129,15 @@ async fn main() {
         .set_color(BLUE)
         .set_position(Vec3::new(0.0, 0.0, AXIS_LENGTH));
 
+    // Create spacecraft and set initial position based on mode
     let mut sparky = add_sparky(&mut gx_scene, &config);
+    let r_s_o_i = if config.dynamic {
+        kep_oe.position()
+    } else {
+        na::matrix![0.0 ; 0.0 ; 0.0]
+    };
     let q_i2b = na::UnitQuaternion::<f64>::from_axis_angle(&khat, 0.0);
-    update_sparky(&mut sparky, &q_i2b);
-
+    update_sparky(&mut sparky, &r_s_o_i, &q_i2b);
 
     //
     // Simulation and render loop
