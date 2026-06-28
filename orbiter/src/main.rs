@@ -136,7 +136,7 @@ async fn main() {
     } else {
         na::matrix![0.0 ; 0.0 ; 0.0]
     };
-    let q_i2b = na::UnitQuaternion::<f64>::from_axis_angle(&khat, 0.0);
+    let mut q_i2b = na::UnitQuaternion::<f64>::from_axis_angle(&khat, 0.0);
     update_sparky(&mut sparky, &r_s_o_i, &q_i2b);
 
     //
@@ -146,7 +146,6 @@ async fn main() {
     // Per-frame loop
     let epoch = std::time::Instant::now();
     let mut seconds: f64 = 0.0;
-    let mut q_i2b_rot = na::UnitQuaternion::<f64>::from_axis_angle(&khat, 0.0);
     // Continue simulation while graphics window is open
     while gx_window.is_some() {
         if let Some(window) = &mut gx_window {
@@ -164,9 +163,14 @@ async fn main() {
             update_earth(&mut earth,  &q_i2f);
 
             // Once dynamics are in place, don't run this
-            q_i2b_rot = dynamics_off_event_handler(&mut window.events(),
+            if config.dynamic {
+                //(r_s_o_i, q_i2b) = propagate(sim_time, &r_s_o_i, &q_i2b);
+                update_sparky(&mut sparky, &r_s_o_i, &q_i2b);
+            } else {
+                q_i2b = dynamics_off_event_handler(&mut window.events(),
                                                    &mut sparky,
-                                                   &q_i2b_rot);
+                                                   &q_i2b);
+            }
     
             /*
             for event in window.events().iter() {
@@ -226,7 +230,7 @@ async fn main() {
             let txt = format!("Elapsed Time (TU): {:>8.2}", seconds*TU_PER_SEC);
             window.draw_text(&txt, Vec2::ZERO, 20.0, &font, WHITE);
             let txt = format!("Inertial to Body:  {}",
-                              attitude_string(&q_i2b_rot));
+                              attitude_string(&q_i2b));
             window.draw_text(&txt, Vec2::new(0.0, 20.0), 20.0, &font, WHITE);
         }
     }

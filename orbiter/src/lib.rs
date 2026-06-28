@@ -299,7 +299,7 @@ pub fn attitude_string(q_i2b: &na::UnitQuaternion<f64>) -> String {
 ///
 /// * events  EventManager from which events will be matched and consumed
 /// * sparky  Node for which to update inertial to body rotation
-/// * qrot    Current inertial to body transformation
+/// * q_i2b   Current inertial to body reference frame transformation
 ///
 /// # Return
 ///
@@ -307,7 +307,7 @@ pub fn attitude_string(q_i2b: &na::UnitQuaternion<f64>) -> String {
 ///
 pub fn dynamics_off_event_handler(events: &mut EventManager,
                                   mut sparky: &mut SceneNode3d,
-                                  qrot: &na::UnitQuaternion<f64>) ->
+                                  q_i2b: &na::UnitQuaternion<f64>) ->
                                                  na::UnitQuaternion<f64> {
     let ihat = na::Vector3::<f64>::x_axis();
     let jhat = na::Vector3::<f64>::y_axis();
@@ -315,7 +315,7 @@ pub fn dynamics_off_event_handler(events: &mut EventManager,
     const DANG: f64 = 5.0*std::f64::consts::PI/180.0;
 
     let pos = v_glam2nat(&sparky.position());
-    let mut q_i2b_rot = qrot.clone();
+    let mut q_i2b_rot = q_i2b.conjugate();
 
     for event in events.iter() {
         match event.value {
@@ -357,5 +357,7 @@ pub fn dynamics_off_event_handler(events: &mut EventManager,
             _ => {}
         }
     }
-    q_i2b_rot
+    // q_i2b_rot updated in event match - convert from vector to
+    // basis rotation
+    q_i2b_rot.conjugate()
 }
