@@ -5,6 +5,7 @@ pub mod phy_const;
 pub mod utl_const;
 
 // Models, algorithms, etc.
+pub mod dyn_gravity;
 pub mod dyn_keplerian;
 pub mod mth_angle;
 pub mod mth_dcm;
