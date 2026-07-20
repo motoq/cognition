@@ -43,11 +43,11 @@ impl Gravity for TwoBodyGravity {
     ///
     /// # Arguments
     ///
-    /// * pos  Position vector
+    /// * pos  Position vector, DU
     ///
     /// # Return
     ///
-    /// * Acceleration Vector
+    /// * Acceleration Vector, DU/TU^2
     ///
     fn gravt(&self, pos: &na::SMatrix<f64, 3, 1>) -> na::SMatrix<f64, 3, 1> {
         let rmag = pos.norm();

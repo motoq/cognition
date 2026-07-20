@@ -7,9 +7,11 @@ pub mod utl_const;
 // Models, algorithms, etc.
 pub mod dyn_gravity;
 pub mod dyn_keplerian;
+pub mod dyn_orbit_deq;
 pub mod dyn_two_body_gravity;
 pub mod mth_angle;
 pub mod mth_dcm;
+pub mod mth_ode;
 pub mod oblate_spheroid;
 pub mod unit_circle;
 
