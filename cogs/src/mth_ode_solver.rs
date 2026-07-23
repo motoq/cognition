@@ -6,15 +6,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-//! Trait defining a functionality that solves ordinary differential
-//! equations through numerical integration.
-//!
-//! # Author
-//!
-//! *  Kurt Motekew  2026/07/20  Initial
-
 use nalgebra as na;
 
+/// Define functionality that solves ordinary differential equations
+/// through numerical integration.
+///
+/// # Author
+///
+/// *  Kurt Motekew  2026/07/20  Initial
 pub trait OdeSolver {
     /// # Return
     ///
