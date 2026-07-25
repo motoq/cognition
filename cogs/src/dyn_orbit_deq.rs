@@ -30,7 +30,7 @@ impl OrbitDeq {
     }
 }
 
-impl Ode for OrbitDeq {
+impl Ode<6> for OrbitDeq {
     /// Given a state vector, return the time derivative
     ///
     /// # Arguments
@@ -42,15 +42,13 @@ impl Ode for OrbitDeq {
     ///
     /// * Time derivative of state vector, 6x1
     ///
-    fn xdot<const R: usize>(&self,
-                            _t: f64,
-                            x: &na::SMatrix<f64, R, 1>)
-                                                     -> na::SMatrix<f64, R, 1> {
-        let a = self.grav.gravt(&x.fixed_view::<3, 1>(0, 0).into());
-        let mut xd = x.clone();
+    fn xdot(&self,
+        _tt: f64, xx: &na::SMatrix<f64, 6, 1>) -> na::SMatrix<f64, 6, 1> {
+        let aa = self.grav.gravt(&xx.fixed_view::<3, 1>(0, 0).into());
+        let mut xd = xx.clone();
         for ii in 0..3 {
-            xd[(ii, 0)] = x[(3+ii, 0)];
-            xd[(3+ii, 0)] = a[ii];
+            xd[(ii, 0)] = xx[(3+ii, 0)];
+            xd[(3+ii, 0)] = aa[ii];
         }
         xd
     }

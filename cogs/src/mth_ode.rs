@@ -15,20 +15,20 @@
 
 use nalgebra as na;
 
-pub trait Ode {
+pub trait Ode<const R: usize> {
     /// This method computes the derivative values based on the model
     /// of the system of equations.
     ///
     /// # Arguments
     ///
-    /// * t  Time
-    /// * x  State vector at time t
+    /// * tt  Time
+    /// * xx  State vector at time t
     ///
     /// # Return
     ///
     /// * Time derivative of state vector at time t
     ///
-    fn xdot<const R: usize>(&self,
-        t: f64, x: &na::SMatrix<f64, R, 1>) -> na::SMatrix<f64, R, 1>;
+    fn xdot(&self,
+        tt: f64, xx: &na::SMatrix<f64, R, 1>) -> na::SMatrix<f64, R, 1>;
 }
 

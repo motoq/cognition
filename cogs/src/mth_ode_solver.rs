@@ -14,7 +14,7 @@ use nalgebra as na;
 /// # Author
 ///
 /// *  Kurt Motekew  2026/07/20  Initial
-pub trait OdeSolver {
+pub trait OdeSolver<const R: usize> {
     /// # Return
     ///
     /// * Time of system in current state
@@ -25,13 +25,13 @@ pub trait OdeSolver {
     ///
     /// * Current state vector of the system
     ///
-    fn state_vector<const R: usize>(&self) -> na::SMatrix<f64, R, 1>;
+    fn state_vector(&self) -> na::SMatrix<f64, R, 1>;
 
     /// # Return
     ///
     /// * First derivative of current state vector of the system
     ///
-    fn state_vector_dot<const R: usize>(&self) -> na::SMatrix<f64, R, 1>;
+    fn state_vector_dot(&self) -> na::SMatrix<f64, R, 1>;
 
     /// # Return
     ///
