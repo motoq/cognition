@@ -6,29 +6,28 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-//! Trait defining a system of 1st order ordinary differential
-//! equations
-//!
-//! # Author
-//!
-//! *  Kurt Motekew  2026/07/16  Initial
 
 use nalgebra as na;
 
+/// Trait defining a system of 1st order ordinary differential
+/// equations
+///
+/// # Author
+///
+/// *  Kurt Motekew  2026/07/16  Initial
 pub trait Ode<const R: usize> {
-    /// This method computes the derivative values based on the model
-    /// of the system of equations.
+    /// Compute the derivative of the state vector
     ///
     /// # Arguments
     ///
-    /// * tt  Time
-    /// * xx  State vector at time t
+    /// * t  Independent variable (e.g., time)
+    /// * x  State vector at (time) t
     ///
     /// # Return
     ///
-    /// * Time derivative of state vector at time t
+    /// * Derivative of state vector w.r.t. t at t
     ///
     fn xdot(&self,
-        tt: f64, xx: &na::SMatrix<f64, R, 1>) -> na::SMatrix<f64, R, 1>;
+        t: f64, x: &na::SMatrix<f64, R, 1>) -> na::SMatrix<f64, R, 1>;
 }
 

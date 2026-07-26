@@ -103,8 +103,9 @@ impl Keplerian {
     /// * Result  If a valid set of orbital elements can be created, a
     ///           Keplerian orbit definition
     ///
-    pub fn try_from_oe(oelmn: &[(KeplerianElement, f64); 6]) -> Result<Self,
-                                                                    String> {
+    pub fn try_from_oe(
+        oelmn: &[(KeplerianElement, f64); 6]
+    ) -> Result<Self, String> {
         let mut a = 0.0;
         let mut e = 0.0;
         let mut i = 0.0;

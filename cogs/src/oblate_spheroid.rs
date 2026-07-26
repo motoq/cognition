@@ -14,7 +14,7 @@
 use nalgebra as na;
 
 use crate::utl_const::DEG_PER_RAD;
-use crate::unit_circle;
+use crate::mth_unit_circle;
 
 
 /// Oblate spheroid definition (eccentricity and semimajor axis length)
@@ -438,7 +438,7 @@ impl OblateSpheroid {
         let r = pos_2d.fixed_view::<2,1>(0,0).into_owned();
         let p = pnt_2d.fixed_view::<2,1>(0,0).into_owned();
 
-        let xy = unit_circle::tangent(&r, &p);
+        let xy = mth_unit_circle::tangent(&r, &p);
 
         let xyz = na::matrix![xy[0] ; xy[1] ; 0.0];
 

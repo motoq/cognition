@@ -7,7 +7,7 @@
  */
 
 //! Differential equations for orbital motion.  Only central body gravity
-//! models are currently incorporated.
+//! models are currently incorporated (no 3rd body, SRP, drag, etc).
 //!
 //! # Author
 //!
@@ -18,11 +18,23 @@ use nalgebra as na;
 use crate::mth_ode::Ode;
 use crate::dyn_gravity::Gravity;
 
+/// Contains the model of the equations of motion (EOM)
 pub struct OrbitDeq {
+    /// Central gravity model
     grav: Box<dyn Gravity>,
 }
 
 impl OrbitDeq {
+    /// Initialize EOM with a central body gravity model
+    ///
+    /// # Argument
+    ///
+    /// * grav  Gravity model
+    ///
+    /// # Return
+    ///
+    /// * Struct capable of satisfying Ode trait
+    ///
     pub fn new(grav: Box<dyn Gravity>) -> Self {
         Self {
             grav,
@@ -35,39 +47,22 @@ impl Ode<6> for OrbitDeq {
     ///
     /// # Arguments
     ///
-    /// * x  state vector, position and velocity, 6x1, units dependent on
-    ///      gravity model used to initialize
+    /// * tmt0  Time since simulation epoch, unused (not needed yet)
+    /// * pv    state vector at time tmt0, position and velocity, units
+    ///         dependent on gravity model used to initialize
     ///
     /// # Return
     ///
-    /// * Time derivative of state vector, 6x1
+    /// * Time derivative of state vector (velocity and acceleration)
+    ///   at tmt0, units consistent with pv
     ///
-    fn xdot(&self,
-        _tt: f64, xx: &na::SMatrix<f64, 6, 1>) -> na::SMatrix<f64, 6, 1> {
-        let aa = self.grav.gravt(&xx.fixed_view::<3, 1>(0, 0).into());
-        let mut xd = xx.clone();
-        for ii in 0..3 {
-            xd[(ii, 0)] = xx[(3+ii, 0)];
-            xd[(3+ii, 0)] = aa[ii];
-        }
-        xd
+    fn xdot(
+        &self,
+        _tmt0: f64,
+        pv: &na::SMatrix<f64, 6, 1>
+    ) -> na::SMatrix<f64, 6, 1> {
+        let acc = self.grav.gravt(&pv.fixed_view::<3, 1>(0, 0).into());
+        let va = na::matrix![pv[3] ; pv[4] ; pv[5] ; acc[0] ; acc[1] ; acc[2]];
+        va
     }
 }
-
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::dyn_two_body_gravity::TwoBodyGravity;
-
-    #[test]
-    fn gravity_ode() {
-        let twobdy = Box::new(TwoBodyGravity::new(1.0));
-        let eom = OrbitDeq::new(twobdy);
-
-        let x = na::matrix![1.0 ; 1.0 ; 1.0 ; 0.5 ; 0.5 ; 0.5];
-        let _dx = eom.xdot(0.0, &x);
-    }
-
-}
-

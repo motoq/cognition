@@ -37,6 +37,6 @@ pub trait OdeSolver<const R: usize> {
     ///
     /// * Time associated with updated state vector
     ///
-    fn step(&self) -> f64;
+    fn step(&mut self) -> f64;
 }
 

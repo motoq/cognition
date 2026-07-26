@@ -61,6 +61,12 @@ impl Gravity for TwoBodyGravity {
 mod tests {
     use super::*;
 
+    fn get_acc(pos: &na::SMatrix<f64, 3, 1>,
+               eom: &impl Gravity) -> na::SMatrix<f64, 3, 1> {
+        eom.gravt(&pos)
+    }
+
+
     #[test]
     fn gravity_twobody() {
         let eps = 1.0e-13;
@@ -71,6 +77,7 @@ mod tests {
                                -0.192450089729875 ;
                                -0.192450089729875 ];
         assert!((twobdy.gravt(&pos) - acc).norm() < eps);
+        assert!((twobdy.gravt(&pos) - get_acc(&pos, &twobdy)).norm() < eps);
     }
 
 }
