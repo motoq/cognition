@@ -14,6 +14,7 @@ pub mod mth_angle;
 pub mod mth_dcm;
 pub mod mth_ode;
 pub mod mth_ode_solver;
+pub mod mth_rk4;
 pub mod mth_unit_circle;
 pub mod oblate_spheroid;
 
