@@ -35,7 +35,7 @@ pub fn rk4<const R: usize>(
     }
 
     let dx = deq.xdot(tmt0, &x);
-    *x = dt * *x;
+    *x = dt * dx;
 
 }
 
