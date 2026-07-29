@@ -18,7 +18,7 @@ use crate::mth_ode::Ode;
 /// * tmt0  Input: state vector time
 ///         Output: time of output state vector (tmt0 + t0 for RK4)
 /// * x     Input: state vector initial conditions
-///         Output: propagated state vector
+///         Output: state vector propagated by dt
 ///
 /// # Author
 ///
@@ -26,21 +26,37 @@ use crate::mth_ode::Ode;
 pub fn rk4<const R: usize>(
     deq: &impl Ode<R>,
     dt: f64,
-    tmt0: f64,
+    tmt0: &mut f64,
     x: &mut na::SMatrix<f64, R, 1>,
 ) {
-
+    // No integration to do
     if dt == 0.0 {
         return;
     }
 
-    let dx = deq.xdot(tmt0, &x);
-    *x = dt * dx;
-
+    // first
+    let x0 = x.clone();
+    let mut time = *tmt0;
+    let mut xd = deq.xdot(time, &x0);
+    let mut xa = dt*xd;
+    let mut xx = 0.5*xa + x0;
+    // second
+    time += 0.5*dt;
+    xd = deq.xdot(time, &xx);
+    let mut q = dt*xd;
+    xx = x0 + 0.5*q;
+    xa += q + q;
+    // third
+    xd = deq.xdot(time, &xx);
+    q = dt*xd;
+    xx = x0 + q;
+    xa += q + q;
+    // forth - update member variables vs. locals
+    time += dt;
+    xd = deq.xdot(time, &xx);
+    *tmt0 = time;
+    *x = x0 + (xa + dt*xd)/6.0;
 }
-
-
-
 
 #[cfg(test)]
 mod tests {
@@ -54,10 +70,9 @@ mod tests {
         let twobdy = Box::new(TwoBodyGravity::new(1.0));
         let eom = OrbitDeq::new(twobdy);
         let dt: f64 = 1.0;
-        let t: f64 = 0.0;
+        let mut t: f64 = 0.0;
         let mut x = na::matrix![1.0 ; 1.0 ; 1.0 ; 0.5 ; 0.5 ; 0.5];
-        rk4(&eom, dt, t, &mut x);
-
+        rk4(&eom, dt, &mut t, &mut x);
     }
 
 }
