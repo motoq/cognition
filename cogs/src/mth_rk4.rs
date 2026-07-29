@@ -52,15 +52,15 @@ pub fn rk4<const R: usize>(
     xx = x0 + q;
     xa += q + q;
     // forth - update member variables vs. locals
-    time += dt;
-    xd = deq.xdot(time, &xx);
-    *tmt0 = time;
+    *tmt0 += dt;
+    xd = deq.xdot(*tmt0, &xx);
     *x = x0 + (xa + dt*xd)/6.0;
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::mth_ode::Ode;
     use crate::mth_rk4::rk4;
     use crate::dyn_two_body_gravity::TwoBodyGravity;
     use crate::dyn_orbit_deq::OrbitDeq;
@@ -73,6 +73,35 @@ mod tests {
         let mut t: f64 = 0.0;
         let mut x = na::matrix![1.0 ; 1.0 ; 1.0 ; 0.5 ; 0.5 ; 0.5];
         rk4(&eom, dt, &mut t, &mut x);
+    }
+
+    #[test]
+    fn rk4_exp() {
+        pub struct Exp;
+        impl Ode<1> for Exp {
+            fn xdot(
+                &self,
+                _t: f64,
+                x: &na::SMatrix<f64, 1, 1>
+            ) -> na::SMatrix<f64, 1, 1> {
+                //let dx = na::matrix![x[0].exp()];
+                //dx
+                
+                let dx = na::matrix![x[0]];
+                dx
+            }
+        }
+
+
+        let eom = Exp;
+        let dt: f64 = 0.1;
+        let mut t: f64 = 0.0;
+        let mut x = na::matrix![0.0];
+        while t < 1.0 - f64::EPSILON {
+          rk4(&eom, dt, &mut t, &mut x);
+          println!("t {} and x {}", t, x);
+        }
+        
     }
 
 }
