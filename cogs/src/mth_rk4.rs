@@ -11,18 +11,22 @@ use nalgebra as na;
 
 use crate::mth_ode::Ode;
 
+/// Basic RK4 integrator.
+///
 /// # Arguments
 ///
 /// * deq   The EOM to be integrated by dt
-/// * dt    Integration step size
-/// * tmt0  Input: state vector time
-///         Output: time of output state vector (tmt0 + t0 for RK4)
+/// * dt    Integration step size.  + for forwards propagation, - for
+///         backwards propagation.
+/// * tmt0  Input: state vector time tmt0
+///         Output: time of output state vector (tmt0 + d0 for RK4)
 /// * x     Input: state vector initial conditions
 ///         Output: state vector propagated by dt
 ///
 /// # Author
 ///
 /// *  Kurt Motekew  2026/07/26  Initial
+///
 pub fn rk4<const R: usize>(
     deq: &impl Ode<R>,
     dt: f64,
@@ -62,21 +66,11 @@ mod tests {
     use super::*;
     use crate::mth_ode::Ode;
     use crate::mth_rk4::rk4;
-    use crate::dyn_two_body_gravity::TwoBodyGravity;
-    use crate::dyn_orbit_deq::OrbitDeq;
-
-    #[test]
-    fn rk4_grav() {
-        let twobdy = Box::new(TwoBodyGravity::new(1.0));
-        let eom = OrbitDeq::new(twobdy);
-        let dt: f64 = 1.0;
-        let mut t: f64 = 0.0;
-        let mut x = na::matrix![1.0 ; 1.0 ; 1.0 ; 0.5 ; 0.5 ; 0.5];
-        rk4(&eom, dt, &mut t, &mut x);
-    }
 
     #[test]
     fn rk4_exp() {
+        // Create struct to implement the ODE dx/dt = x where the solution
+        // is x(t) = x0*exp(t) with I.C. x0
         pub struct Exp;
         impl Ode<1> for Exp {
             fn xdot(
@@ -84,25 +78,23 @@ mod tests {
                 _t: f64,
                 x: &na::SMatrix<f64, 1, 1>
             ) -> na::SMatrix<f64, 1, 1> {
-                //let dx = na::matrix![x[0].exp()];
-                //dx
-                
                 let dx = na::matrix![x[0]];
                 dx
             }
         }
-
-
+        // Create ODE with x0 = 1 such that x(t) = exp(t).
+        // Compare to f32 eps just to keep the integration step
+        // size from being too small.
         let eom = Exp;
-        let dt: f64 = 0.1;
+        let dt: f64 = 0.01;
         let mut t: f64 = 0.0;
-        let mut x = na::matrix![0.0];
+        let mut x = na::matrix![1.0];
         while t < 1.0 - f64::EPSILON {
           rk4(&eom, dt, &mut t, &mut x);
-          println!("t {} and x {}", t, x);
         }
-        
+        // For truth set t to 1.0
+        t = 1.0;
+        assert!((x[0] - t.exp()).abs() < f32::EPSILON as f64);
     }
-
 }
 

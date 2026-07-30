@@ -17,6 +17,7 @@ use nalgebra as na;
 use crate::dyn_orbit_deq::OrbitDeq;
 use crate::mth_ode::Ode;
 use crate::mth_ode_solver::OdeSolver;
+use crate::mth_rk4::rk4;
 
 /// EOM and current state vector that will be propagated through RK4
 /// numerical integration by dt
@@ -72,15 +73,33 @@ impl OdeSolver<6> for OrbitRk4 {
         self.orbit.xdot(self.tmt0, &self.pv)
     }
 
-    /// Integrate EOM by one step size.  Time and state vector are updated.
+    /// Integrate EOM by internal step size.  Time and state vector are
+    /// updated.
+    ///
+    /// # Return
+    ///
+    /// * Time associated with updated state vector.  For the RK4 integrator
+    ///   equal to tmt0 + dt
+    ///
+    fn step(&mut self) -> f64 {
+        rk4(&self.orbit, self.dt, &mut self.tmt0, &mut self.pv); 
+        self.tmt0
+    }
+
+    /// Integrate EOM by supplied step size.  Time and state vector are
+    /// updated.
+    ///
+    /// # Argument
+    ///
+    /// * dt  Integration step size
     ///
     /// # Return
     ///
     /// * Time associated with updated state vector
     ///
-    fn step(&mut self) -> f64 {
-        //let dpv = self.orbit.xdot(self.tmt0, &self.pv);
-        self.tmt0 + self.dt
+    fn step_dt(&mut self, dt: f64) -> f64 {
+        rk4(&self.orbit, dt, &mut self.tmt0, &mut self.pv); 
+        self.tmt0
     }
 }
 

@@ -38,5 +38,16 @@ pub trait OdeSolver<const R: usize> {
     /// * Time associated with updated state vector
     ///
     fn step(&mut self) -> f64;
+
+    /// # Argument
+    ///
+    /// * dt  Integration step size
+    ///
+    /// # Return
+    ///
+    /// * Time associated with updated state vector.  May or may not
+    ///   equal t0 + dt depending on integration method.
+    ///
+    fn step_dt(&mut self, dt: f64) -> f64;
 }
 
