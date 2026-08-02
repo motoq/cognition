@@ -25,6 +25,8 @@ use orbiter::attitude_string;
 use orbiter::dynamics_off_event_handler;
 
 use cogs::utl_const::RAD_PER_DEG;
+use cogs::phy_const;
+use cogs::phy_const::DU;
 use cogs::dyn_keplerian::KeplerianElement;
 use cogs::dyn_keplerian::Keplerian;
 
@@ -48,6 +50,11 @@ async fn main() {
         config.dynamic,
     );
 
+    // Integration step size, sec
+    let dt_sec: f64 = config.dt;
+    // Speedup factor of runtime vs. simulation time
+    let tfactor: f64 = config.tfactor;
+
     let oelmn: [(KeplerianElement, f64); 6] =
         [(KeplerianElement::A, config.orbit.semimajor_axis),
          (KeplerianElement::E, config.orbit.eccentricity),
@@ -62,6 +69,10 @@ async fn main() {
     };
 
     if config.dynamic {
+        println!("One Time Unit is {} seconds", phy_const::sec_per_tu());
+        println!("Earth angular velocity is {} rad/TU", phy_const::we_rad_tu());
+        println!("Integration step size is {} sec and time factor is {}",
+            dt_sec, tfactor);
         println!("Orbit Definition\n{}", &kep_oe);
     }
 
@@ -74,9 +85,10 @@ async fn main() {
     const AXIS_LENGTH: f32 = 10.0;
     const NO_DNY_SF:   f32 = 0.025;
     // Physics for this simulation - cast to f32 when needed for GX
-    const DU: f64 = 1.0;            // Distance units
-    const OMEGA_EARTH: f64 = 0.06;  // rad/TU
-    const TU_PER_SEC: f64 = 1.0;    // Time units per real time
+    let omega_earth: f64 = phy_const::we_rad_tu();
+    let sec_per_tu: f64 = phy_const::sec_per_tu();
+    let tu_per_sec: f64 = 1.0/sec_per_tu;
+    let dt: f64 = dt_sec*tu_per_sec;             // Integration step size, TU
 
     let camera_offset = if config.dynamic {
         2.0*AXIS_LENGTH
@@ -145,7 +157,12 @@ async fn main() {
 
     // Per-frame loop
     let epoch = std::time::Instant::now();
-    let mut seconds: f64 = 0.0;
+    // Track simulation time although physics works in TU
+    let mut runtime_seconds: f64 = 0.0;
+    // Simulation time for equations of motion
+    let mut sim_time = tfactor*tu_per_sec*runtime_seconds;
+    // Time of last integration step
+    let mut last_sim_step_time: f64 = sim_time;
     // Continue simulation while graphics window is open
     while gx_window.is_some() {
         if let Some(window) = &mut gx_window {
@@ -154,23 +171,32 @@ async fn main() {
                 continue;
             }
             let now = std::time::Instant::now();
-            seconds = now.duration_since(epoch).as_secs_f64();
-    
-            let sim_time = TU_PER_SEC*seconds;
-            let earth_rot = sim_time*OMEGA_EARTH;
-            let q_i2f = Quat::from_axis_angle(Vec3::Z,
-                                              -1.0*earth_rot as f32);
-            update_earth(&mut earth,  &q_i2f);
+            runtime_seconds = now.duration_since(epoch).as_secs_f64();
+            sim_time = tfactor*tu_per_sec*runtime_seconds;
 
-            // Once dynamics are in place, don't run this
+            // Get updates to inputs even if not updating model state
             if config.dynamic {
                 //(r_s_o_i, q_i2b) = propagate(sim_time, &r_s_o_i, &q_i2b);
-                update_sparky(&mut sparky, &r_s_o_i, &q_i2b);
+                //update_sparky(&mut sparky, &r_s_o_i, &q_i2b);
             } else {
                 q_i2b = dynamics_off_event_handler(&mut window.events(),
                                                    &mut sparky,
                                                    &q_i2b);
             }
+
+            if dt > sim_time - last_sim_step_time {
+                println!("Did not have to Integrate at {} seconds",
+                    runtime_seconds);
+                continue
+            }
+            // Update state through integration of EOM
+            last_sim_step_time = sim_time;
+
+            let earth_rot = sim_time*omega_earth;
+            let q_i2f = Quat::from_axis_angle(Vec3::Z,
+                                              -1.0*earth_rot as f32);
+            update_earth(&mut earth,  &q_i2f);
+
     
             /*
             for event in window.events().iter() {
@@ -227,7 +253,8 @@ async fn main() {
                 txt_window = None;
                 continue;
             }
-            let txt = format!("Elapsed Time (TU): {:>8.2}", seconds*TU_PER_SEC);
+            let txt = format!("Elapsed SimulationTime (TU): {:>8.2}",
+                sim_time);
             window.draw_text(&txt, Vec2::ZERO, 20.0, &font, WHITE);
             let txt = format!("Inertial to Body:  {}",
                               attitude_string(&q_i2b));

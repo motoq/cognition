@@ -25,16 +25,26 @@ use std::path::Path;
 pub struct OrbiterConfig {
     pub name: String,
     pub dynamic: bool,
+    /// Integration step size, seconds
+    pub dt: f64,
+    /// Simulation time vs. runtime mutliplication factor
+    pub tfactor: f64,
     pub orbit: OrbitDef,
 }
 
 #[derive(Deserialize)]
 pub struct OrbitDef {
+    /// DU
     pub semimajor_axis: f64,
+    /// Nondimensional
     pub eccentricity: f64,
+    /// deg
     pub inclination: f64,
+    /// deg
     pub raan: f64,
+    /// deg
     pub arg_perigee: f64,
+    /// deg
     pub true_anomaly: f64,
 }
 

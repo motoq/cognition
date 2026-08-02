@@ -8,5 +8,29 @@
 pub const GM: f64 = 1.0;
 /// Gravitational scale factor = 1 DU
 pub const DU: f64 = 1.0;
-/// Planetary body semimajor axis set to one DU for this sim
-pub const RE: f64 = DU;
+
+/// Ellipsoid radius, GRS80/WGS 84, km
+pub const KM_PER_ER: f64 = 6378.1370;
+/// Gravitational scaling radius, EGM96/EGM2008, TN 36 TT compatible
+pub const KM_PER_DU: f64 = 6378.1363;
+/// Earth semimajor axis in DU
+pub const ER_PER_DU: f64 = KM_PER_DU/KM_PER_ER;
+/// Gravitational parameter, EGM96/EGM2008, TN 36 TT compatible, km^3/s^2
+pub const GM_KM3_SEC2: f64 = 398600.4415;
+
+/// Earth radius
+pub const RE: f64 = ER_PER_DU;
+
+/// Nominal mean angular velocity of earth w.r.t ECI, GRS80/WGS 84, rad/sec
+pub const WE_RAD_SEC: f64 = 7292115.0e-11;
+
+/// Definition of a Time Unit (TU)
+pub fn sec_per_tu() -> f64 {
+    (KM_PER_DU*((KM_PER_DU*KM_PER_DU)/GM_KM3_SEC2)).sqrt()
+}
+
+/// Nominal mean angular velocity of earth w.r.t ECI, GRS80/WGS 84, rad/TU
+pub fn we_rad_tu() -> f64 {
+    WE_RAD_SEC*sec_per_tu()
+}
+

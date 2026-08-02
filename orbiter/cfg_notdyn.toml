@@ -1,5 +1,7 @@
 name = "Sparky"                                                         
 dynamic = false
+dt = 0.0
+tfactor = 0.0
 
 [orbit]                                                                
 semimajor_axis = 0.0
