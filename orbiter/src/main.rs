@@ -176,7 +176,6 @@ async fn main() {
 
             // Get updates to inputs even if not updating model state
             if config.dynamic {
-                //(r_s_o_i, q_i2b) = propagate(sim_time, &r_s_o_i, &q_i2b);
                 //update_sparky(&mut sparky, &r_s_o_i, &q_i2b);
             } else {
                 q_i2b = dynamics_off_event_handler(&mut window.events(),
@@ -191,6 +190,8 @@ async fn main() {
             }
             // Update state through integration of EOM
             last_sim_step_time = sim_time;
+
+            //(r_s_o_i, q_i2b) = propagate_orbiter(sim_time, &r_s_o_i, &q_i2b);
 
             let earth_rot = sim_time*omega_earth;
             let q_i2f = Quat::from_axis_angle(Vec3::Z,

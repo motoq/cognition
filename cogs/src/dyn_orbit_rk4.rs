@@ -35,10 +35,13 @@ impl OrbitRk4 {
     /// * dt     Integration step size to be used for this ODE solver
     /// * tmt0   Time associated with state vector
     /// * pv     Position and velocity state vector
-    pub fn new(orbit: OrbitDeq,
-               dt: f64,
-               tmt0: f64,
-               pv: na::SMatrix<f64, 6, 1>) -> Self {
+    pub fn new(
+        orbit: OrbitDeq,
+        dt: f64,
+        tmt0: f64,
+        pv: na::SMatrix<f64, 6, 1>
+    ) -> Self {
+
         Self {
             orbit,
             dt,
