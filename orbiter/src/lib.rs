@@ -20,7 +20,7 @@ use nalgebra as na;
 use serde::Deserialize;
 use std::path::Path;
 
-pub mod orbiter;
+pub mod orbiter_6dof;
 
 /// Configuration structs, in progress
 #[derive(Deserialize)]

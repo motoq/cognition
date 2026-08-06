@@ -12,11 +12,11 @@ use cogs::dyn_orbit_deq::OrbitDeq;
 use cogs::dyn_orbit_rk4::OrbitRk4;
 use cogs::mth_ode_solver::OdeSolver;
 
-pub struct Orbiter {
+pub struct Orbiter6Dof {
     orbit: OrbitRk4,
 }
 
-impl Orbiter {
+impl Orbiter6Dof {
     pub fn new(
         eom: OrbitDeq,
         dt: f64,
@@ -30,9 +30,15 @@ impl Orbiter {
     }
 }
 
-impl Orbiter {
-    pub fn propagate(&mut self, dt: f64) -> f64 {
-        self.orbit.step_dt(dt)
+impl Orbiter6Dof {
+    pub fn propagate(
+        &mut self,
+        dt: f64,
+        pv: &mut na::SMatrix<f64, 6, 1>
+    ) -> f64 {
+        let tnow = self.orbit.step_dt(dt);
+        *pv = self.orbit.state_vector();
+        tnow
     }
 }
 

@@ -24,15 +24,25 @@ use orbiter::update_sparky;
 use orbiter::attitude_string;
 use orbiter::dynamics_off_event_handler;
 
+use orbiter::orbiter_6dof::Orbiter6Dof;
+
 use cogs::utl_const::RAD_PER_DEG;
 use cogs::phy_const;
 use cogs::phy_const::DU;
 use cogs::dyn_keplerian::KeplerianElement;
 use cogs::dyn_keplerian::Keplerian;
 
+use cogs::dyn_two_body_gravity::TwoBodyGravity;
+use cogs::dyn_orbit_deq::OrbitDeq;
+
 
 #[kiss3d::main]
 async fn main() {
+    // Constants computed at runtime
+    let sec_per_tu: f64 = phy_const::sec_per_tu();
+    let tu_per_sec = 1.0/sec_per_tu;
+    // Earth rotation - cast to f32 for graphics
+    let omega_earth: f64 = phy_const::we_rad_tu();
 
     let args: Vec<String> = env::args().collect();
     println!("{} Arguments", args.len());
@@ -50,8 +60,12 @@ async fn main() {
         config.dynamic,
     );
 
-    // Integration step size, sec
+    // Integration step size, sec and...
     let dt_sec: f64 = config.dt;
+    // ...in TU
+    let dt = dt_sec*tu_per_sec;
+    // Minimum step size considered when closing gaps
+    let dt_eps = dt/100.0;
     // Speedup factor of runtime vs. simulation time
     let tfactor: f64 = config.tfactor;
 
@@ -69,13 +83,23 @@ async fn main() {
     };
 
     if config.dynamic {
-        println!("One Time Unit is {} seconds", phy_const::sec_per_tu());
+        println!("One Time Unit is {} seconds", sec_per_tu);
         println!("Earth angular velocity is {} rad/TU", phy_const::we_rad_tu());
         println!("Integration step size is {} sec and time factor is {}",
             dt_sec, tfactor);
         println!("Orbit Definition\n{}", &kep_oe);
     }
 
+    let twobdy = Box::new(TwoBodyGravity::new(1.0));
+    let eom = OrbitDeq::new(twobdy);
+    let mut orbit = Orbiter6Dof::new(eom, dt, 0.0, kep_oe.cartesian());
+    /*
+    let argp: f64 = if evec[2] < 0.0 {
+        std::f64::consts::TAU - tmp
+    } else {
+        tmp
+    };
+    */
 
 //    let ihat = na::Vector3::<f64>::x_axis();
 //    let jhat = na::Vector3::<f64>::y_axis();
@@ -84,11 +108,6 @@ async fn main() {
     // GX related - define as f32
     const AXIS_LENGTH: f32 = 10.0;
     const NO_DNY_SF:   f32 = 0.025;
-    // Physics for this simulation - cast to f32 when needed for GX
-    let omega_earth: f64 = phy_const::we_rad_tu();
-    let sec_per_tu: f64 = phy_const::sec_per_tu();
-    let tu_per_sec: f64 = 1.0/sec_per_tu;
-    let dt: f64 = dt_sec*tu_per_sec;             // Integration step size, TU
 
     let camera_offset = if config.dynamic {
         2.0*AXIS_LENGTH
@@ -163,6 +182,8 @@ async fn main() {
     let mut sim_time = tfactor*tu_per_sec*runtime_seconds;
     // Time of last integration step
     let mut last_sim_step_time: f64 = sim_time;
+    // Position and velocity state vector updated with each loop
+    let mut pv: na::SMatrix<f64, 6, 1> = na::SMatrix::repeat(0.0);
     // Continue simulation while graphics window is open
     while gx_window.is_some() {
         if let Some(window) = &mut gx_window {
@@ -188,10 +209,23 @@ async fn main() {
                     runtime_seconds);
                 continue
             }
-            // Update state through integration of EOM
-            last_sim_step_time = sim_time;
 
-            //(r_s_o_i, q_i2b) = propagate_orbiter(sim_time, &r_s_o_i, &q_i2b);
+            // Update state through integration of EOM up to sim_time
+            // Propagate by configured dt steps until time less than dt
+            // remains.  Then close the gap
+            let end_time = sim_time - dt;
+            while last_sim_step_time < end_time {
+                last_sim_step_time = orbit.propagate(dt, &mut pv);
+            }
+            let final_dt = sim_time - last_sim_step_time;
+            if final_dt > dt_eps {
+                last_sim_step_time = orbit.propagate(dt, &mut pv);
+            }
+
+            update_sparky(
+                &mut sparky,
+                &pv.fixed_view::<3, 1>(0, 0).into(),
+                &q_i2b);
 
             let earth_rot = sim_time*omega_earth;
             let q_i2f = Quat::from_axis_angle(Vec3::Z,

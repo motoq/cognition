@@ -175,7 +175,7 @@ impl Keplerian {
     ///
     /// # Return
     ///
-    /// * Position and velocity, DU and DU/TU
+    /// * Inertial position and velocity, DU and DU/TU
     ///
     pub fn cartesian(&self) -> na::SMatrix<f64, 6, 1> {
         self.cart
@@ -186,7 +186,7 @@ impl Keplerian {
     /// * Cartesian position vector, DU
     ///
     pub fn position(&self) -> na::SMatrix<f64, 3, 1> {
-        self.cart.fixed_view::<3, 1>(0, 0).into()
+        self.cart.fixed_view::<3, 1>(0, 0).into_owned()
     }
 
     /// # Return
@@ -194,7 +194,7 @@ impl Keplerian {
     /// * Cartesian velocity vector, DU/TU
     ///
     pub fn velocity(&self) -> na::SMatrix<f64, 3, 1> {
-        self.cart.fixed_view::<3, 1>(3, 0).into()
+        self.cart.fixed_view::<3, 1>(3, 0).into_owned()
     }
 }
 

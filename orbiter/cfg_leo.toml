@@ -1,11 +1,11 @@
 name = "Sparky"                                                         
 dynamic = true                                                          
 dt = 0.1
-tfactor = 1000.0
+tfactor = 200.0
 
 [orbit]                                                                
-semimajor_axis = 4.2
-eccentricity = 0.7
+semimajor_axis = 1.1
+eccentricity = 0.001
 inclination = 63.4
 raan = 30.0
 arg_perigee = 270.0
