@@ -18,6 +18,9 @@ pub const ER_PER_DU: f64 = KM_PER_DU/KM_PER_ER;
 /// Gravitational parameter, EGM96/EGM2008, TN 36 TT compatible, km^3/s^2
 pub const GM_KM3_SEC2: f64 = 398600.4415;
 
+/// EGM96 Zonal
+pub const J2: f64 = 1.082626173852223e-03;
+
 /// Earth radius
 pub const RE: f64 = ER_PER_DU;
 

@@ -219,7 +219,7 @@ async fn main() {
             }
             let final_dt = sim_time - last_sim_step_time;
             if final_dt > dt_eps {
-                last_sim_step_time = orbit.propagate(dt, &mut pv);
+                last_sim_step_time = orbit.propagate(final_dt, &mut pv);
             }
 
             update_sparky(
@@ -228,8 +228,7 @@ async fn main() {
                 &q_i2b);
 
             let earth_rot = sim_time*omega_earth;
-            let q_i2f = Quat::from_axis_angle(Vec3::Z,
-                                              -1.0*earth_rot as f32);
+            let q_i2f = Quat::from_axis_angle(Vec3::Z, -1.0*earth_rot as f32);
             update_earth(&mut earth,  &q_i2f);
 
     
