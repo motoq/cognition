@@ -60,10 +60,8 @@ async fn main() {
         config.dynamic,
     );
 
-    // Integration step size, sec and...
-    let dt_sec: f64 = config.dt;
-    // ...in TU
-    let dt = dt_sec*tu_per_sec;
+    // Integration step size, sec to TU
+    let dt = config.dt*tu_per_sec;
     // Minimum step size considered when closing gaps
     let dt_eps = dt/100.0;
     // Speedup factor of runtime vs. simulation time
@@ -86,7 +84,7 @@ async fn main() {
         println!("One Time Unit is {} seconds", sec_per_tu);
         println!("Earth angular velocity is {} rad/TU", phy_const::we_rad_tu());
         println!("Integration step size is {} sec and time factor is {}",
-            dt_sec, tfactor);
+            config.dt, tfactor);
         println!("Orbit Definition\n{}", &kep_oe);
     }
 
@@ -191,19 +189,32 @@ async fn main() {
                 gx_window = None;
                 continue;
             }
+
+            // Update attitude for static model - don't update time
+            // and skip all dynamics
+            if !config.dynamic {
+                q_i2b = dynamics_off_event_handler(
+                    &mut window.events(), &mut sparky, &q_i2b);
+                if let Some(window) = &mut txt_window {
+                    if !window.render_3d(
+                        &mut txt_scene, &mut txt_camera).await {
+                        txt_window = None;
+                        continue;
+                    }
+                    let txt = format!("Inertial to Body:  {}",
+                        attitude_string(&q_i2b));
+                    window.draw_text(
+                        &txt, Vec2::new(0.0, 20.0), 20.0, &font, WHITE);
+                }
+                continue;
+            }
+
+            // Get time since epoch and convert to simulation time
             let now = std::time::Instant::now();
             runtime_seconds = now.duration_since(epoch).as_secs_f64();
             sim_time = tfactor*tu_per_sec*runtime_seconds;
 
-            // Get updates to inputs even if not updating model state
-            if config.dynamic {
-                //update_sparky(&mut sparky, &r_s_o_i, &q_i2b);
-            } else {
-                q_i2b = dynamics_off_event_handler(&mut window.events(),
-                                                   &mut sparky,
-                                                   &q_i2b);
-            }
-
+            // Sim time does not require the EOM to catch up
             if dt > sim_time - last_sim_step_time {
                 println!("Did not have to Integrate at {} seconds",
                     runtime_seconds);
