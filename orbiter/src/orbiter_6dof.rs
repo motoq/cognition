@@ -21,12 +21,10 @@ impl Orbiter6Dof {
         eom: OrbitDeq,
         dt: f64,
         tmt0: f64,
-        pv: na::SMatrix<f64, 6, 1>
+        pv: na::SMatrix<f64, 6, 1>,
     ) -> Self {
         let orbit = OrbitRk4::new(eom, dt, tmt0, pv);
-        Self {
-            orbit
-        }
+        Self { orbit }
     }
 }
 
@@ -34,7 +32,7 @@ impl Orbiter6Dof {
     pub fn propagate(
         &mut self,
         dt: f64,
-        pv: &mut na::SMatrix<f64, 6, 1>
+        pv: &mut na::SMatrix<f64, 6, 1>,
     ) -> f64 {
         let tnow = self.orbit.step_dt(dt);
         *pv = self.orbit.state_vector();

@@ -67,6 +67,8 @@ async fn main() {
     let dt_eps = dt/100.0;
     // Speedup factor of runtime vs. simulation time
     let tfactor: f64 = config.tfactor;
+    // Real-time update rate for text window outputs
+    let txt_refresh_sec = config.text_refresh;
 
     let oelmn: [(KeplerianElement, f64); 6] =
         [(KeplerianElement::A, config.orbit.semimajor_axis),
@@ -177,6 +179,10 @@ async fn main() {
     let epoch = std::time::Instant::now();
     // Track simulation time although physics works in TU
     let mut runtime_seconds: f64 = 0.0;
+    // Text window update info - not based on integration step
+    let mut last_runtime_txt_upd_sec: f64 = 0.0;
+    let mut q_i2b_txt = q_i2b;
+    let mut kep_oe_txt = kep_oe;
     // Simulation time for equations of motion
     let mut sim_time = tfactor*tu_per_sec*runtime_seconds;
     // Time of last integration step
@@ -299,29 +305,34 @@ async fn main() {
                 txt_window = None;
                 continue;
             }
+            if runtime_seconds - last_runtime_txt_upd_sec > txt_refresh_sec {
+                last_runtime_txt_upd_sec = runtime_seconds;
+                q_i2b_txt = q_i2b;
+                kep_oe_txt =
+                    Keplerian::try_from_cart(&pv).expect("Bad State Vector");
+            }
             // Vertical text size and displacement
             let dy: f32 = 20.0;
             let mut yloc = dy;
             // Sim time from epoch
-            let txt = format!("Elapsed SimulationTime (TU): {:>8.2}",
+            let txt = format!("Elapsed SimulationTime (TU): {:>8.3}",
                 sim_time);
             window.draw_text(&txt, Vec2::ZERO, dy, &font, WHITE);
             yloc += dy;
             // Satellite state
             let txt = format!("Inertial to Body:  {}",
-                              attitude_string(&q_i2b));
+                              attitude_string(&q_i2b_txt));
             window.draw_text(&txt, Vec2::new(0.0, yloc), dy, &font, WHITE);
             yloc += dy;
-            let kep = Keplerian::try_from_cart(&pv).expect("Bad State Vector");
             let txt = format!(
                 "a: {:>1.3}    e: {:>1.4}    i: {:>2.3}    \
                  o: {:>3.3}    w: {:>3.3}    v: {:>3.3}",
-                kep.orbital_element(KeplerianElement::A),
-                kep.orbital_element(KeplerianElement::E),
-                kep.orbital_element(KeplerianElement::I)*DEG_PER_RAD,
-                kep.orbital_element(KeplerianElement::O)*DEG_PER_RAD,
-                kep.orbital_element(KeplerianElement::W)*DEG_PER_RAD,
-                kep.orbital_element(KeplerianElement::V)*DEG_PER_RAD);
+                kep_oe_txt.orbital_element(KeplerianElement::A),
+                kep_oe_txt.orbital_element(KeplerianElement::E),
+                kep_oe_txt.orbital_element(KeplerianElement::I)*DEG_PER_RAD,
+                kep_oe_txt.orbital_element(KeplerianElement::O)*DEG_PER_RAD,
+                kep_oe_txt.orbital_element(KeplerianElement::W)*DEG_PER_RAD,
+                kep_oe_txt.orbital_element(KeplerianElement::V)*DEG_PER_RAD);
             window.draw_text(&txt, Vec2::new(0.0, yloc), dy, &font, WHITE);
         }
     }

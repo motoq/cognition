@@ -2,6 +2,7 @@ name = "Sparky"
 dynamic = true                                                          
 dt = 0.1
 tfactor = 200.0
+text_refresh = 0.5
 
 [orbit]                                                                
 semimajor_axis = 1.1

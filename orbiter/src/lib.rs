@@ -31,6 +31,8 @@ pub struct OrbiterConfig {
     pub dt: f64,
     /// Simulation time vs. runtime mutliplication factor
     pub tfactor: f64,
+    /// Text window update rate, seconds
+    pub text_refresh: f64,
     pub orbit: OrbitDef,
 }
 
@@ -93,11 +95,13 @@ pub fn v_glam2nat(gv3: &Vec3) -> na::SMatrix<f64, 3, 1> {
 ///
 /// * Glam quaternion
 ///
-pub fn q_na2glamt(nq: &na::UnitQuaternion::<f64>) -> Quat {
-    Quat::from_xyzw(nq.vector()[0] as f32,
-                    nq.vector()[1] as f32,
-                    nq.vector()[2] as f32,
-                    nq.scalar() as f32)
+pub fn q_na2glamt(nq: &na::UnitQuaternion<f64>) -> Quat {
+    Quat::from_xyzw(
+        nq.vector()[0] as f32,
+        nq.vector()[1] as f32,
+        nq.vector()[2] as f32,
+        nq.scalar() as f32
+    )
 }
 
 /// Rotation from the graphics environment (y-axis up, z-axis out of the
@@ -108,7 +112,7 @@ pub fn q_na2glamt(nq: &na::UnitQuaternion::<f64>) -> Quat {
 /// * Graphics to computational rotation quaternion
 ///
 pub fn gx2inertial_rot() -> Quat {
-  Quat::from_axis_angle(Vec3::X, -0.5*std::f64::consts::PI as f32)
+    Quat::from_axis_angle(Vec3::X, -0.5*std::f64::consts::PI as f32)
 }
 
 /// Rotation from texture to earth fixed (body), where the z-axis
@@ -152,12 +156,14 @@ pub fn sparkymodel2body_rot() -> Quat {
 ///
 /// * Sphere representing the earth object
 ///
-pub fn add_earth(scene: &mut SceneNode3d,
-                 config: &OrbiterConfig,  er: f32) -> SceneNode3d {
+pub fn add_earth(
+    scene: &mut SceneNode3d,
+    config: &OrbiterConfig,
+    er: f32
+) -> SceneNode3d {
     let earth = if config.dynamic {
-        scene.add_sphere(er)
-             .set_texture_from_file(
-                 Path::new("./resources/earth_lights_exp.jpg"), "earth_texture")
+        scene.add_sphere(er).set_texture_from_file(
+            Path::new("./resources/earth_lights_exp.jpg"), "earth_texture")
     } else {
         scene.add_sphere(LS1*LS2*LS3*er)
     };
@@ -173,9 +179,9 @@ pub fn add_earth(scene: &mut SceneNode3d,
 /// * q_i2f  Inertial to Fixed reference frame transformation
 ///
 pub fn update_earth(earth_node: &mut SceneNode3d, q_i2f: &Quat) {
-    earth_node.set_rotation(gx2inertial_rot()*
-                            q_i2f.conjugate()*
-                            earthtexture2fixed_rot());
+    earth_node.set_rotation(
+        gx2inertial_rot()*q_i2f.conjugate()*earthtexture2fixed_rot()
+    );
 }
 
 /// Creates the orbiter object
@@ -188,17 +194,24 @@ pub fn update_earth(earth_node: &mut SceneNode3d, q_i2f: &Quat) {
 ///
 /// * Sparky orbiter
 ///
-pub fn add_sparky(scene: &mut SceneNode3d,
-                  config: &OrbiterConfig) -> SceneNode3d {
+pub fn add_sparky(
+    scene: &mut SceneNode3d,
+    config: &OrbiterConfig
+) -> SceneNode3d {
     let sparky_obj_path = Path::new("./resources/sparkymatmesh.obj");
     let sparky_mtl_path = Path::new("./resources");
     let sparky = if config.dynamic {
-        scene.add_obj(sparky_obj_path, sparky_mtl_path,
-                      Vec3::new(0.005, 0.005, 0.005))
-             .set_position(Vec3::new(1.0, 1.0, 1.0))
+        scene.add_obj(
+            sparky_obj_path,
+            sparky_mtl_path,
+            Vec3::new(0.005, 0.005, 0.005)
+        ).set_position(Vec3::new(1.0, 1.0, 1.0))
     } else {
-        scene.add_obj(sparky_obj_path, sparky_mtl_path,
-                      Vec3::new(0.005, 0.005, 0.005))
+        scene.add_obj(
+            sparky_obj_path,
+            sparky_mtl_path,
+            Vec3::new(0.005, 0.005, 0.005)
+        )
     };
     sparky
 }
@@ -215,13 +228,15 @@ pub fn add_sparky(scene: &mut SceneNode3d,
 ///
 /// * q_i2b  Inertial to body reference frame transformation
 ///
-pub fn update_sparky(sparky_node: &mut SceneNode3d,
-                     pos: &na::SMatrix<f64, 3, 1>,
-                     q_i2b: &na::UnitQuaternion<f64>) {
+pub fn update_sparky(
+    sparky_node: &mut SceneNode3d,
+    pos: &na::SMatrix<f64, 3, 1>,
+    q_i2b: &na::UnitQuaternion<f64>,
+) {
     sparky_node.set_position(v_na2glamt(&pos));
-    sparky_node.set_rotation(gx2inertial_rot()*
-                             q_na2glamt(q_i2b).conjugate()*
-                             sparkymodel2body_rot());
+    sparky_node.set_rotation(
+        gx2inertial_rot()*q_na2glamt(q_i2b).conjugate()*sparkymodel2body_rot()
+    );
 }
 
 /// Creates axes for a Cartesian coordinate system with RGB representing
@@ -238,8 +253,11 @@ pub fn update_sparky(sparky_node: &mut SceneNode3d,
 /// * Axis aligned starting from the origin and extending along the
 ///   y-axis of the graphics reference frame.
 ///
-pub fn add_axis(scene: &mut SceneNode3d, length: f32,
-                                         color: Color) -> SceneNode3d {
+pub fn add_axis(
+    scene: &mut SceneNode3d,
+    length: f32,
+    color: Color,
+) -> SceneNode3d {
     let mut grp = scene.add_group();
     let cone_length = LS1*length;
     let cone_width = LS2*cone_length;
@@ -267,15 +285,11 @@ pub fn add_axis(scene: &mut SceneNode3d, length: f32,
 ///
 pub fn add_axes(scene: &mut SceneNode3d, length: f32) -> SceneNode3d {
     let mut grp = scene.add_group();
-    _ = add_axis(&mut grp,
-                 length, Color::new(0.0, 1.0, 0.0, 1.0));
-    let mut axis = add_axis(&mut grp,
-                            length, Color::new(1.0, 0.0, 0.0, 1.0));
-    let rot = Quat::from_axis_angle(Vec3::Z,
-                                    -0.5*std::f64::consts::PI as f32);
+    _ = add_axis(&mut grp, length, Color::new(0.0, 1.0, 0.0, 1.0));
+    let mut axis = add_axis(&mut grp, length, Color::new(1.0, 0.0, 0.0, 1.0));
+    let rot = Quat::from_axis_angle(Vec3::Z, -0.5*std::f64::consts::PI as f32);
     axis.rotate(rot);
-    let mut axis = add_axis(&mut grp,
-                            length, Color::new(0.0, 0.0, 1.0, 1.0));
+    let mut axis = add_axis(&mut grp, length, Color::new(0.0, 0.0, 1.0, 1.0));
     let rot = Quat::from_axis_angle(Vec3::X, 0.5*std::f64::consts::PI as f32);
     axis.rotate(rot);
     grp
@@ -292,8 +306,13 @@ pub fn add_axes(scene: &mut SceneNode3d, length: f32) -> SceneNode3d {
 /// * String representation of quaternion in scalar + vector format
 ///
 pub fn attitude_string(q_i2b: &na::UnitQuaternion<f64>) -> String {
-    format!("{:1.6} + [{:1.6} {:1.6} {:1.6}]",
-        q_i2b.scalar(), q_i2b.imag().x, q_i2b.imag().y, q_i2b.imag().z)
+    format!(
+        "{:1.6} + [{:1.6} {:1.6} {:1.6}]",
+        q_i2b.scalar(),
+        q_i2b.imag().x,
+        q_i2b.imag().y,
+        q_i2b.imag().z
+    )
 }
 
 /// Handles keyboard events for the case where are dynamics are turned off
@@ -317,10 +336,12 @@ pub fn attitude_string(q_i2b: &na::UnitQuaternion<f64>) -> String {
 ///
 /// * Updated inertial to body rotation
 ///
-pub fn dynamics_off_event_handler(events: &mut EventManager,
-                                  mut sparky: &mut SceneNode3d,
-                                  q_i2b: &na::UnitQuaternion<f64>) ->
-                                                 na::UnitQuaternion<f64> {
+pub fn dynamics_off_event_handler(
+    events: &mut EventManager,
+    mut sparky: &mut SceneNode3d,
+    q_i2b: &na::UnitQuaternion<f64>
+) -> na::UnitQuaternion<f64> {
+
     let ihat = na::Vector3::<f64>::x_axis();
     let jhat = na::Vector3::<f64>::y_axis();
     let khat = na::Vector3::<f64>::z_axis();
@@ -333,33 +354,45 @@ pub fn dynamics_off_event_handler(events: &mut EventManager,
         match event.value {
             WindowEvent::Key(button, Action::Press, _) => {
                 if button == Key::A {
-                    q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
-                        from_axis_angle(&khat, DANG);
+                    q_i2b_rot = q_i2b_rot
+                        *na::UnitQuaternion::<f64>::from_axis_angle(
+                            &khat, DANG
+                        );
                     let q_i2b = q_i2b_rot.conjugate();
                     update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::G {
-                    q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
-                        from_axis_angle(&khat, -DANG);
+                    q_i2b_rot = q_i2b_rot
+                        *na::UnitQuaternion::<f64>::from_axis_angle(
+                            &khat, -DANG
+                        );
                     let q_i2b = q_i2b_rot.conjugate();
                     update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::E {
-                    q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
-                        from_axis_angle(&jhat, DANG);
+                    q_i2b_rot = q_i2b_rot
+                        *na::UnitQuaternion::<f64>::from_axis_angle(
+                            &jhat, DANG
+                        );
                     let q_i2b = q_i2b_rot.conjugate();
                     update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::D {
-                    q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
-                        from_axis_angle(&jhat, -DANG);
+                    q_i2b_rot = q_i2b_rot
+                        *na::UnitQuaternion::<f64>::from_axis_angle(&jhat,
+                            -DANG
+                        );
                     let q_i2b = q_i2b_rot.conjugate();
                     update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::F {
-                    q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
-                        from_axis_angle(&ihat, DANG);
+                    q_i2b_rot = q_i2b_rot
+                        *na::UnitQuaternion::<f64>::from_axis_angle(
+                            &ihat, DANG
+                        );
                     let q_i2b = q_i2b_rot.conjugate();
                     update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::S {
-                    q_i2b_rot = q_i2b_rot*na::UnitQuaternion::<f64>::
-                        from_axis_angle(&ihat, -DANG);
+                    q_i2b_rot = q_i2b_rot
+                        *na::UnitQuaternion::<f64>::from_axis_angle(
+                            &ihat, -DANG
+                        );
                     let q_i2b = q_i2b_rot.conjugate();
                     update_sparky(&mut sparky, &pos, &q_i2b);
                 }
