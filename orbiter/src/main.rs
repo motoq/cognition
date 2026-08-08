@@ -27,6 +27,7 @@ use orbiter::dynamics_off_event_handler;
 use orbiter::orbiter_6dof::Orbiter6Dof;
 
 use cogs::utl_const::RAD_PER_DEG;
+use cogs::utl_const::DEG_PER_RAD;
 use cogs::phy_const;
 use cogs::phy_const::DU;
 use cogs::dyn_keplerian::KeplerianElement;
@@ -292,18 +293,36 @@ async fn main() {
             }
             */
         }
-        // If still active, update text window
+        // If still active, update text window (this is dynamic mode)
         if let Some(window) = &mut txt_window {
             if !window.render_3d(&mut txt_scene, &mut txt_camera).await {
                 txt_window = None;
                 continue;
             }
+            // Vertical text size and displacement
+            let dy: f32 = 20.0;
+            let mut yloc = dy;
+            // Sim time from epoch
             let txt = format!("Elapsed SimulationTime (TU): {:>8.2}",
                 sim_time);
-            window.draw_text(&txt, Vec2::ZERO, 20.0, &font, WHITE);
+            window.draw_text(&txt, Vec2::ZERO, dy, &font, WHITE);
+            yloc += dy;
+            // Satellite state
             let txt = format!("Inertial to Body:  {}",
                               attitude_string(&q_i2b));
-            window.draw_text(&txt, Vec2::new(0.0, 20.0), 20.0, &font, WHITE);
+            window.draw_text(&txt, Vec2::new(0.0, yloc), dy, &font, WHITE);
+            yloc += dy;
+            let kep = Keplerian::try_from_cart(&pv).expect("Bad State Vector");
+            let txt = format!(
+                "a: {:>1.3}    e: {:>1.4}    i: {:>2.3}    \
+                 o: {:>3.3}    w: {:>3.3}    v: {:>3.3}",
+                kep.orbital_element(KeplerianElement::A),
+                kep.orbital_element(KeplerianElement::E),
+                kep.orbital_element(KeplerianElement::I)*DEG_PER_RAD,
+                kep.orbital_element(KeplerianElement::O)*DEG_PER_RAD,
+                kep.orbital_element(KeplerianElement::W)*DEG_PER_RAD,
+                kep.orbital_element(KeplerianElement::V)*DEG_PER_RAD);
+            window.draw_text(&txt, Vec2::new(0.0, yloc), dy, &font, WHITE);
         }
     }
 }
