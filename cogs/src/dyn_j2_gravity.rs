@@ -31,10 +31,7 @@ impl J2Gravity {
     /// * gm  Gravitational parameter, DU^2/TU^3
     /// * j2  Oblateness
     pub fn new(gm: f64, j2: f64) -> Self {
-        Self {
-            gm,
-            j2,
-        }
+        Self { gm, j2 }
     }
 }
 

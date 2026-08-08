@@ -36,9 +36,7 @@ impl OrbitDeq {
     /// * Struct capable of satisfying Ode trait
     ///
     pub fn new(grav: Box<dyn Gravity>) -> Self {
-        Self {
-            grav,
-        }
+        Self { grav }
     }
 }
 
@@ -59,7 +57,7 @@ impl Ode<6> for OrbitDeq {
     fn xdot(
         &self,
         _tmt0: f64,
-        pv: &na::SMatrix<f64, 6, 1>
+        pv: &na::SMatrix<f64, 6, 1>,
     ) -> na::SMatrix<f64, 6, 1> {
         let acc = self.grav.gravt(&pv.fixed_view::<3, 1>(0, 0).into());
         let va = na::matrix![pv[3] ; pv[4] ; pv[5] ; acc[0] ; acc[1] ; acc[2]];

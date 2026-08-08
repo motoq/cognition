@@ -28,6 +28,8 @@ pub trait Ode<const R: usize> {
     /// * Derivative of state vector w.r.t. t at t
     ///
     fn xdot(&self,
-        t: f64, x: &na::SMatrix<f64, R, 1>) -> na::SMatrix<f64, R, 1>;
+        t: f64,
+        x: &na::SMatrix<f64, R, 1>,
+    ) -> na::SMatrix<f64, R, 1>;
 }
 

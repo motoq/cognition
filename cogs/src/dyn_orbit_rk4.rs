@@ -39,7 +39,7 @@ impl OrbitRk4 {
         orbit: OrbitDeq,
         dt: f64,
         tmt0: f64,
-        pv: na::SMatrix<f64, 6, 1>
+        pv: na::SMatrix<f64, 6, 1>,
     ) -> Self {
 
         Self {
@@ -85,7 +85,7 @@ impl OdeSolver<6> for OrbitRk4 {
     ///   equal to tmt0 + dt
     ///
     fn step(&mut self) -> f64 {
-        rk4(&self.orbit, self.dt, &mut self.tmt0, &mut self.pv); 
+        rk4(&self.orbit, self.dt, &mut self.tmt0, &mut self.pv);
         self.tmt0
     }
 
@@ -101,7 +101,7 @@ impl OdeSolver<6> for OrbitRk4 {
     /// * Time associated with updated state vector
     ///
     fn step_dt(&mut self, dt: f64) -> f64 {
-        rk4(&self.orbit, dt, &mut self.tmt0, &mut self.pv); 
+        rk4(&self.orbit, dt, &mut self.tmt0, &mut self.pv);
         self.tmt0
     }
 }
@@ -110,8 +110,8 @@ impl OdeSolver<6> for OrbitRk4 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dyn_two_body_gravity::TwoBodyGravity;
     use crate::dyn_orbit_deq::OrbitDeq;
+    use crate::dyn_two_body_gravity::TwoBodyGravity;
 
     #[test]
     fn rk4_grav() {

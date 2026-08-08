@@ -82,19 +82,25 @@ mod tests {
         let roll = 2.0*pi/3.0;
         let m_roll = rotx(roll);
         let q_roll = na::UnitQuaternion::<f64>::from_axis_angle(
-            &na::Vector3::<f64>::x_axis(), roll);
+            &na::Vector3::<f64>::x_axis(),
+            roll,
+        );
         let qm_roll = na::UnitQuaternion::<f64>::from_matrix(&m_roll);
         //
         let pitch = -pi/3.0;
         let m_pitch = roty(pitch);
         let q_pitch = na::UnitQuaternion::<f64>::from_axis_angle(
-            &na::Vector3::<f64>::y_axis(), pitch);
+            &na::Vector3::<f64>::y_axis(),
+            pitch,
+        );
         let qm_pitch = na::UnitQuaternion::<f64>::from_matrix(&m_pitch);
         //
         let yaw = pi/6.0;
         let myaw = rotz(yaw);
         let qyaw = na::UnitQuaternion::<f64>::from_axis_angle(
-            &na::Vector3::<f64>::z_axis(), yaw);
+            &na::Vector3::<f64>::z_axis(),
+            yaw,
+        );
         let qmyaw = na::UnitQuaternion::<f64>::from_matrix(&myaw);
 
 
@@ -109,7 +115,8 @@ mod tests {
         // ...via quaternions and na '*' op with left to right multiplication
         let v_qcg = (qyaw*q_pitch*q_roll).conjugate()*v0;
         // ...via quaternions and na '*' op with right to left multiplication
-        let v_qmt = (q_roll.conjugate()*q_pitch.conjugate()*qyaw.conjugate())*v0;
+        let v_qmt =
+            (q_roll.conjugate()*q_pitch.conjugate()*qyaw.conjugate())*v0;
         // ...via na interpretation of DCM to quaternion and '*' op
         let v_qcgm = (qm_roll*qm_pitch*qmyaw)*v0;
 

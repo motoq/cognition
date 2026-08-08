@@ -22,8 +22,10 @@ use nalgebra as na;
 ///
 /// * Angle between the two vectors, radians
 ///
-pub fn unit_vec_angle(u1: &na::SMatrix<f64, 3, 1>,
-                      u2: &na::SMatrix<f64, 3, 1>) -> f64 {
+pub fn unit_vec_angle(
+    u1: &na::SMatrix<f64, 3, 1>,
+    u2: &na::SMatrix<f64, 3, 1>,
+) -> f64 {
     let eps: f64 = 0.00001;
     let cang = u1.dot(&u2);
     // Unit vector dot product can exceed +/-1.0 due to roundoff

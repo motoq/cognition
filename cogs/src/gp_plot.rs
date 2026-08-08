@@ -10,7 +10,7 @@
 //! to support graphic display functionality
 
 use std::fs::File;
-use std::io::{Write, BufWriter};
+use std::io::{BufWriter, Write};
 
 use nalgebra as na;
 
@@ -29,9 +29,11 @@ use nalgebra as na;
 ///
 /// * Gnuplot command to plot an arrow
 ///
-pub fn gp_arrow(orgn: &na::SMatrix<f64, 3, 1>,
-                dstn: &na::SMatrix<f64, 3, 1>,
-                rgb: &str) -> String {
+pub fn gp_arrow(
+    orgn: &na::SMatrix<f64, 3, 1>,
+    dstn: &na::SMatrix<f64, 3, 1>,
+    rgb: &str,
+) -> String {
     format!("set arrow from {:.3e}, {:.3e}, {:.3e}",
              orgn[0], orgn[1], orgn[2]) +
         &format!(" to {:.3e}, {:.3e}, {:.3e}", dstn[0], dstn[1], dstn[2]) +
@@ -53,11 +55,14 @@ pub fn gp_arrow(orgn: &na::SMatrix<f64, 3, 1>,
 ///
 /// * Errors if a problem with writing to the BufWriter occurs
 ///
-pub fn gp_plot_basis(writer: &mut BufWriter<File>,
-                     xyz0: &na::SMatrix<f64, 3, 1>,
-                     basis: &(na::SMatrix<f64, 3, 1>,
-                              na::SMatrix<f64, 3, 1>,
-                              na::SMatrix<f64, 3, 1>)) -> std::io::Result<()> {
+pub fn gp_plot_basis(
+    writer: &mut BufWriter<File>,
+    xyz0: &na::SMatrix<f64, 3, 1>,
+    basis: &(
+        na::SMatrix<f64, 3, 1>,
+        na::SMatrix<f64, 3, 1>,
+        na::SMatrix<f64, 3, 1>),
+) -> std::io::Result<()> {
     let (e1, e2, e3) = basis;
     let mut xyz = xyz0 + e1;
     write!(writer, "\n{}", gp_arrow(&xyz0, &xyz, &"red".to_string()))?;

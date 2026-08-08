@@ -104,7 +104,7 @@ impl Keplerian {
     ///           Keplerian orbit definition
     ///
     pub fn try_from_oe(
-        oelmn: &[(KeplerianElement, f64); 6]
+        oelmn: &[(KeplerianElement, f64); 6],
     ) -> Result<Self, String> {
         let mut a = 0.0;
         let mut e = 0.0;
@@ -223,7 +223,8 @@ impl std::fmt::Display for Keplerian {
             DEG_PER_RAD*self.orbital_element(KeplerianElement::O),
             DEG_PER_RAD*self.orbital_element(KeplerianElement::W),
             DEG_PER_RAD*self.orbital_element(KeplerianElement::V),
-            self.cart)
+            self.cart
+        )
     }
 }
 
@@ -247,16 +248,21 @@ fn kep_to_cart(kepv: &[f64; 6]) -> Result<na::SMatrix<f64, 6, 1>, String> {
     // Error checking.  Gravity models not valid below scaling radius.
     // Etc...
     if rp < RE {
-        return Err("Perigee distance less than 1 DU:  ".to_string() +
-                   &rp.to_string());
+        return Err(
+            "Perigee distance less than 1 DU:  ".to_string() + &rp.to_string()
+        );
     }
     if e < ECC_EPS {
-        return Err("Eccentricity too small or negative:  ".to_string() +
-                   &e.to_string());
+        return Err(
+            "Eccentricity too small or negative:  ".to_string()
+            + &e.to_string()
+        );
     }
     if i < INC_EPS {
-        return Err("Inclination too small for this type of OE:  ".to_string() +
-                   &i.to_string());
+        return Err(
+            "Inclination too small for this type of OE:  ".to_string()
+            + &i.to_string()
+        );
     }
 
     let semip = a*(1.0 - e*e);                             // Semilatus Rectum
@@ -306,8 +312,10 @@ fn cart_to_kep(rv: &na::SMatrix<f64, 6, 1>) -> Result<[f64; 6], String> {
     // Vis-viva eqn - first check this is an elliptical orbit
     let sme = v2/2.0 - muor;
     if sme >= 0.0 {
-        return Err("Orbit must be elliptical Energy >= 0:  ".to_string() +
-                   &sme.to_string());
+        return Err(
+            "Orbit must be elliptical Energy >= 0:  ".to_string()
+            + &sme.to_string()
+        );
     }
     
     let hvec = rvec.cross(&vvec);
@@ -327,16 +335,19 @@ fn cart_to_kep(rv: &na::SMatrix<f64, 6, 1>) -> Result<[f64; 6], String> {
     let evec = ((v2 - muor)*rvec - rdotv*vvec)/GM;
     let emag = evec.norm();
     if emag < ECC_EPS {
-        return Err("Eccentricity too small or negative:  ".to_string() +
-                   &emag.to_string());
+        return Err(
+            "Eccentricity too small or negative:  ".to_string()
+            + &emag.to_string()
+        );
     }
 
     // Semimajor axis, perigee radius, final error check
     let sma = -0.5*GM/sme;
     let rp = sma*(1.0 - emag);
     if rp < RE {
-        return Err("Perigee distance less than 1 DU:  ".to_string() +
-                   &rp.to_string());
+        return Err(
+            "Perigee distance less than 1 DU:  ".to_string() + &rp.to_string()
+        );
     }
 
     // Inclination
@@ -406,17 +417,19 @@ mod tests {
         let eps = 1.0e-13;
         // Hard coded reference orbital elements with hard coded expected
         // Cartesian below
-        let oelmn: [(KeplerianElement, f64); 6] = [(KeplerianElement::A, 4.2),
-                                                   (KeplerianElement::E, 0.7),
-                                                   (KeplerianElement::I, 1.1),
-                                                   (KeplerianElement::O, 0.5),
-                                                   (KeplerianElement::W, 4.7),
-                                                   (KeplerianElement::V, 0.25)];
+        let oelmn: [(KeplerianElement, f64); 6] = [
+            (KeplerianElement::A, 4.2),
+            (KeplerianElement::E, 0.7),
+            (KeplerianElement::I, 1.1),
+            (KeplerianElement::O, 0.5),
+            (KeplerianElement::W, 4.7),
+            (KeplerianElement::V, 0.25)
+        ];
 
         // first convert to Cartesian, then from Cartesian back to Keplerian
         let kep1 = Keplerian::try_from_oe(&oelmn).expect("Bad Cartesian Orbit");
         let kep2 = Keplerian::try_from_cart(&kep1.cartesian())
-                                                 .expect("Bad Keplerain OE");
+            .expect("Bad Keplerain OE");
 
         // Test print format
         println!("kep1: {}", &kep1);

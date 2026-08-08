@@ -76,7 +76,7 @@ mod tests {
             fn xdot(
                 &self,
                 _t: f64,
-                x: &na::SMatrix<f64, 1, 1>
+                x: &na::SMatrix<f64, 1, 1>,
             ) -> na::SMatrix<f64, 1, 1> {
                 let dx = na::matrix![x[0]];
                 dx
@@ -90,7 +90,7 @@ mod tests {
         let mut t: f64 = 0.0;
         let mut x = na::matrix![1.0];
         while t < 1.0 - f64::EPSILON {
-          rk4(&eom, dt, &mut t, &mut x);
+            rk4(&eom, dt, &mut t, &mut x);
         }
         // For truth set t to 1.0
         t = 1.0;

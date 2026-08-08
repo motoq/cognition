@@ -1,6 +1,6 @@
 /*
  * Copyright 2025 Kurt Motekew
- *      
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -38,8 +38,11 @@ use nalgebra as na;
 /// * Kurt Motekew  2022/01/29  Initial, C++ version
 /// * Kurt Motekew  2025/02/24  Rust version
 ///
-pub fn tangent(pos: &na::SMatrix<f64, 2, 1>,
-               pnt: &na::SMatrix<f64, 2, 1>) -> na::SMatrix<f64, 2, 1> {
+pub fn tangent(
+    pos: &na::SMatrix<f64, 2, 1>,
+    pnt: &na::SMatrix<f64, 2, 1>,
+) -> na::SMatrix<f64, 2, 1> {
+
     let r2 = pos.dot(&pos);
     let rmag = r2.sqrt();
     let rhat =pos/rmag;

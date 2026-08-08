@@ -28,9 +28,7 @@ impl TwoBodyGravity {
     ///
     /// * gm  Gravitational parameter, DU^2/TU^3
     pub fn new(gm: f64) -> Self {
-        Self {
-            gm,
-        }
+        Self { gm }
     }
 }
 
@@ -61,11 +59,12 @@ impl Gravity for TwoBodyGravity {
 mod tests {
     use super::*;
 
-    fn get_acc(pos: &na::SMatrix<f64, 3, 1>,
-               eom: &impl Gravity) -> na::SMatrix<f64, 3, 1> {
+    fn get_acc(
+        pos: &na::SMatrix<f64, 3, 1>,
+        eom: &impl Gravity,
+    ) -> na::SMatrix<f64, 3, 1> {
         eom.gravt(&pos)
     }
-
 
     #[test]
     fn gravity_twobody() {
