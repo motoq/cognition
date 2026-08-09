@@ -38,7 +38,7 @@ pub struct OrbiterConfig {
     pub tfactor: f64,
     /// Text window update rate, seconds
     pub text_refresh: f64,
-    ///
+    /// Text description of gravity model to implement
     pub gravity_model: String,
     /// Orbital parameters
     pub orbit: OrbitDef,
@@ -60,22 +60,37 @@ pub struct OrbitDef {
     pub true_anomaly: f64,
 }
 
-/// Returns the gravity model based on a string description
+/// Available gravity models
+pub enum GravityModelType {
+    TwoBody,
+    J2,
+}
+
+/// Returns the appropriate gravity model type given an string
+/// or an Err if an invalid string is supplied.
+///
+pub fn gravity_model_type(model: &str) -> Result<GravityModelType, String> {
+    match model {
+        "two_body" => Ok(GravityModelType::TwoBody),
+        "j2" => Ok(GravityModelType::J2),
+        &_ => Err(("Bad Gravity Model".to_owned() + model).to_string()),
+    }
+}
+
+/// Returns the gravity model based on an enum type
 ///
 /// # Argument
 ///
-/// * model  String representation of desired model
+/// * model_type  Available gravity model type
 ///
 /// # Return
 ///
-/// * Gravty model matching string description.  If no match exists, then
-///   a two body gravitational model is returned.
+/// * Corresponding Gravity model implementation
 ///
-pub fn gravity_model(model: &str) -> Box::<dyn Gravity> {
-    match model {
-        "two_body" => Box::new(TwoBodyGravity::new(1.0)),
-        "j2" => Box::new(J2Gravity::new(1.0, J2)),
-        &_ => Box::new(TwoBodyGravity::new(1.0)),
+pub fn gravity_model(model_type: GravityModelType) -> Box::<dyn Gravity> {
+    match model_type {
+        GravityModelType::TwoBody => Box::new(TwoBodyGravity::new(1.0)),
+        GravityModelType::J2 => Box::new(J2Gravity::new(1.0, J2)),
     }
 }
 

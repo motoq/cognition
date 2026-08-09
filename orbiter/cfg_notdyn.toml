@@ -4,7 +4,7 @@ dt = 0.0
 tfactor = 0.0
 text_refresh = 0.5
 
-gravity_model = ""
+gravity_model = "two_body"
 
 [orbit]                                                                
 semimajor_axis = 0.0

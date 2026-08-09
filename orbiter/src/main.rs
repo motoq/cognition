@@ -16,6 +16,7 @@ use nalgebra as na;
 
 use orbiter::OrbiterConfig;
 use orbiter::gravity_model;
+use orbiter::gravity_model_type;
 use orbiter::gx2inertial_rot;
 use orbiter::add_sparky;
 use orbiter::add_axes;
@@ -87,12 +88,16 @@ async fn main() {
     if config.dynamic {
         println!("One Time Unit is {} seconds", sec_per_tu);
         println!("Earth angular velocity is {} rad/TU", phy_const::we_rad_tu());
-        println!("Integration step size is {} sec and time factor is {}",
-            config.dt, tfactor);
+        println!(
+            "Integration step size is {} sec and time factor is {}",
+            config.dt, tfactor,
+        );
         println!("Orbit Definition\n{}", &kep_oe);
     }
 
-    let eom = OrbitDeq::new(gravity_model(&config.gravity_model.as_str()));
+    let gmodel_type = gravity_model_type(&config.gravity_model.as_str())
+        .expect(&("Config File Error:  ".to_owned() + &config.gravity_model));
+    let eom = OrbitDeq::new(gravity_model(gmodel_type));
     let mut orbit = Orbiter6Dof::new(eom, dt, 0.0, kep_oe.cartesian());
     /*
     let argp: f64 = if evec[2] < 0.0 {
