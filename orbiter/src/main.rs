@@ -15,6 +15,7 @@ use kiss3d::prelude::*;
 use nalgebra as na;
 
 use orbiter::OrbiterConfig;
+use orbiter::gravity_model;
 use orbiter::gx2inertial_rot;
 use orbiter::add_sparky;
 use orbiter::add_axes;
@@ -33,7 +34,6 @@ use cogs::phy_const::DU;
 use cogs::dyn_keplerian::KeplerianElement;
 use cogs::dyn_keplerian::Keplerian;
 
-use cogs::dyn_two_body_gravity::TwoBodyGravity;
 use cogs::dyn_orbit_deq::OrbitDeq;
 
 
@@ -56,9 +56,10 @@ async fn main() {
         .expect(&("Error reading ".to_owned() + &args[1]));
 
     let config: OrbiterConfig = toml::from_str(&config).unwrap();
-    println!("Flying {} in dynamic = {} mode.",
+    println!("Flying {} in dynamic = {} mode with gravity model {}.",
         config.name,
         config.dynamic,
+        config.gravity_model,
     );
 
     // Integration step size, sec to TU
@@ -91,8 +92,7 @@ async fn main() {
         println!("Orbit Definition\n{}", &kep_oe);
     }
 
-    let twobdy = Box::new(TwoBodyGravity::new(1.0));
-    let eom = OrbitDeq::new(twobdy);
+    let eom = OrbitDeq::new(gravity_model(&config.gravity_model.as_str()));
     let mut orbit = Orbiter6Dof::new(eom, dt, 0.0, kep_oe.cartesian());
     /*
     let argp: f64 = if evec[2] < 0.0 {

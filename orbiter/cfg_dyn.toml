@@ -4,6 +4,8 @@ dt = 0.1
 tfactor = 1000.0
 text_refresh = 0.5
 
+gravity_model = "j2"
+
 [orbit]                                                                
 semimajor_axis = 4.2
 eccentricity = 0.7

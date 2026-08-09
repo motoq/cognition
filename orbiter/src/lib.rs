@@ -20,6 +20,11 @@ use nalgebra as na;
 use serde::Deserialize;
 use std::path::Path;
 
+use cogs::phy_const::J2;
+use cogs::dyn_gravity::Gravity;
+use cogs::dyn_two_body_gravity::TwoBodyGravity;
+use cogs::dyn_j2_gravity::J2Gravity;
+
 pub mod orbiter_6dof;
 
 /// Configuration structs, in progress
@@ -33,6 +38,9 @@ pub struct OrbiterConfig {
     pub tfactor: f64,
     /// Text window update rate, seconds
     pub text_refresh: f64,
+    ///
+    pub gravity_model: String,
+    /// Orbital parameters
     pub orbit: OrbitDef,
 }
 
@@ -50,6 +58,25 @@ pub struct OrbitDef {
     pub arg_perigee: f64,
     /// deg
     pub true_anomaly: f64,
+}
+
+/// Returns the gravity model based on a string description
+///
+/// # Argument
+///
+/// * model  String representation of desired model
+///
+/// # Return
+///
+/// * Gravty model matching string description.  If no match exists, then
+///   a two body gravitational model is returned.
+///
+pub fn gravity_model(model: &str) -> Box::<dyn Gravity> {
+    match model {
+        "two_body" => Box::new(TwoBodyGravity::new(1.0)),
+        "j2" => Box::new(J2Gravity::new(1.0, J2)),
+        &_ => Box::new(TwoBodyGravity::new(1.0)),
+    }
 }
 
 // Axis and related scale factors

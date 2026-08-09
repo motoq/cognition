@@ -4,6 +4,8 @@ dt = 0.0
 tfactor = 0.0
 text_refresh = 0.5
 
+gravity_model = ""
+
 [orbit]                                                                
 semimajor_axis = 0.0
 eccentricity = 0.0
