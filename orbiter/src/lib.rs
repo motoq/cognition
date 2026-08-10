@@ -25,6 +25,7 @@ use cogs::dyn_gravity::Gravity;
 use cogs::dyn_two_body_gravity::TwoBodyGravity;
 use cogs::dyn_j2_gravity::J2Gravity;
 
+pub mod orbiter_3dof;
 pub mod orbiter_6dof;
 
 /// Configuration structs, in progress
