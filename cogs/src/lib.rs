@@ -12,6 +12,9 @@ pub mod mth_ode_solver;
 pub mod mth_rk4;
 pub mod mth_unit_circle;
 
+// Geodesy
+pub mod gds_ground_point;
+
 // Dynamics related, algorithms, etc.
 pub mod dyn_gravity;
 pub mod dyn_j2_gravity;
