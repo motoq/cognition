@@ -12,8 +12,6 @@
 
 use nalgebra as na;
 
-use crate::phy_const::RE;
-
 /// Longitude, latitude, altitude order is a right handed system
 pub enum GeodeticElement {
     /// Longitude, radians
@@ -43,12 +41,38 @@ impl Default for GroundPoint {
     fn default() -> Self {
         Self {
             lla: [0.0, 0.0, 0.0],
-            cart: na::matrix![RE ; 0.0 ; 0.0],
+            cart: na::matrix![1.0 ; 0.0 ; 0.0],
         }
     }
 }
 
-/// Public immutable accessor methods
+impl GroundPoint {
+    pub fn try_from_geodetic(
+        coords: &[(GeodeticElement, f64); 3], 
+        re: f64,
+        flat: f64,
+    ) -> Self {
+        let mut lat: f64 = 0.0;
+        let mut lon: f64 = 0.0;
+        let mut alt: f64 = 0.0;
+        for coord in coords {
+            let (ctype, cvalue) = coord;
+            match ctype {
+                GeodeticElement::LON => lon = *cvalue,
+                GeodeticElement::LAT => lat = *cvalue,
+                GeodeticElement::ALT => alt = *cvalue,
+            }
+        }
+        let lla = [lon, lat, alt];
+        let cart: na::SMatrix<f64, 3, 1> = geodetic_to_cart(&lla, re, flat);
+        Self { lla, cart }
+    }
+}
+
+//
+// Public immutable accessor methods
+//
+
 impl GroundPoint {
     /// Returns the requested geodetic element value
     ///
@@ -76,35 +100,21 @@ impl GroundPoint {
 }
 
 
-/*
 //
 // Local Functions
 //
 
-fn geodetic_to_cart(lla: &[f64; 3]) -> na::SMatrix<f64, 3, 1> {
-    let lat = lla[0];
-    let lon = lla[1];
-    let alt = lla[2];
-
-
-
-
-
-    self.lla = lla;
-
-
-  m_lat = lat;
-  m_lon = lon;
-  m_alt = alt;
-
-    let slat = lla[0].sin();
-    let clat = lla[0].cos();
-  double clat {std::cos(lat)};
-  double n {phy_const::earth_smaj/
-            std::sqrt(1.0 - phy_const::ecc2*slat*slat)};
-  double nph {n + alt};
-  m_xyz(0) = nph*clat*std::cos(lon);
-  m_xyz(1) = nph*clat*std::sin(lon);
-  m_xyz(2) = (n*(1.0 - phy_const::ecc2) + alt)*slat;
-
-*/
+fn geodetic_to_cart(
+    lla: &[f64; 3],
+    re: f64,
+    flat: f64
+) -> na::SMatrix<f64, 3, 1> {
+    let slat = lla[1].sin();
+    let clat = lla[1].cos();
+    let ecc2 = flat*(2.0 - flat);
+    let n = re/(1.0 - ecc2*slat*slat).sqrt();
+    let nph = n + lla[2];
+    na::matrix![nph*clat*lla[0].cos() ;
+                nph*clat*lla[0].sin() ;
+                (n*(1.0 - ecc2) + lla[2])*slat]
+}

@@ -123,13 +123,10 @@ impl Keplerian {
                 KeplerianElement::V => v = *oe_value,
             }
         }
-        let oelmn = [a, e, i, o, w, v];
-        let rv: na::SMatrix<f64, 6, 1> = kep_to_cart(&oelmn)?;
+        let oe = [a, e, i, o, w, v];
+        let cart: na::SMatrix<f64, 6, 1> = kep_to_cart(&oe)?;
 
-        Ok(Self {
-            oe: oelmn,
-            cart: rv,
-        })
+        Ok(Self { oe, cart, })
     }
 
     /// Create a Keplerian element set from a Cartesian position and
@@ -153,6 +150,10 @@ impl Keplerian {
         })
     }
 }
+
+//
+// Accessor Methods
+//
 
 /// Public immutable accessor methods
 impl Keplerian {
