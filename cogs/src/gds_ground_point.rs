@@ -12,6 +12,8 @@
 
 use nalgebra as na;
 
+use crate::utl_const::DEG_PER_RAD;
+
 /// Longitude, latitude, altitude order is a right handed system
 pub enum GeodeticElement {
     /// Longitude, radians
@@ -47,7 +49,7 @@ impl Default for GroundPoint {
 }
 
 impl GroundPoint {
-    pub fn try_from_geodetic(
+    pub fn from_geodetic(
         coords: &[(GeodeticElement, f64); 3], 
         re: f64,
         flat: f64,
@@ -99,6 +101,23 @@ impl GroundPoint {
     }
 }
 
+//
+// IO
+//
+
+impl std::fmt::Display for GroundPoint {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "(Lat (deg), Lon (deg), alt (DU)): ({} {} {})\nCartesian {} DU",
+            self.geodetic(GeodeticElement::LAT)*DEG_PER_RAD,
+            self.geodetic(GeodeticElement::LON)*DEG_PER_RAD,
+            self.geodetic(GeodeticElement::ALT)*DEG_PER_RAD,
+            self.cartesian(),
+        )
+    }
+}
+
 
 //
 // Local Functions
@@ -117,4 +136,45 @@ fn geodetic_to_cart(
     na::matrix![nph*clat*lla[0].cos() ;
                 nph*clat*lla[0].sin() ;
                 (n*(1.0 - ecc2) + lla[2])*slat]
+}
+
+//
+// Unit tests
+//
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utl_const::RAD_PER_DEG;
+    use crate::phy_const::RE;
+    use crate::phy_const::FLAT;
+    use crate::phy_const::DU_PER_M;
+
+    #[test]
+    fn lla_cart() {
+        let gd_coords: [(GeodeticElement, f64); 3] = [
+            (GeodeticElement::LON, 0.0),
+            (GeodeticElement::LAT, 0.0),
+            (GeodeticElement::ALT, 0.0),
+        ];
+        let gp =  GroundPoint::from_geodetic(&gd_coords, RE, FLAT);
+        let xyz = gp.cartesian();
+        assert!((xyz[0] - RE).abs() < 10.0*f64::EPSILON);
+        assert!((xyz[1] - 0.0).abs() < 10.0*f64::EPSILON);
+        assert!((xyz[2] - 0.0).abs() < 10.0*f64::EPSILON);
+
+        let gd_coords: [(GeodeticElement, f64); 3] = [
+            (GeodeticElement::LAT,  38.3477*RAD_PER_DEG),
+            (GeodeticElement::LON, -75.0774*RAD_PER_DEG),
+            (GeodeticElement::ALT,  0.0),
+        ];
+        let gp =  GroundPoint::from_geodetic(&gd_coords, RE, FLAT);
+        let xyz_gp = gp.cartesian();
+        let xyz_gt = DU_PER_M*na::matrix![1289778.2 ; -4839659.64 ; 3935784.66];
+        println!("Truth {}", xyz_gt);
+        println!("Comp {}", xyz_gp);
+        // 1 cm tol
+        let eps = 0.01*DU_PER_M;
+        assert!((xyz_gt - xyz_gp).norm() < eps);
+    }
 }

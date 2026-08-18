@@ -11,8 +11,11 @@ pub const DU: f64 = 1.0;
 
 /// Ellipsoid radius, GRS80/WGS 84, km
 pub const KM_PER_ER: f64 = 6378.1370;
+pub const M_PER_ER: f64 = 1000.0*KM_PER_ER;
 /// Gravitational scaling radius, EGM96/EGM2008, TN 36 TT compatible
 pub const KM_PER_DU: f64 = 6378.1363;
+pub const M_PER_DU: f64 = 1000.0*KM_PER_DU;
+pub const DU_PER_M: f64 = 1.0/M_PER_DU;
 /// Earth semimajor axis in DU
 pub const ER_PER_DU: f64 = KM_PER_DU/KM_PER_ER;
 /// WGS 84 earth flatness
@@ -24,7 +27,7 @@ pub const GM_KM3_SEC2: f64 = 398600.4415;
 pub const J2: f64 = 1.082626173852223e-03;
 
 /// Earth radius
-pub const RE: f64 = ER_PER_DU;
+pub const RE: f64 = 1.0/ER_PER_DU;
 
 /// Nominal mean angular velocity of earth w.r.t ECI, GRS80/WGS 84, rad/sec
 pub const WE_RAD_SEC: f64 = 7292115.0e-11;
