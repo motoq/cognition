@@ -6,6 +6,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+
+//! Ground point struct that takes geodetic coordinates (latitude,
+//! longitude, altitude) and converts them to Cartesian earth fixed
+//! based on the supplied flattening factor.  Can be used for any
+//! oblate spheroid but naming convention is geodesy based...
+//!
+//! Conversion from Cartesian to geodetic isn't needed yet so has not
+//! been added.
+//!
 //! # Author
 //!
 //! * Kurt Motekew 2026/08/12  Initial based on eom::GroundPoint
@@ -13,6 +22,7 @@
 use nalgebra as na;
 
 use crate::utl_const::DEG_PER_RAD;
+use crate::phy_const::DU_PER_ER;
 
 /// Longitude, latitude, altitude order is a right handed system
 pub enum GeodeticElement {
@@ -24,10 +34,13 @@ pub enum GeodeticElement {
     ALT,
 }
 
+/// Geodetic latitude, longitude, altitude, and Cartesian earth fixed
 pub struct GroundPoint {
-    /// Holds geodetic coordinates, indexed by GeodeticElement enum
+    /// Geodetic coordinates, index ordered by GeodeticElement enum,
+    /// radians with distance units the same as the earth radius supplied
+    /// during initialization.
     lla: [f64; 3],
-    /// Cartesian position, DU
+    /// Cartesian position, distance units determinded upon creation
     cart: na::SMatrix<f64, 3, 1>,
 }
 
@@ -38,17 +51,31 @@ pub struct GroundPoint {
 impl Default for GroundPoint {
     /// # Return
     ///
-    /// * Ground point at Null Island (0, 0, 0)
+    /// * Ground point at Null Island (0, 0, 0) with units of DU
+    ///   for altitude and Cartesian coordinates
     ///
     fn default() -> Self {
         Self {
             lla: [0.0, 0.0, 0.0],
-            cart: na::matrix![1.0 ; 0.0 ; 0.0],
+            cart: na::matrix![DU_PER_ER ; 0.0 ; 0.0],
         }
     }
 }
 
 impl GroundPoint {
+    /// Initialize with geodetic coordinates
+    ///
+    /// # Arguments
+    ///
+    /// * coords  Array of geodetic element pairs
+    /// * re      Oblate spheroid semimajor axis
+    /// * flat    Flattening factor (~1/300 for the earth)
+    ///
+    /// # Return
+    ///
+    /// * Initialized ground point with the same distance units as used
+    ///   to define the semimajor axis
+    ///
     pub fn from_geodetic(
         coords: &[(GeodeticElement, f64); 3], 
         re: f64,
@@ -84,7 +111,8 @@ impl GroundPoint {
     ///
     /// # Return
     ///
-    /// * Value of the indicated geodetic element, radians or DU
+    /// * Value of the indicated geodetic element, radians and
+    ///   distance units used for initialization
     ///
     pub fn geodetic(&self, elem: GeodeticElement) -> f64 {
         self.lla[elem as usize]
@@ -94,7 +122,7 @@ impl GroundPoint {
     ///
     /// # Return
     ///
-    /// * Position, DU
+    /// * Position, distance units used for initialization
     ///
     pub fn cartesian(&self) -> na::SMatrix<f64, 3, 1> {
         self.cart
@@ -122,7 +150,12 @@ impl std::fmt::Display for GroundPoint {
 //
 // Local Functions
 //
-
+// # Inputs
+//
+// * lla   Internal ordering [Lon, Lat, Alt]
+// * re    Semimajor axis of oblate spheroid
+// * flat  Flattening factor
+//
 fn geodetic_to_cart(
     lla: &[f64; 3],
     re: f64,
@@ -152,6 +185,7 @@ mod tests {
 
     #[test]
     fn lla_cart() {
+        // Sanity check with Null Island - 1 ER at (0, 0)
         let gd_coords: [(GeodeticElement, f64); 3] = [
             (GeodeticElement::LON, 0.0),
             (GeodeticElement::LAT, 0.0),
@@ -162,19 +196,19 @@ mod tests {
         assert!((xyz[0] - RE).abs() < 10.0*f64::EPSILON);
         assert!((xyz[1] - 0.0).abs() < 10.0*f64::EPSILON);
         assert!((xyz[2] - 0.0).abs() < 10.0*f64::EPSILON);
-
+        // Compare manual set Null Island to default
+        let gp =  GroundPoint::default();
+        assert!((xyz - gp.cartesian()).norm() < 10.0*f64::EPSILON);
+        // Mid latitude point
         let gd_coords: [(GeodeticElement, f64); 3] = [
             (GeodeticElement::LAT,  38.3477*RAD_PER_DEG),
             (GeodeticElement::LON, -75.0774*RAD_PER_DEG),
             (GeodeticElement::ALT,  0.0),
         ];
         let gp =  GroundPoint::from_geodetic(&gd_coords, RE, FLAT);
-        let xyz_gp = gp.cartesian();
-        let xyz_gt = DU_PER_M*na::matrix![1289778.2 ; -4839659.64 ; 3935784.66];
-        println!("Truth {}", xyz_gt);
-        println!("Comp {}", xyz_gp);
+        let xyz = DU_PER_M*na::matrix![1289778.2 ; -4839659.64 ; 3935784.66];
         // 1 cm tol
         let eps = 0.01*DU_PER_M;
-        assert!((xyz_gt - xyz_gp).norm() < eps);
+        assert!((xyz - gp.cartesian()).norm() < eps);
     }
 }

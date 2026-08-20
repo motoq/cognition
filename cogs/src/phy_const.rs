@@ -18,6 +18,7 @@ pub const M_PER_DU: f64 = 1000.0*KM_PER_DU;
 pub const DU_PER_M: f64 = 1.0/M_PER_DU;
 /// Earth semimajor axis in DU
 pub const ER_PER_DU: f64 = KM_PER_DU/KM_PER_ER;
+pub const DU_PER_ER: f64 = 1.0/ER_PER_DU;
 /// WGS 84 earth flatness
 pub const FLAT: f64 = 1.0/298.257223563;
 /// Gravitational parameter, EGM96/EGM2008, TN 36 TT compatible, km^3/s^2
