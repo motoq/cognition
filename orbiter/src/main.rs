@@ -14,11 +14,13 @@ use kiss3d::prelude::*;
 
 use nalgebra as na;
 
+use orbiter::i2f;
 use orbiter::OrbiterConfig;
 use orbiter::gravity_model;
 use orbiter::gravity_model_type;
 use orbiter::gx2inertial_rot;
 use orbiter::add_sparky;
+use orbiter::add_ref_point;
 use orbiter::add_axes;
 use orbiter::add_earth;
 use orbiter::update_earth;
@@ -43,8 +45,6 @@ async fn main() {
     // Constants computed at runtime
     let sec_per_tu: f64 = phy_const::sec_per_tu();
     let tu_per_sec = 1.0/sec_per_tu;
-    // Earth rotation - cast to f32 for graphics
-    let omega_earth: f64 = phy_const::we_rad_tu();
 
     let args: Vec<String> = env::args().collect();
     println!("{} Arguments", args.len());
@@ -99,17 +99,6 @@ async fn main() {
         .expect(&("Config File Error:  ".to_owned() + &config.gravity_model));
     let eom = OrbitDeq::new(gravity_model(gmodel_type));
     let mut orbit = Orbiter6Dof::new(eom, dt, 0.0, kep_oe.cartesian());
-    /*
-    let argp: f64 = if evec[2] < 0.0 {
-        std::f64::consts::TAU - tmp
-    } else {
-        tmp
-    };
-    */
-
-//    let ihat = na::Vector3::<f64>::x_axis();
-//    let jhat = na::Vector3::<f64>::y_axis();
-    let khat = na::Vector3::<f64>::z_axis();
 
     // GX related - define as f32
     const AXIS_LENGTH: f32 = 10.0;
@@ -151,8 +140,9 @@ async fn main() {
     };
     axes.rotate(gx2inertial_rot());
     let mut earth = add_earth(&mut gx_scene, &config, DU as f32);
-    let q_i2f = Quat::from_axis_angle(Vec3::Z, 0.0);
-    update_earth(&mut earth,  &q_i2f);
+    update_earth(&mut earth,  &i2f(0.0));
+
+    let _ = add_ref_point(&mut gx_scene, DU as f32);
 
     // The RBG spheres are references for the graphics environment
     // basis vectors (vs. the dynamics environment plotted with "arrows"
@@ -173,7 +163,7 @@ async fn main() {
     } else {
         na::matrix![0.0 ; 0.0 ; 0.0]
     };
-    let mut q_i2b = na::UnitQuaternion::<f64>::from_axis_angle(&khat, 0.0);
+    let mut q_i2b = na::UnitQuaternion::<f64>::from_axis_angle(&na::Vector3::<f64>::z_axis(), 0.0);
     update_sparky(&mut sparky, &r_s_o_i, &q_i2b);
 
     //
@@ -249,10 +239,7 @@ async fn main() {
                 &mut sparky,
                 &pv.fixed_view::<3, 1>(0, 0).into(),
                 &q_i2b);
-
-            let earth_rot = sim_time*omega_earth;
-            let q_i2f = Quat::from_axis_angle(Vec3::Z, -1.0*earth_rot as f32);
-            update_earth(&mut earth,  &q_i2f);
+            update_earth(&mut earth,  &i2f(sim_time));
 
     
             /*
@@ -347,3 +334,10 @@ async fn main() {
             //if count % 100 != 0 {
             //    continue;
             //}
+    /*
+    let argp: f64 = if evec[2] < 0.0 {
+        std::f64::consts::TAU - tmp
+    } else {
+        tmp
+    };
+    */

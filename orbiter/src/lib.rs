@@ -20,10 +20,11 @@ use nalgebra as na;
 use serde::Deserialize;
 use std::path::Path;
 
-use cogs::phy_const::J2;
+use cogs::phy_const;
 use cogs::dyn_gravity::Gravity;
 use cogs::dyn_two_body_gravity::TwoBodyGravity;
 use cogs::dyn_j2_gravity::J2Gravity;
+
 
 pub mod orbiter_3dof;
 pub mod orbiter_6dof;
@@ -91,8 +92,38 @@ pub fn gravity_model_type(model: &str) -> Result<GravityModelType, String> {
 pub fn gravity_model(model_type: GravityModelType) -> Box::<dyn Gravity> {
     match model_type {
         GravityModelType::TwoBody => Box::new(TwoBodyGravity::new(1.0)),
-        GravityModelType::J2 => Box::new(J2Gravity::new(1.0, J2)),
+        GravityModelType::J2 => Box::new(J2Gravity::new(1.0, phy_const::J2)),
     }
+}
+
+/// Compute inertial to central body (earth) transformation.
+/// Nalgebra/Glam treat quaternions as vector rotations whereas
+/// dynamics oriented libraries treat quaternions as reference frame
+/// transformations.  To clarify, a positive eigenaxis rotation
+/// with Nalgebra/Glam rotates a vector while the reference frame
+/// remains the same whereas dynamics libraries rotate the basis vectors
+/// while the vector itself remains fixed (as the vector components
+/// change).  The quaternion here is a negative rotation about the
+/// z-axis, which is an earth fixed to inertial reference frame
+/// transformation.  But, when applied via Nalgebra/Glam operators,
+/// it acts as an inertial to earth fixed transformation.  Note, to
+/// act as a rotation (such as rotating the earth clockwise within the
+/// graphics window), the conjugate must be used to recover the rotation.
+///
+/// # Argument
+///
+/// * sim_time  Orbiter simulation time.
+///
+/// # Return
+///
+/// * Quaternion basis vector rotation - a reference frame
+///   transformation w.r.t. Nalgebra/Glam operators.
+///
+pub fn i2f(sim_time: f64) -> na::UnitQuaternion<f64> {
+    na::UnitQuaternion::<f64>::from_axis_angle(
+        &na::Vector3::<f64>::z_axis(),
+        -sim_time*phy_const::we_rad_tu(),
+    )
 }
 
 // Axis and related scale factors
@@ -221,9 +252,14 @@ pub fn add_earth(
 ///
 /// * q_i2f  Inertial to Fixed reference frame transformation
 ///
-pub fn update_earth(earth_node: &mut SceneNode3d, q_i2f: &Quat) {
+pub fn update_earth(
+    earth_node: &mut SceneNode3d,
+    q_i2f: &na::UnitQuaternion<f64>
+) {
     earth_node.set_rotation(
-        gx2inertial_rot()*q_i2f.conjugate()*earthtexture2fixed_rot()
+        gx2inertial_rot()
+        *q_na2glamt(q_i2f).conjugate()
+        *earthtexture2fixed_rot()
     );
 }
 
@@ -336,6 +372,27 @@ pub fn add_axes(scene: &mut SceneNode3d, length: f32) -> SceneNode3d {
     let rot = Quat::from_axis_angle(Vec3::X, 0.5*std::f64::consts::PI as f32);
     axis.rotate(rot);
     grp
+}
+
+/// Creates a reference point fixed to the central body frame
+///
+/// # Arguments
+///
+/// * scene   Scene graph to update
+/// * er      Earth radius to use in graphics environment
+///
+/// # Return
+///
+/// * Reference point object
+///
+pub fn add_ref_point(
+    scene: &mut SceneNode3d,
+    er: f32
+) -> SceneNode3d {
+    let rp = scene.add_sphere(LS1*er).set_texture_from_file(
+        Path::new("./resources/foil_gold_256.jpg"), "rp_texture"
+    ).set_position(Vec3::new(1.0, 1.0, 1.0));
+    rp
 }
 
 /// Formats a quaternion for text output
