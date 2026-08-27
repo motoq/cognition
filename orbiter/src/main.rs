@@ -36,6 +36,8 @@ use cogs::phy_const;
 use cogs::phy_const::DU;
 use cogs::dyn_keplerian::KeplerianElement;
 use cogs::dyn_keplerian::Keplerian;
+use cogs::gds_ground_point::GeodeticElement;
+use cogs::gds_ground_point::GroundPoint;
 
 use cogs::dyn_orbit_deq::OrbitDeq;
 
@@ -71,7 +73,7 @@ async fn main() {
     let tfactor: f64 = config.tfactor;
     // Real-time update rate for text window outputs
     let txt_refresh_sec = config.text_refresh;
-
+    // Orbit definition
     let oelmn: [(KeplerianElement, f64); 6] =
         [(KeplerianElement::A, config.orbit.semimajor_axis),
          (KeplerianElement::E, config.orbit.eccentricity),
@@ -84,16 +86,28 @@ async fn main() {
     } else {
         Keplerian::default()
     };
+    // Reference Point
+    let rp_lla: [(GeodeticElement, f64); 3] = [
+        (GeodeticElement::LAT, RAD_PER_DEG*config.ref_point_lat_lon_alt[0]),
+        (GeodeticElement::LON, RAD_PER_DEG*config.ref_point_lat_lon_alt[1]),
+        (GeodeticElement::ALT, RAD_PER_DEG*config.ref_point_lat_lon_alt[2]),
+    ];
+    let rp = GroundPoint::from_geodetic(
+        &rp_lla,
+        phy_const::RE,
+        phy_const::FLAT
+    );
 
     if config.dynamic {
         println!("One Time Unit is {} seconds", sec_per_tu);
-        println!("Earth angular velocity is {} rad/TU", phy_const::we_rad_tu());
+        println!("Earth angular velocity: {} rad/TU", phy_const::we_rad_tu());
         println!(
             "Integration step size is {} sec and time factor is {}",
             config.dt, tfactor,
         );
-        println!("Orbit Definition\n{}", &kep_oe);
+        println!("Orbit Definition:\n{}", &kep_oe);
     }
+    println!("Reference Point:\n  {}", rp);
 
     let gmodel_type = gravity_model_type(&config.gravity_model.as_str())
         .expect(&("Config File Error:  ".to_owned() + &config.gravity_model));

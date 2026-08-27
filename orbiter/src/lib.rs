@@ -44,6 +44,8 @@ pub struct OrbiterConfig {
     pub gravity_model: String,
     /// Orbital parameters
     pub orbit: OrbitDef,
+    /// Reference point location
+    pub ref_point_lat_lon_alt: [f64; 3],
 }
 
 #[derive(Deserialize)]

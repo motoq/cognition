@@ -137,11 +137,10 @@ impl std::fmt::Display for GroundPoint {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,
-            "(Lat (deg), Lon (deg), alt (DU)): ({} {} {})\nCartesian {} DU",
+            "(Lat (deg), Lon (deg), alt (DU)): ({} {} {})",
             self.geodetic(GeodeticElement::LAT)*DEG_PER_RAD,
             self.geodetic(GeodeticElement::LON)*DEG_PER_RAD,
-            self.geodetic(GeodeticElement::ALT)*DEG_PER_RAD,
-            self.cartesian(),
+            self.geodetic(GeodeticElement::ALT),
         )
     }
 }

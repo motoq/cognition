@@ -211,13 +211,13 @@ impl std::fmt::Display for Keplerian {
     /// * Printable form of OblateSpheroid
     ///
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "(Semimajor:    {} (DU)\n \
-                    Eccentricity: {}\n \
-                    Inclination:  {} (deg)\n \
-                    RAAN:         {} (deg)\n \
-                    ArgPerigee    {} (deg)\n \
-                    TrueAnomaly   {} (deg)\n \
-                    Cartesian     {})",
+        write!(f, "  Semimajor:    {} (DU)\n  \
+                    Eccentricity: {}\n  \
+                    Inclination:  {} (deg)\n  \
+                    RAAN:         {} (deg)\n  \
+                    ArgPerigee    {} (deg)\n  \
+                    TrueAnomaly   {} (deg)\n  \
+                    Cartesian     {}",
             self.orbital_element(KeplerianElement::A),
             self.orbital_element(KeplerianElement::E),
             DEG_PER_RAD*self.orbital_element(KeplerianElement::I),
