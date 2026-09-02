@@ -6,6 +6,8 @@ text_refresh = 0.5
 
 gravity_model = "two_body"
 
+ref_point_lat_lon_alt = [0.0, 0.0, 0.0]
+
 [orbit]                                                                
 semimajor_axis = 0.0
 eccentricity = 0.0

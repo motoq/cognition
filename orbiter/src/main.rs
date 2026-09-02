@@ -14,6 +14,7 @@ use kiss3d::prelude::*;
 
 use nalgebra as na;
 
+use orbiter::f2i;
 use orbiter::i2f;
 use orbiter::OrbiterConfig;
 use orbiter::gravity_model;
@@ -21,6 +22,7 @@ use orbiter::gravity_model_type;
 use orbiter::gx2inertial_rot;
 use orbiter::add_sparky;
 use orbiter::add_ref_point;
+use orbiter::update_ref_point;
 use orbiter::add_axes;
 use orbiter::add_earth;
 use orbiter::update_earth;
@@ -153,10 +155,11 @@ async fn main() {
         add_axes(&mut gx_scene, NO_DNY_SF*AXIS_LENGTH)
     };
     axes.rotate(gx2inertial_rot());
-    let mut earth = add_earth(&mut gx_scene, &config, DU as f32);
-    update_earth(&mut earth,  &i2f(0.0));
+    let mut earth_node = add_earth(&mut gx_scene, &config, DU as f32);
+    update_earth(&mut earth_node,  &i2f(0.0));
 
-    let _ = add_ref_point(&mut gx_scene, DU as f32);
+    let r_p_o_i = f2i(0.0)*rp.cartesian();
+    let mut ref_point_node = add_ref_point(&mut gx_scene, DU as f32, &r_p_o_i);
 
     // The RBG spheres are references for the graphics environment
     // basis vectors (vs. the dynamics environment plotted with "arrows"
@@ -171,14 +174,21 @@ async fn main() {
         .set_position(Vec3::new(0.0, 0.0, AXIS_LENGTH));
 
     // Create spacecraft and set initial position based on mode
-    let mut sparky = add_sparky(&mut gx_scene, &config);
+    let mut sparky_node = add_sparky(
+        &mut gx_scene,
+        &config,
+        &kep_oe.cartesian().fixed_view::<3, 1>(0, 0).into(),
+    );
     let r_s_o_i = if config.dynamic {
         kep_oe.position()
     } else {
         na::matrix![0.0 ; 0.0 ; 0.0]
     };
-    let mut q_i2b = na::UnitQuaternion::<f64>::from_axis_angle(&na::Vector3::<f64>::z_axis(), 0.0);
-    update_sparky(&mut sparky, &r_s_o_i, &q_i2b);
+    let mut q_i2b =
+        na::UnitQuaternion::<f64>::from_axis_angle(
+            &na::Vector3::<f64>::z_axis(), 0.0
+        );
+    update_sparky(&mut sparky_node, &r_s_o_i, &q_i2b);
 
     //
     // Simulation and render loop
@@ -210,7 +220,7 @@ async fn main() {
             // and skip all dynamics
             if !config.dynamic {
                 q_i2b = dynamics_off_event_handler(
-                    &mut window.events(), &mut sparky, &q_i2b);
+                    &mut window.events(), &mut sparky_node, &q_i2b);
                 if let Some(window) = &mut txt_window {
                     if !window.render_3d(
                         &mut txt_scene, &mut txt_camera).await {
@@ -250,11 +260,12 @@ async fn main() {
             }
 
             update_sparky(
-                &mut sparky,
+                &mut sparky_node,
                 &pv.fixed_view::<3, 1>(0, 0).into(),
                 &q_i2b);
-            update_earth(&mut earth,  &i2f(sim_time));
-
+            update_earth(&mut earth_node,  &i2f(sim_time));
+            let r_p_o_i = f2i(sim_time)*rp.cartesian();
+            update_ref_point(&mut ref_point_node, &r_p_o_i);
     
             /*
             for event in window.events().iter() {

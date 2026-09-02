@@ -6,6 +6,8 @@ text_refresh = 0.5
 
 gravity_model = "j2"
 
+ref_point_lat_lon_alt = [40.0, -80.0, 0.0]
+
 [orbit]                                                                
 semimajor_axis = 1.1
 eccentricity = 0.001

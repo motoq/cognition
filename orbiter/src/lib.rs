@@ -98,7 +98,7 @@ pub fn gravity_model(model_type: GravityModelType) -> Box::<dyn Gravity> {
     }
 }
 
-/// Compute inertial to central body (earth) transformation.
+/// Compute inertial to central body(earth) fixed transformation.
 /// Nalgebra/Glam treat quaternions as vector rotations whereas
 /// dynamics oriented libraries treat quaternions as reference frame
 /// transformations.  To clarify, a positive eigenaxis rotation
@@ -125,6 +125,24 @@ pub fn i2f(sim_time: f64) -> na::UnitQuaternion<f64> {
     na::UnitQuaternion::<f64>::from_axis_angle(
         &na::Vector3::<f64>::z_axis(),
         -sim_time*phy_const::we_rad_tu(),
+    )
+}
+
+/// Compute central body (earth) fixed to inertial transformation.
+///
+/// # Argument
+///
+/// * sim_time  Orbiter simulation time.
+///
+/// # Return
+///
+/// * Quaternion basis vector rotation - a reference frame
+///   transformation w.r.t. Nalgebra/Glam operators.
+///
+pub fn f2i(sim_time: f64) -> na::UnitQuaternion<f64> {
+    na::UnitQuaternion::<f64>::from_axis_angle(
+        &na::Vector3::<f64>::z_axis(),
+        sim_time*phy_const::we_rad_tu(),
     )
 }
 
@@ -265,11 +283,14 @@ pub fn update_earth(
     );
 }
 
-/// Creates the orbiter object
+/// Creates the orbiter object, sets its position, and defaults to
+/// an identity inertial to body transformation.
 ///
 /// # Argument
 ///
-/// * scene  Scene graph to update
+/// * scene   Scene graph to update
+/// * config  Scenario configuration settings
+/// * pos     Initial inertial position, DU
 ///
 /// # Return
 ///
@@ -277,7 +298,8 @@ pub fn update_earth(
 ///
 pub fn add_sparky(
     scene: &mut SceneNode3d,
-    config: &OrbiterConfig
+    config: &OrbiterConfig,
+    pos: &na::SMatrix<f64, 3, 1>,
 ) -> SceneNode3d {
     let sparky_obj_path = Path::new("./resources/sparkymatmesh.obj");
     let sparky_mtl_path = Path::new("./resources");
@@ -286,7 +308,7 @@ pub fn add_sparky(
             sparky_obj_path,
             sparky_mtl_path,
             Vec3::new(0.005, 0.005, 0.005)
-        ).set_position(Vec3::new(1.0, 1.0, 1.0))
+        ).set_position(gx2inertial_rot()*v_na2glamt(&pos))
     } else {
         scene.add_obj(
             sparky_obj_path,
@@ -304,17 +326,15 @@ pub fn add_sparky(
 /// # Argument
 ///
 /// * sparky_node  Node for which to update display state
-///
-/// # Return
-///
-/// * q_i2b  Inertial to body reference frame transformation
+/// * pos          Inertial position, DU
+/// * q_i2b        Inertial to body reference frame transformation
 ///
 pub fn update_sparky(
     sparky_node: &mut SceneNode3d,
     pos: &na::SMatrix<f64, 3, 1>,
     q_i2b: &na::UnitQuaternion<f64>,
 ) {
-    sparky_node.set_position(v_na2glamt(&pos));
+    sparky_node.set_position(gx2inertial_rot()*v_na2glamt(&pos));
     sparky_node.set_rotation(
         gx2inertial_rot()*q_na2glamt(q_i2b).conjugate()*sparkymodel2body_rot()
     );
@@ -382,6 +402,7 @@ pub fn add_axes(scene: &mut SceneNode3d, length: f32) -> SceneNode3d {
 ///
 /// * scene   Scene graph to update
 /// * er      Earth radius to use in graphics environment
+/// * pos     Initial inertial position, DU
 ///
 /// # Return
 ///
@@ -389,12 +410,27 @@ pub fn add_axes(scene: &mut SceneNode3d, length: f32) -> SceneNode3d {
 ///
 pub fn add_ref_point(
     scene: &mut SceneNode3d,
-    er: f32
+    er: f32,
+    pos: &na::SMatrix<f64, 3, 1>,
 ) -> SceneNode3d {
     let rp = scene.add_sphere(LS1*er).set_texture_from_file(
         Path::new("./resources/foil_gold_256.jpg"), "rp_texture"
-    ).set_position(Vec3::new(1.0, 1.0, 1.0));
+    ).set_position(gx2inertial_rot()*v_na2glamt(&pos));
     rp
+}
+
+/// Update reference point location
+///
+/// # Arguments
+///
+/// * ref_point_node  Node for which to update display state
+/// * pos             Inertial position, DU
+///
+pub fn update_ref_point(
+    ref_point_node: &mut SceneNode3d,
+    pos: &na::SMatrix<f64, 3, 1>,
+) {
+    ref_point_node.set_position(gx2inertial_rot()*v_na2glamt(&pos));
 }
 
 /// Formats a quaternion for text output
