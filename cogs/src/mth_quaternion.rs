@@ -165,12 +165,16 @@ impl Mul for Quaternion {
     }
 }
 
+/// fgiesen link and other useful references:
+/// <https://fgiesen.wordpress.com/
+///     2019/02/09/rotating-a-single-vector-using-a-quaternion/>
+/// <https://www.johndcook.com/blog/2021/06/16/faster-quaternion-rotations/>
+/// <https://blog.molecular-matters.com/
+///     2013/05/24/a-faster-quaternion-vector-multiplication/>
+///
 impl Mul<na::Vector3<f64>> for Quaternion {
     type Output = na::Vector3<f64>;
 
-    // https://www.johndcook.com/blog/2021/06/16/faster-quaternion-rotations/
-    // https://blog.molecular-matters.com/
-    //     2013/05/24/a-faster-quaternion-vector-multiplication/
     fn mul(self, rhs: na::Vector3<f64>) -> Self::Output {
         let tt = 2.0*self.qi.cross(&rhs);
         rhs + self.qr*tt + self.qi.cross(&tt)
@@ -241,18 +245,6 @@ mod tests {
 
         let ratt = r3*r2*r1;
         let pos_rx = ratt*pos;
-
-        println!("qpos: {}\nand rpos: {}", &pos_qx, &pos_rx);
-
-        println!(
-            "q*vq: {}\nand vq: {}",
-            &(qatt.conjugate()*qpos*qatt), &(pos*qatt)
-        );
-        println!(
-            "qvq*: {}\nand qv: {}",
-            &(qatt*qpos*qatt.conjugate()), &(qatt*pos)
-        );
-
 
         assert!((pos_rx - pos_qx.imaginary()).norm() < 10.0*f64::EPSILON);
 
