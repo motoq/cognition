@@ -28,6 +28,7 @@ use nalgebra as na;
 /// The quaternion is represented as real and imaginary components.
 /// There is no ambiguity w.r.t. which component is the scalar element
 /// when a {scalar, vector} approach is used.
+#[derive(Copy, Clone)]
 pub struct Quaternion {
     /// Real (scalar) portion of quaternion
     qr: f64,
@@ -164,6 +165,29 @@ impl Mul for Quaternion {
     }
 }
 
+impl Mul<na::Vector3<f64>> for Quaternion {
+    type Output = na::Vector3<f64>;
+
+    // https://www.johndcook.com/blog/2021/06/16/faster-quaternion-rotations/
+    // https://blog.molecular-matters.com/
+    //     2013/05/24/a-faster-quaternion-vector-multiplication/
+    fn mul(self, rhs: na::Vector3<f64>) -> Self::Output {
+        let tt = 2.0*self.qi.cross(&rhs);
+        rhs + self.qr*tt + self.qi.cross(&tt)
+    }
+}
+
+impl Mul<Quaternion> for na::Vector3<f64> {
+    type Output = na::Vector3<f64>;
+
+    // Derived from above q*v operation
+    fn mul(self, rhs: Quaternion) -> Self::Output {
+        let tt = -2.0*rhs.qi.cross(&self);
+        self + rhs.qr*tt - rhs.qi.cross(&tt)
+    }
+}
+
+
 ///! IO
 impl std::fmt::Display for Quaternion {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -219,6 +243,15 @@ mod tests {
         let pos_rx = ratt*pos;
 
         println!("qpos: {}\nand rpos: {}", &pos_qx, &pos_rx);
+
+        println!(
+            "q*vq: {}\nand vq: {}",
+            &(qatt.conjugate()*qpos*qatt), &(pos*qatt)
+        );
+        println!(
+            "qvq*: {}\nand qv: {}",
+            &(qatt*qpos*qatt.conjugate()), &(qatt*pos)
+        );
 
 
         assert!((pos_rx - pos_qx.imaginary()).norm() < 10.0*f64::EPSILON);
