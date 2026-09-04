@@ -255,5 +255,11 @@ mod tests {
 
 
         assert!((pos_rx - pos_qx.imaginary()).norm() < 10.0*f64::EPSILON);
+
+        let dv = (qatt*qpos*qatt.conjugate()).imaginary() - qatt*pos;
+        assert!(dv.norm() < 10.0*f64::EPSILON);
+
+        let dv = (qatt.conjugate()*qpos*qatt).imaginary() - pos*qatt;
+        assert!(dv.norm() < 10.0*f64::EPSILON);
     }
 }
