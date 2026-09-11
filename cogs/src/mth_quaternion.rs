@@ -28,7 +28,7 @@
 //!
 //! * Kurt Motekew 2026/09/02  Initial
 
-use std::ops::Mul;
+use std::ops::{Div, Mul};
 
 use nalgebra as na;
 
@@ -190,7 +190,7 @@ impl Quaternion {
     }
 }
 
-/// Public immutable accessor methods
+/// Public immutable (accessor and similar) methods
 impl Quaternion {
     /// # Return
     ///
@@ -206,6 +206,29 @@ impl Quaternion {
     ///
     pub fn imaginary(&self) -> na::Vector3::<f64> {
         self.qi
+    }
+
+    /// # Return
+    ///
+    /// * Equivalent DCM (reference frame transformation).  This quaternion
+    ///   must be a unit quaternion.
+    pub fn dcm(&self) -> na::Matrix3::<f64> {
+        let q0q0 = self.qr*self.qr;
+        let q0qi = self.qr*self.qi[0];
+        let q0qj = self.qr*self.qi[1];
+        let q0qk = self.qr*self.qi[2];
+        let qiqj = self.qi[0]*self.qi[1];
+        let qiqk = self.qi[0]*self.qi[2];
+        let qjqk = self.qi[1]*self.qi[2];
+        na::matrix![2.0*(q0q0 + self.qi[0]*self.qi[0]) - 1.0,
+                    2.0*(qiqj + q0qk),
+                    2.0*(qiqk - q0qj) ;
+                    2.0*(qiqj - q0qk),
+                    2.0*(q0q0 + self.qi[1]*self.qi[1]) - 1.0,
+                    2.0*(qjqk + q0qi) ;
+                    2.0*(qiqk + q0qj),
+                    2.0*(qjqk - q0qi),
+                    2.0*(q0q0 + self.qi[2]*self.qi[2]) - 1.0]
     }
 }
 
@@ -306,7 +329,7 @@ impl Mul<na::Vector3<f64>> for Quaternion {
     ///
     /// # Return
     ///
-    /// * q*v*q.conjugate(), a vector rotation if the angle defining the
+    /// * q*v = q*v*q.conjugate(), a vector rotation if the angle defining the
     ///   quaternion is passive.  If the angle is active, then this operation
     ///   is a reference frame transformation.
     ///
@@ -316,7 +339,7 @@ impl Mul<na::Vector3<f64>> for Quaternion {
     }
 }
 
-    /// Overload Vector3*Quaternion for the q.conjugate()*v*q operation where
+    /// Overload Quaternion/Vector3 for the q.conjugate()*v*q operation where
     /// v is treated as the imaginary part of a pure quaternion.
     ///
     /// # Argument
@@ -326,17 +349,23 @@ impl Mul<na::Vector3<f64>> for Quaternion {
     ///
     /// # Return
     ///
-    /// * q.conjugate()*v*q, a vector reference frame transformation (basis
-    ///   vector rotation) if the angle defining the quaternion is passive.
-    ///   If the angle is active, then this is a vector rotation.
-    ///
-impl Mul<Quaternion> for na::Vector3<f64> {
+    /// * q/v =q.conjugate()*v*q, a vector reference frame transformation
+    ///   (basis vector rotation) if the angle defining the quaternion is
+    ///   passive.  If the angle is active, then this is a vector rotation.
+    //
+    // Previously tried v*q notation, but seemed easier to confuse.  Also,
+    // this approach add trait to local struct vs. external struct:
+    //
+    //     impl Mul<Quaternion> for na::Vector3<f64> {
+    //     fn mul(self, rhs: Quaternion) -> Self::Output {
+    //
+impl Div<na::Vector3<f64>> for Quaternion {
     type Output = na::Vector3<f64>;
 
     // Derived from above q*v operation
-    fn mul(self, rhs: Quaternion) -> Self::Output {
-        let tt = -2.0*rhs.qi.cross(&self);
-        self + rhs.qr*tt - rhs.qi.cross(&tt)
+    fn div(self, rhs: na::Vector3<f64>) -> Self::Output {
+        let tt = -2.0*self.qi.cross(&rhs);
+        rhs + self.qr*tt - self.qi.cross(&tt)
     }
 }
 
@@ -368,7 +397,7 @@ mod tests {
     use crate::mth_dcm::{rotx, roty, rotz};
 
     #[test]
-    fn passive_angle_passive_xform() {
+    fn passive_active_unit() {
         let ihat = na::Vector3::new(1.0, 0.0, 0.0);
         let jhat = na::Vector3::new(0.0, 1.0, 0.0);
         let khat = na::Vector3::new(0.0, 0.0, 1.0);
@@ -396,21 +425,70 @@ mod tests {
         assert!(dv.norm() < 10.0*f64::EPSILON);
 
         // DCM xform vs overload q xform
-        let dv = ratt*pos - pos*qatt;
+        let dv = ratt*pos - qatt/pos;
         assert!(dv.norm() < 10.0*f64::EPSILON);
 
         // DCM xform vs. DCM derived q with overload
         let qatt_dcm = Quaternion::try_from_dcm(&ratt).expect("Bad DCM");
-        let dv = ratt*pos - pos*qatt_dcm;
-        println!("q: {} {}", qatt, qatt_dcm);
+        let dv = ratt*pos - qatt_dcm/pos;
         assert!(dv.norm() < 10.0*f64::EPSILON);
 
         // explicit xform vs. overload
-        let dv = (qatt.conjugate()*qpos*qatt).imaginary() - pos*qatt;
+        let dv = (qatt.conjugate()*qpos*qatt).imaginary() - qatt/pos;
         assert!(dv.norm() < 10.0*f64::EPSILON);
 
         // explicit q rotation vs. overload
         let dv = (qatt*qpos*qatt.conjugate()).imaginary() - qatt*pos;
         assert!(dv.norm() < 10.0*f64::EPSILON);
+    }
+
+    #[test]
+    fn passive_itrative() {
+        let pos = na::Vector3::new(1.0, 1.0, 1.0);
+
+        let ihat = na::Vector3::new(1.0, 0.0, 0.0);
+        let jhat = na::Vector3::new(0.0, 1.0, 0.0);
+        let khat = na::Vector3::new(0.0, 0.0, 1.0);
+
+        for yaw in (0..360).step_by(30) {
+            let yaw = RAD_PER_DEG * yaw as f64;
+            for pitch in (-90..90).step_by(30) {
+                let pitch = RAD_PER_DEG * pitch as f64;
+                for roll in (-90..90).step_by(30) {
+                    let roll = RAD_PER_DEG * roll as f64;
+
+                    let q1 = Quaternion::from_angle_axis(yaw, &khat);
+                    let q2 = Quaternion::from_angle_axis(pitch, &jhat);
+                    let q3 = Quaternion::from_angle_axis(roll, &ihat);
+                    let qatt = q1*q2*q3;
+
+                    let r1 = rotz(yaw);
+                    let r2 = roty(pitch);
+                    let r3 = rotx(roll);
+                    let ratt = r3*r2*r1;
+
+                    let qatt_dcm = Quaternion::try_from_dcm(&ratt)
+                        .expect("Bad DCM");
+
+                    let dv = ratt*pos - qatt/pos;
+                    assert!(dv.norm() < 10.0*f64::EPSILON);
+                    let dv = ratt*pos - qatt_dcm/pos;
+                    assert!(dv.norm() < 10.0*f64::EPSILON);
+
+                    let dcm = qatt.dcm();
+                    assert!(((ratt*dcm.transpose()).norm()
+                            - 3.0_f64.sqrt()).abs() < 10.0*f64::EPSILON);
+
+                    /*
+                    println!(
+                        "Y: {}  P {}  R {}",
+                        yaw/RAD_PER_DEG,
+                        pitch/RAD_PER_DEG,
+                        roll/RAD_PER_DEG
+                    );
+                    */
+                }
+            }
+        }
     }
 }
