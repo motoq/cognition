@@ -33,6 +33,8 @@ use std::ops::{Div, Mul};
 use nalgebra as na;
 
 /// Square of quaternion norm magnitude to trigger normalization
+/// Possibly excessive.  Will affect EPS used by passive_itrative() test.
+/// Note TOL here is compared to square of small error number.
 const TOL: f64 = 100.0*f64::EPSILON;
 
 /// DCM to quaternion alg selection factor.  0.25 requires
@@ -444,17 +446,27 @@ mod tests {
 
     #[test]
     fn passive_itrative() {
-        let pos = na::Vector3::new(1.0, 1.0, 1.0);
+        // Compare to Quaternion::TOL
+        const EPS: f64 = 100.0*f64::EPSILON;
+        // Set to 1 to catch harder to find roundoff errors
+        const DELT_DEG: usize = 30*1;
+        let mut pos = na::Vector3::new(1.0, 1.0, 1.0);
 
         let ihat = na::Vector3::new(1.0, 0.0, 0.0);
         let jhat = na::Vector3::new(0.0, 1.0, 0.0);
         let khat = na::Vector3::new(0.0, 0.0, 1.0);
 
-        for yaw in (0..360).step_by(30) {
+        let mut ii = 0;
+        for yaw in (0..360).step_by(DELT_DEG) {
             let yaw = RAD_PER_DEG * yaw as f64;
-            for pitch in (-90..90).step_by(30) {
+            for pitch in (-90..90).step_by(DELT_DEG) {
                 let pitch = RAD_PER_DEG * pitch as f64;
-                for roll in (-90..90).step_by(30) {
+                for roll in (-90..90).step_by(DELT_DEG) {
+                    let ndx = ii%3;
+                    pos[ndx] *= -1.0;
+                    ii += 1;
+                    //println!("pos: {}", pos);
+
                     let roll = RAD_PER_DEG * roll as f64;
 
                     let q1 = Quaternion::from_angle_axis(yaw, &khat);
@@ -470,14 +482,15 @@ mod tests {
                     let qatt_dcm = Quaternion::try_from_dcm(&ratt)
                         .expect("Bad DCM");
 
-                    let dv = ratt*pos - qatt/pos;
-                    assert!(dv.norm() < 10.0*f64::EPSILON);
-                    let dv = ratt*pos - qatt_dcm/pos;
-                    assert!(dv.norm() < 10.0*f64::EPSILON);
+                    let dv = (ratt*pos - qatt/pos).norm();
+                    assert!(dv < EPS, "q/v error: {:e}", dv);
+                    let dv = (ratt*pos - qatt_dcm/pos).norm();
+                    assert!(dv < EPS, "q/v error: {:e}", dv);
 
                     let dcm = qatt.dcm();
-                    assert!(((ratt*dcm.transpose()).norm()
-                            - 3.0_f64.sqrt()).abs() < 10.0*f64::EPSILON);
+                    let delta_dcm =
+                        ((ratt*dcm.transpose()).norm() - 3.0_f64.sqrt()).abs();
+                    assert!(delta_dcm < EPS, "DCM Error: {:e}", delta_dcm);
 
                     /*
                     println!(
