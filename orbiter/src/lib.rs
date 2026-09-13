@@ -138,7 +138,7 @@ const LS1: f32 = 0.05;
 const LS2: f32 = 0.25;
 const LS3: f32 = 0.25;
 
-/// Convert an nalgebra SMatrix<f64, 6, 1> to a Glam Vec3
+/// Convert an nalgebra SMatrix<f64, 3, 1> to a Glam Vec3
 ///
 /// # Arguments
 ///
@@ -152,7 +152,7 @@ pub fn v_na2glamt(nv3: &na::SMatrix<f64, 3, 1>) -> Vec3 {
     Vec3::new(nv3[0] as f32, nv3[1] as f32, nv3[2] as f32)
 }
 
-/// Convert a Glam Vec3 to an nalgebra SMatrix<f64, 6, 1>
+/// Convert a Glam Vec3 to an nalgebra SMatrix<f64, 3, 1>
 ///
 /// # Arguments
 ///
@@ -167,6 +167,7 @@ pub fn v_glam2nat(gv3: &Vec3) -> na::SMatrix<f64, 3, 1> {
 }
 
 /// Convert an nalgebra UnitQuaternion to a Glam Quat
+/// Should be mostly replaced by q_cog2glamt within the Orbiter sim
 ///
 /// # Arguments
 ///
@@ -185,7 +186,8 @@ pub fn q_na2glamt(nq: &na::UnitQuaternion<f64>) -> Quat {
     )
 }
 
-/// Convert a Cog Quaternion to a Glam Quat
+/// Convert a Cog Quaternion to a Glam Quat.  Simple component for
+/// component translation - no change of convention (conjugation).
 ///
 /// # Arguments
 ///
@@ -196,8 +198,7 @@ pub fn q_na2glamt(nq: &na::UnitQuaternion<f64>) -> Quat {
 /// * Glam quaternion
 ///
 pub fn q_cog2glamt(nc: &Quaternion) -> Quat {
-    // Take conjugate to account for different convention
-    let qi = -nc.imaginary();
+    let qi = nc.imaginary();
     Quat::from_xyzw(
         qi[0] as f32,
         qi[1] as f32,
@@ -284,10 +285,10 @@ pub fn update_earth(
     earth_node: &mut SceneNode3d,
     q_i2f: &Quaternion
 ) {
-    // Convert q_i2f to a vector rotation
+    // Uses q_i2f to a vector rotation
     earth_node.set_rotation(
         gx2inertial_rot()
-        *q_cog2glamt(q_i2f).conjugate()
+        *q_cog2glamt(q_i2f)
         *earthtexture2fixed_rot()
     );
 }
@@ -328,9 +329,8 @@ pub fn add_sparky(
     sparky
 }
 
-/// Updates the orientation of the orbiter object as displayed in the
-/// graphics environment given an inertial to body reference frame 
-/// transformation.
+/// Updates the position and orientation of the orbiter object as displayed
+/// in the graphics environment given an inertial position and attitude.
 ///
 /// # Argument
 ///
@@ -345,7 +345,7 @@ pub fn update_sparky(
 ) {
     sparky_node.set_position(gx2inertial_rot()*v_na2glamt(&pos));
     sparky_node.set_rotation(
-        gx2inertial_rot()*q_cog2glamt(q_i2b).conjugate()*sparkymodel2body_rot()
+        gx2inertial_rot()*q_cog2glamt(q_i2b)*sparkymodel2body_rot()
     );
 }
 
@@ -446,17 +446,17 @@ pub fn update_ref_point(
 ///
 /// # Arguments
 ///
-/// * q_i2b  Quaternion to convert to a String
+/// * q  Quaternion to convert to a String
 ///
 /// # Return
 ///
 /// * String representation of quaternion in scalar + vector format
 ///
-pub fn attitude_string(q_i2b: &Quaternion) -> String {
-    let imag = q_i2b.imaginary();
+pub fn attitude_string(q: &Quaternion) -> String {
+    let imag = q.imaginary();
     format!(
         "{:1.6} + [{:1.6} {:1.6} {:1.6}]",
-        q_i2b.real(),
+        q.real(),
         imag[0],
         imag[1],
         imag[2],
@@ -482,7 +482,7 @@ pub fn attitude_string(q_i2b: &Quaternion) -> String {
 ///
 /// # Return
 ///
-/// * Updated inertial to body rotation
+/// * Updated inertial to body reference frame transformation
 ///
 pub fn dynamics_off_event_handler(
     events: &mut EventManager,
@@ -496,42 +496,36 @@ pub fn dynamics_off_event_handler(
     const DANG: f64 = 5.0*std::f64::consts::PI/180.0;
 
     let pos = v_glam2nat(&sparky.position());
-    // Work in rotations to update, then back to ref frame xform on return
-    let mut q_i2b_rot = q_i2b.conjugate();
+    let mut q_i2b_new = *q_i2b;
 
     for event in events.iter() {
         match event.value {
             WindowEvent::Key(button, Action::Press, _) => {
+                // Take current attitude and apply delta
                 if button == Key::A {
-                    q_i2b_rot =
-                        Quaternion::from_angle_axis(-DANG, &khat)*q_i2b_rot;
-                    let q_i2b = q_i2b_rot.conjugate();
-                    update_sparky(&mut sparky, &pos, &q_i2b);
+                    q_i2b_new =
+                        q_i2b_new*Quaternion::from_angle_axis(DANG, &khat);
+                    update_sparky(&mut sparky, &pos, &q_i2b_new);
                 } else if button == Key::G {
-                    q_i2b_rot =
-                        Quaternion::from_angle_axis(DANG, &khat)*q_i2b_rot;
-                    let q_i2b = q_i2b_rot.conjugate();
-                    update_sparky(&mut sparky, &pos, &q_i2b);
+                    q_i2b_new =
+                        q_i2b_new*Quaternion::from_angle_axis(-DANG, &khat);
+                    update_sparky(&mut sparky, &pos, &q_i2b_new);
                 } else if button == Key::E {
-                    q_i2b_rot =
-                        Quaternion::from_angle_axis(-DANG, &jhat)*q_i2b_rot;
-                    let q_i2b = q_i2b_rot.conjugate();
-                    update_sparky(&mut sparky, &pos, &q_i2b);
+                    q_i2b_new =
+                        q_i2b_new*Quaternion::from_angle_axis(DANG, &jhat);
+                    update_sparky(&mut sparky, &pos, &q_i2b_new);
                 } else if button == Key::D {
-                    q_i2b_rot =
-                        Quaternion::from_angle_axis(DANG, &jhat)*q_i2b_rot;
-                    let q_i2b = q_i2b_rot.conjugate();
-                    update_sparky(&mut sparky, &pos, &q_i2b);
+                    q_i2b_new =
+                        q_i2b_new*Quaternion::from_angle_axis(-DANG, &jhat);
+                    update_sparky(&mut sparky, &pos, &q_i2b_new);
                 } else if button == Key::F {
-                    q_i2b_rot =
-                        Quaternion::from_angle_axis(-DANG, &ihat)*q_i2b_rot;
-                    let q_i2b = q_i2b_rot.conjugate();
-                    update_sparky(&mut sparky, &pos, &q_i2b);
+                    q_i2b_new =
+                        q_i2b_new*Quaternion::from_angle_axis(DANG, &ihat);
+                    update_sparky(&mut sparky, &pos, &q_i2b_new);
                 } else if button == Key::S {
-                    q_i2b_rot =
-                        Quaternion::from_angle_axis(DANG, &ihat)*q_i2b_rot;
-                    let q_i2b = q_i2b_rot.conjugate();
-                    update_sparky(&mut sparky, &pos, &q_i2b);
+                    q_i2b_new =
+                        q_i2b_new*Quaternion::from_angle_axis(-DANG, &ihat);
+                    update_sparky(&mut sparky, &pos, &q_i2b_new);
                 }
                 //event.inhibited = true
                 // override default keyboard handler
@@ -539,7 +533,7 @@ pub fn dynamics_off_event_handler(
             _ => {}
         }
     }
-    // q_i2b_rot updated in event match - convert from vector to
+    // q_i2b_new updated in event match - convert from vector to
     // basis rotation
-    q_i2b_rot.conjugate()
+    q_i2b_new
 }
