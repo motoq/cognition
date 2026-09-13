@@ -341,11 +341,11 @@ pub fn add_sparky(
 pub fn update_sparky(
     sparky_node: &mut SceneNode3d,
     pos: &na::SMatrix<f64, 3, 1>,
-    q_i2b: &na::UnitQuaternion<f64>,
+    q_i2b: &Quaternion,
 ) {
     sparky_node.set_position(gx2inertial_rot()*v_na2glamt(&pos));
     sparky_node.set_rotation(
-        gx2inertial_rot()*q_na2glamt(q_i2b).conjugate()*sparkymodel2body_rot()
+        gx2inertial_rot()*q_cog2glamt(q_i2b).conjugate()*sparkymodel2body_rot()
     );
 }
 
@@ -452,13 +452,14 @@ pub fn update_ref_point(
 ///
 /// * String representation of quaternion in scalar + vector format
 ///
-pub fn attitude_string(q_i2b: &na::UnitQuaternion<f64>) -> String {
+pub fn attitude_string(q_i2b: &Quaternion) -> String {
+    let imag = q_i2b.imaginary();
     format!(
         "{:1.6} + [{:1.6} {:1.6} {:1.6}]",
-        q_i2b.scalar(),
-        q_i2b.imag().x,
-        q_i2b.imag().y,
-        q_i2b.imag().z
+        q_i2b.real(),
+        imag[0],
+        imag[1],
+        imag[2],
     )
 }
 
@@ -486,8 +487,8 @@ pub fn attitude_string(q_i2b: &na::UnitQuaternion<f64>) -> String {
 pub fn dynamics_off_event_handler(
     events: &mut EventManager,
     mut sparky: &mut SceneNode3d,
-    q_i2b: &na::UnitQuaternion<f64>
-) -> na::UnitQuaternion<f64> {
+    q_i2b: &Quaternion,
+) -> Quaternion {
 
     let ihat = na::Vector3::<f64>::x_axis();
     let jhat = na::Vector3::<f64>::y_axis();
@@ -495,51 +496,40 @@ pub fn dynamics_off_event_handler(
     const DANG: f64 = 5.0*std::f64::consts::PI/180.0;
 
     let pos = v_glam2nat(&sparky.position());
+    // Work in rotations to update, then back to ref frame xform on return
     let mut q_i2b_rot = q_i2b.conjugate();
 
     for event in events.iter() {
         match event.value {
             WindowEvent::Key(button, Action::Press, _) => {
                 if button == Key::A {
-                    q_i2b_rot = q_i2b_rot
-                        *na::UnitQuaternion::<f64>::from_axis_angle(
-                            &khat, DANG
-                        );
+                    q_i2b_rot =
+                        Quaternion::from_angle_axis(-DANG, &khat)*q_i2b_rot;
                     let q_i2b = q_i2b_rot.conjugate();
                     update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::G {
-                    q_i2b_rot = q_i2b_rot
-                        *na::UnitQuaternion::<f64>::from_axis_angle(
-                            &khat, -DANG
-                        );
+                    q_i2b_rot =
+                        Quaternion::from_angle_axis(DANG, &khat)*q_i2b_rot;
                     let q_i2b = q_i2b_rot.conjugate();
                     update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::E {
-                    q_i2b_rot = q_i2b_rot
-                        *na::UnitQuaternion::<f64>::from_axis_angle(
-                            &jhat, DANG
-                        );
+                    q_i2b_rot =
+                        Quaternion::from_angle_axis(-DANG, &jhat)*q_i2b_rot;
                     let q_i2b = q_i2b_rot.conjugate();
                     update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::D {
-                    q_i2b_rot = q_i2b_rot
-                        *na::UnitQuaternion::<f64>::from_axis_angle(&jhat,
-                            -DANG
-                        );
+                    q_i2b_rot =
+                        Quaternion::from_angle_axis(DANG, &jhat)*q_i2b_rot;
                     let q_i2b = q_i2b_rot.conjugate();
                     update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::F {
-                    q_i2b_rot = q_i2b_rot
-                        *na::UnitQuaternion::<f64>::from_axis_angle(
-                            &ihat, DANG
-                        );
+                    q_i2b_rot =
+                        Quaternion::from_angle_axis(-DANG, &ihat)*q_i2b_rot;
                     let q_i2b = q_i2b_rot.conjugate();
                     update_sparky(&mut sparky, &pos, &q_i2b);
                 } else if button == Key::S {
-                    q_i2b_rot = q_i2b_rot
-                        *na::UnitQuaternion::<f64>::from_axis_angle(
-                            &ihat, -DANG
-                        );
+                    q_i2b_rot =
+                        Quaternion::from_angle_axis(DANG, &ihat)*q_i2b_rot;
                     let q_i2b = q_i2b_rot.conjugate();
                     update_sparky(&mut sparky, &pos, &q_i2b);
                 }

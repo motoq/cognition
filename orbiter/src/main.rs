@@ -185,10 +185,7 @@ async fn main() {
     } else {
         na::matrix![0.0 ; 0.0 ; 0.0]
     };
-    let mut q_i2b =
-        na::UnitQuaternion::<f64>::from_axis_angle(
-            &na::Vector3::<f64>::z_axis(), 0.0
-        );
+    let mut q_i2b = Quaternion::default();
     update_sparky(&mut sparky_node, &r_s_o_i, &q_i2b);
 
     //
