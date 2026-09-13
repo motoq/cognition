@@ -40,6 +40,7 @@ use cogs::dyn_keplerian::KeplerianElement;
 use cogs::dyn_keplerian::Keplerian;
 use cogs::gds_ground_point::GeodeticElement;
 use cogs::gds_ground_point::GroundPoint;
+use cogs::mth_quaternion::Quaternion;
 
 use cogs::dyn_orbit_deq::OrbitDeq;
 
@@ -158,7 +159,7 @@ async fn main() {
     let mut earth_node = add_earth(&mut gx_scene, &config, DU as f32);
     update_earth(&mut earth_node,  &i2f(0.0));
 
-    let r_p_o_i = f2i(0.0)*rp.cartesian();
+    let r_p_o_i = f2i(0.0)/rp.cartesian();
     let mut ref_point_node = add_ref_point(&mut gx_scene, DU as f32, &r_p_o_i);
 
     // The RBG spheres are references for the graphics environment
@@ -264,7 +265,7 @@ async fn main() {
                 &pv.fixed_view::<3, 1>(0, 0).into(),
                 &q_i2b);
             update_earth(&mut earth_node,  &i2f(sim_time));
-            let r_p_o_i = f2i(sim_time)*rp.cartesian();
+            let r_p_o_i = f2i(sim_time)/rp.cartesian();
             update_ref_point(&mut ref_point_node, &r_p_o_i);
     
             /*

@@ -24,6 +24,7 @@ use cogs::phy_const;
 use cogs::dyn_gravity::Gravity;
 use cogs::dyn_two_body_gravity::TwoBodyGravity;
 use cogs::dyn_j2_gravity::J2Gravity;
+use cogs::mth_quaternion::Quaternion;
 
 
 pub mod orbiter_3dof;
@@ -98,19 +99,7 @@ pub fn gravity_model(model_type: GravityModelType) -> Box::<dyn Gravity> {
     }
 }
 
-/// Compute inertial to central body(earth) fixed transformation.
-/// Nalgebra/Glam treat quaternions as vector rotations whereas
-/// dynamics oriented libraries treat quaternions as reference frame
-/// transformations.  To clarify, a positive eigenaxis rotation
-/// with Nalgebra/Glam rotates a vector while the reference frame
-/// remains the same whereas dynamics libraries rotate the basis vectors
-/// while the vector itself remains fixed (as the vector components
-/// change).  The quaternion here is a negative rotation about the
-/// z-axis, which is an earth fixed to inertial reference frame
-/// transformation.  But, when applied via Nalgebra/Glam operators,
-/// it acts as an inertial to earth fixed transformation.  Note, to
-/// act as a rotation (such as rotating the earth clockwise within the
-/// graphics window), the conjugate must be used to recover the rotation.
+/// Inertial to (earth) fixed reference frame transformation
 ///
 /// # Argument
 ///
@@ -118,17 +107,16 @@ pub fn gravity_model(model_type: GravityModelType) -> Box::<dyn Gravity> {
 ///
 /// # Return
 ///
-/// * Quaternion basis vector rotation - a reference frame
-///   transformation w.r.t. Nalgebra/Glam operators.
+/// * ECI to ECF passive transformation (basis vector rotation)
 ///
-pub fn i2f(sim_time: f64) -> na::UnitQuaternion<f64> {
-    na::UnitQuaternion::<f64>::from_axis_angle(
+pub fn i2f(sim_time: f64) -> Quaternion {
+    Quaternion::from_angle_axis(
+        sim_time*phy_const::we_rad_tu(),
         &na::Vector3::<f64>::z_axis(),
-        -sim_time*phy_const::we_rad_tu(),
     )
 }
 
-/// Compute central body (earth) fixed to inertial transformation.
+/// Earth fixed to inertial reference frame transformation
 ///
 /// # Argument
 ///
@@ -136,13 +124,12 @@ pub fn i2f(sim_time: f64) -> na::UnitQuaternion<f64> {
 ///
 /// # Return
 ///
-/// * Quaternion basis vector rotation - a reference frame
-///   transformation w.r.t. Nalgebra/Glam operators.
+/// * ECF to ECI passive transformation (basis vector rotation)
 ///
-pub fn f2i(sim_time: f64) -> na::UnitQuaternion<f64> {
-    na::UnitQuaternion::<f64>::from_axis_angle(
+pub fn f2i(sim_time: f64) -> Quaternion {
+    Quaternion::from_angle_axis(
+        -sim_time*phy_const::we_rad_tu(),
         &na::Vector3::<f64>::z_axis(),
-        sim_time*phy_const::we_rad_tu(),
     )
 }
 
@@ -195,6 +182,27 @@ pub fn q_na2glamt(nq: &na::UnitQuaternion<f64>) -> Quat {
         nq.vector()[1] as f32,
         nq.vector()[2] as f32,
         nq.scalar() as f32
+    )
+}
+
+/// Convert a Cog Quaternion to a Glam Quat
+///
+/// # Arguments
+///
+/// * cq  nalgebra quaternion
+///
+/// # Return
+///
+/// * Glam quaternion
+///
+pub fn q_cog2glamt(nc: &Quaternion) -> Quat {
+    // Take conjugate to account for different convention
+    let qi = -nc.imaginary();
+    Quat::from_xyzw(
+        qi[0] as f32,
+        qi[1] as f32,
+        qi[2] as f32,
+        nc.real() as f32
     )
 }
 
@@ -274,11 +282,12 @@ pub fn add_earth(
 ///
 pub fn update_earth(
     earth_node: &mut SceneNode3d,
-    q_i2f: &na::UnitQuaternion<f64>
+    q_i2f: &Quaternion
 ) {
+    // Convert q_i2f to a vector rotation
     earth_node.set_rotation(
         gx2inertial_rot()
-        *q_na2glamt(q_i2f).conjugate()
+        *q_cog2glamt(q_i2f).conjugate()
         *earthtexture2fixed_rot()
     );
 }
