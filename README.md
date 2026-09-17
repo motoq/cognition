@@ -12,7 +12,7 @@ The cogs directory is the library layer serving other directories
 orbiter
 -------
 
-<img src="./sparky_rs.pn">
+<img src="./sparky_rs.png">
 
 The orbiter directory is a 6DOF spacecraft attitude dynamics, estimation,
 and control simulator.  The current effort focuses on recreating functionality
