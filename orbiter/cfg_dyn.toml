@@ -15,3 +15,16 @@ inclination = 63.4
 raan = 30.0
 arg_perigee = 270.0
 true_anomaly = 0.0
+
+#[struct]
+#weight = 39000.0
+#jxx = 25000.0
+#jyy = 122200.0
+#jzz = 139800.0
+#jxy = 0.0
+#jxz = 2200.0
+#jyz = 0.0
+
+#[prop]
+#thrust = 39000.0
+

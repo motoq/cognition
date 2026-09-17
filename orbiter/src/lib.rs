@@ -453,14 +453,67 @@ pub fn update_ref_point(
 /// * String representation of quaternion in scalar + vector format
 ///
 pub fn attitude_string(q: &Quaternion) -> String {
-    let imag = q.imaginary();
+    let mut real = q.real();
+    let mut imag = q.imaginary();
+    // Canonical form
+    if real < 0.0 {
+        real *= -1.0;
+        imag *= -1.0;
+    }
     format!(
         "{:1.6} + [{:1.6} {:1.6} {:1.6}]",
-        q.real(),
+        real,
         imag[0],
         imag[1],
         imag[2],
     )
+}
+
+/// Handles keyboard events for the dynamic orbiter simulation option.
+///
+/// # Keyboard Inputs
+///
+/// * A/G  Yaw
+/// * D/E  Pitch
+/// * S/F  Roll
+///
+/// # Arguments
+///
+/// * events  EventManager from which events will be matched and consumed
+///
+/// # Return
+///
+/// * Increment in torque to apply
+///
+pub fn dynamics_event_handler(events: &mut EventManager) -> na::Vector3::<f64> {
+    const DTQ: f64 = 1.0;
+
+    let mut dtq = na::Vector3::<f64>::zeros();
+
+    for event in events.iter() {
+        match event.value {
+            WindowEvent::Key(button, Action::Press, _) => {
+                // Take current attitude and apply delta
+                if button == Key::A {
+                    dtq[2] = DTQ;
+                } else if button == Key::G {
+                    dtq[2] = -DTQ;
+                } else if button == Key::E {
+                    dtq[1] = DTQ;
+                } else if button == Key::D {
+                    dtq[1] = -DTQ;
+                } else if button == Key::F {
+                    dtq[0] = DTQ;
+                } else if button == Key::S {
+                    dtq[0] = -DTQ;
+                }
+                //event.inhibited = true
+                // override default keyboard handler
+            }
+            _ => {}
+        }
+    }
+    dtq
 }
 
 /// Handles keyboard events for the case where are dynamics are turned off
