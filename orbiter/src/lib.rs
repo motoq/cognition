@@ -41,6 +41,8 @@ pub struct OrbiterConfig {
     pub tfactor: f64,
     /// Text window update rate, seconds
     pub text_refresh: f64,
+    /// Sparky model scaling.  1 is a bit small at LEO, 5 is good at Geo
+    pub model_scale: i32,
     /// Text description of gravity model to implement
     pub gravity_model: String,
     /// Orbital parameters
@@ -313,11 +315,12 @@ pub fn add_sparky(
 ) -> SceneNode3d {
     let sparky_obj_path = Path::new("./resources/sparkymatmesh.obj");
     let sparky_mtl_path = Path::new("./resources");
+    let sparky_scale = config.model_scale as f32 / 1000.0;
     let sparky = if config.dynamic {
         scene.add_obj(
             sparky_obj_path,
             sparky_mtl_path,
-            Vec3::new(0.005, 0.005, 0.005)
+            Vec3::new(sparky_scale, sparky_scale, sparky_scale)
         ).set_position(gx2inertial_rot()*v_na2glamt(&pos))
     } else {
         scene.add_obj(

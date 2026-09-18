@@ -3,6 +3,7 @@ dynamic = true
 dt = 0.1
 tfactor = 1000.0
 text_refresh = 0.5
+model_scale = 5
 
 gravity_model = "j2"
 

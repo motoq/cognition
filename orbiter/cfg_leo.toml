@@ -1,8 +1,9 @@
 name = "Sparky"                                                         
 dynamic = true                                                          
 dt = 0.1
-tfactor = 200.0
+tfactor = 100.0
 text_refresh = 0.5
+model_scale = 2
 
 gravity_model = "j2"
 

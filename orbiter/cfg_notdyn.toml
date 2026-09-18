@@ -3,6 +3,7 @@ dynamic = false
 dt = 0.0
 tfactor = 0.0
 text_refresh = 0.5
+model_scale = 1
 
 gravity_model = "two_body"
 
