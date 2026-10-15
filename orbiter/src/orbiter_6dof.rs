@@ -13,7 +13,7 @@ use cogs::dyn_orbit_rk4::OrbitRk4;
 use cogs::mth_ode_solver::OdeSolver;
 
 pub struct Orbiter6Dof {
-    orbit: OrbitRk4,
+    orbit: Box<dyn OdeSolver<6>>,
 }
 
 impl Orbiter6Dof {
@@ -23,7 +23,7 @@ impl Orbiter6Dof {
         tmt0: f64,
         pv: na::SMatrix<f64, 6, 1>,
     ) -> Self {
-        let orbit = OrbitRk4::new(eom, dt, tmt0, pv);
+        let orbit = Box::new(OrbitRk4::new(eom, dt, tmt0, pv));
         Self { orbit }
     }
 }
