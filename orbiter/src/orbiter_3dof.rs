@@ -6,6 +6,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+//! 3DOF system supporting integration of EOM to determine translational
+//! motion.
+
 use nalgebra as na;
 
 use cogs::dyn_orbit_deq::OrbitDeq;

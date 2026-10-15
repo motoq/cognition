@@ -29,6 +29,7 @@ use cogs::mth_quaternion::Quaternion;
 
 pub mod orbiter_3dof;
 pub mod orbiter_6dof;
+pub mod translation;
 
 /// Configuration structs, in progress
 #[derive(Deserialize)]
@@ -49,6 +50,10 @@ pub struct OrbiterConfig {
     pub orbit: OrbitDef,
     /// Reference point location
     pub ref_point_lat_lon_alt: [f64; 3],
+    /// Mass and structure
+    pub structure: Structure,
+    /// Propulsion
+    pub propulsion: Propulsion,
 }
 
 #[derive(Deserialize)]
@@ -65,6 +70,24 @@ pub struct OrbitDef {
     pub arg_perigee: f64,
     /// deg
     pub true_anomaly: f64,
+}
+
+#[derive(Deserialize)]
+pub struct Structure {
+    /// lbs
+    pub weight: f64,
+//    pub ixx: f64,
+//    pub iyy: f64,
+//    pub izz: f64,
+//    pub ixy: f64,
+//    pub ixz: f64,
+//    pub iyz: f64,
+}
+
+#[derive(Deserialize)]
+pub struct Propulsion {
+    /// lbs
+    pub thrust: f64,
 }
 
 /// Available gravity models
