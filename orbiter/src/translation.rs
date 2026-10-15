@@ -15,6 +15,8 @@
 /// based on the current thrust level or a desired thrust level (limited to
 /// max_thrust return values) can be requested.
 ///
+/// # Author
+///
 /// Kurt Motekew  2026/10/14
 ///
 pub struct Translation {

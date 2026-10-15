@@ -7,7 +7,8 @@
  */
 
 //! 3DOF system supporting integration of EOM to determine translational
-//! motion.
+//! motion.  Left as a functional but "stub" struct at this point with
+//! a hard coded integrator (see Orbiter6Dof for developed version)
 
 use nalgebra as na;
 

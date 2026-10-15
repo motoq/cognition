@@ -43,6 +43,7 @@ use cogs::gds_ground_point::GroundPoint;
 use cogs::mth_quaternion::Quaternion;
 
 use cogs::dyn_orbit_deq::OrbitDeq;
+use cogs::dyn_orbit_rk4::OrbitRk4;
 
 
 #[kiss3d::main]
@@ -115,7 +116,9 @@ async fn main() {
     let gmodel_type = gravity_model_type(&config.gravity_model.as_str())
         .expect(&("Config File Error:  ".to_owned() + &config.gravity_model));
     let eom = OrbitDeq::new(gravity_model(gmodel_type));
-    let mut orbit = Orbiter6Dof::new(eom, dt, 0.0, kep_oe.cartesian());
+    let tmt0 = 0.0;
+    let orbit = Box::new(OrbitRk4::new(eom, dt, tmt0, kep_oe.cartesian()));
+    let mut orbit = Orbiter6Dof::new(orbit);
 
     // GX related - define as f32
     const AXIS_LENGTH: f32 = 10.0;
