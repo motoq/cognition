@@ -20,12 +20,14 @@ use nalgebra as na;
 use serde::Deserialize;
 use std::path::Path;
 
+use cogs::utl_const;
 use cogs::phy_const;
 use cogs::dyn_gravity::Gravity;
 use cogs::dyn_two_body_gravity::TwoBodyGravity;
 use cogs::dyn_j2_gravity::J2Gravity;
 use cogs::mth_quaternion::Quaternion;
 
+use crate::translation::Translation;
 
 pub mod orbiter_3dof;
 pub mod orbiter_6dof;
@@ -94,6 +96,16 @@ pub struct Propulsion {
 pub enum GravityModelType {
     TwoBody,
     J2,
+}
+
+pub fn orbiter_properties(cfg: &OrbiterConfig) -> Translation {
+    let thrust = utl_const::N_PER_LBF*cfg.propulsion.thrust;
+    Translation::new(
+        utl_const::KG_PER_LB*cfg.structure.weight,
+        thrust,
+        thrust/100.0,
+        0.0
+    )
 }
 
 /// Returns the appropriate gravity model type given an string

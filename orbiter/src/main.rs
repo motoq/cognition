@@ -17,6 +17,7 @@ use nalgebra as na;
 use orbiter::f2i;
 use orbiter::i2f;
 use orbiter::OrbiterConfig;
+use orbiter::orbiter_properties;
 use orbiter::gravity_model;
 use orbiter::gravity_model_type;
 use orbiter::gx2inertial_rot;
@@ -68,6 +69,8 @@ async fn main() {
         config.dynamic,
         config.gravity_model,
     );
+
+    let translation = orbiter_properties(&config);
 
     // Integration step size, sec to TU
     let dt = config.dt*tu_per_sec;

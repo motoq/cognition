@@ -8,6 +8,7 @@ pub const RAD_PER_DEG: f64 = std::f64::consts::PI/180.0;
 /// Feet to meters
 pub const M_PER_FT: f64 = 0.3048;
 
-/// Slug to kg
+/// Slug, etc., to SI
 pub const KG_PER_SLUG: f64 = 14.593902937;
 pub const KG_PER_LB: f64 = 0.45359237;
+pub const N_PER_LBF: f64 = KG_PER_SLUG*M_PER_FT;
