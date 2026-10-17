@@ -336,8 +336,10 @@ impl Mul<na::Vector3<f64>> for Quaternion {
     ///   is a reference frame transformation.
     ///
     fn mul(self, rhs: na::Vector3<f64>) -> Self::Output {
-        let tt = 2.0*self.qi.cross(&rhs);
-        rhs + self.qr*tt + self.qi.cross(&tt)
+        //let tt = 2.0*self.qi.cross(&rhs);
+        //rhs + self.qr*tt + self.qi.cross(&tt)
+        // factor out qX
+        rhs + 2.0*(self.qi.cross(&(self.qi.cross(&rhs) + self.qr*rhs)))
     }
 }
 
@@ -366,8 +368,10 @@ impl Div<na::Vector3<f64>> for Quaternion {
 
     // Derived from above q*v operation
     fn div(self, rhs: na::Vector3<f64>) -> Self::Output {
-        let tt = -2.0*self.qi.cross(&rhs);
-        rhs + self.qr*tt - self.qi.cross(&tt)
+        //let tt = -2.0*self.qi.cross(&rhs);
+        //rhs + self.qr*tt - self.qi.cross(&tt)
+        // factor out qX
+        rhs + 2.0*(self.qi.cross(&(self.qi.cross(&rhs) - self.qr*rhs)))
     }
 }
 
